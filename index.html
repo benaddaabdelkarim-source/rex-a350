@@ -1,189 +1,200 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>REX Planning A350 – Check A</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--sub:#94a3b8;
-  --accent:#60a5fa;--good:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#1e293b;
+  --bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--sub:#cbd5e1;
+  --accent:#60a5fa;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#1e293b
 }
-*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui}
-header{display:flex;gap:10px;align-items:center;padding:12px 16px;position:sticky;top:0;background:#0f172ab3;backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
-h1{font-size:16px;margin:0}
-.tag{background:#0b1222;color:#cbd5e1;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.35 system-ui,Segoe UI,Roboto,Ubuntu}
+header{display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,23,42,.9);backdrop-filter:saturate(140%) blur(8px);z-index:2}
+h1{font-size:16px;margin:0;font-weight:700}
+.small{font-size:12px;color:var(--sub)}
+.tag{padding:2px 8px;border-radius:999px;background:var(--muted);color:#dbeafe;font-size:12px}
 .right{margin-left:auto}
-.btn{background:#0f1a30;border:1px solid #20324f;color:#dbeafe;border-radius:10px;padding:9px 11px;cursor:pointer}
-.btn.primary{background:#102c53;border-color:#1d4ed8}
-.btn.good{background:#0d2d1b;border-color:#16a34a}
-.btn.warn{background:#3a2a0a;border-color:#f59e0b}
-.btn.bad{background:#3a0a0a;border-color:#ef4444}
-.wrap{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 54px)}
+.wrap{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 56px)}
 nav{border-right:1px solid var(--line);background:#0b1222;padding:10px}
-nav .tabbtn{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0f1a30}
-nav .tabbtn.active{outline:2px solid var(--accent)}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px}
+nav .btn{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0f1a30;color:#dbeafe;cursor:pointer}
+nav .btn.active{outline:2px solid var(--accent)}
+main{padding:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}
 .grid{display:grid;gap:10px}
 .grid.cols-2{grid-template-columns:1fr 1fr}
 .grid.cols-3{grid-template-columns:repeat(3,1fr)}
 .grid.cols-4{grid-template-columns:repeat(4,1fr)}
-input,select,textarea{width:100%;background:#0b1222;border:1px solid #223050;color:#e5e7eb;border-radius:10px;padding:9px}
-input[type="datetime-local"]{padding:7px}
-table{width:100%;border-collapse:collapse}
-th,td{border-bottom:1px solid var(--line);padding:8px;vertical-align:top}
-.small{font-size:12px;color:var(--sub)}
-.kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:#0b1222;border:1px solid #223050;border-radius:6px;padding:1px 6px}
-.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-.pill{border:1px solid #223050;background:#0b1222;border-radius:999px;padding:4px 8px;font-size:12px;color:#cbd5e1}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.hint{color:#93c5fd}
-.badge{padding:2px 8px;border-radius:999px;font-size:12px}
-.badge.neg{background:#3a0a0a;border:1px solid #ef4444}
-.badge.pos{background:#0d2d1b;border:1px solid #16a34a}
-.hidden{display:none}
-canvas{max-height:360px}
+input,select,textarea{width:100%;background:#0b1222;border:1px solid #223050;color:var(--text);border-radius:10px;padding:10px}
+textarea{min-height:76px}
+label{font-size:12px;color:#93b3d9}
+.btn2{border:1px solid #223050;background:#0b1222;border-radius:10px;padding:8px 10px;color:var(--text);cursor:pointer}
+.btn2.primary{background:#11345a;border-color:#1d4ed8}
+.btn2.good{background:#0d2d1b;border-color:#16a34a}
+.btn2.bad{background:#3a0a0a;border-color:#ef4444}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+.muted{color:#93b3d9}
+.kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:#0c1528;border:1px solid #273146;border-radius:6px;padding:1px 6px}
+.help{opacity:.8}
 </style>
 </head>
 <body>
 <header>
   <h1>REX Planning A350 – Check A</h1>
-  <span class="tag">Standalone (localStorage)</span>
+  <span class="tag">Standalone localStorage</span>
   <span class="right"></span>
-  <button class="btn" id="exportBtn">Exporter JSON</button>
-  <label class="btn" for="importFile">Importer JSON</label>
-  <input id="importFile" type="file" accept="application/json" class="hidden">
+  <button class="btn2" id="exportBtn">Exporter JSON</button>
+  <label for="importFile" class="btn2">Importer JSON</label>
+  <input id="importFile" type="file" accept="application/json" style="display:none"/>
 </header>
 
 <div class="wrap">
   <nav>
-    <button class="tabbtn active" data-tab="problems">📚 Bibliothèque Problèmes</button>
-    <button class="tabbtn" data-tab="visit">🧾 Checklist Visite</button>
-    <button class="tabbtn" data-tab="analytics">📈 Fréquences & REX</button>
-    <button class="tabbtn" data-tab="settings">⚙️ Paramètres flotte</button>
-    <div class="panel small">Astuce : tape <span class="kbd">/</span> pour chercher, <span class="kbd">N</span> pour ajouter un problème, <span class="kbd">V</span> pour une nouvelle visite.</div>
+    <button class="btn active" data-tab="problems">📚 Bibliothèque Problèmes</button>
+    <button class="btn" data-tab="visit">✅ Checklist Visite</button>
+    <button class="btn" data-tab="analytics">📊 REX / Analyse</button>
+    <button class="btn" data-tab="settings">⚙️ Paramètres flotte</button>
+    <div class="panel" style="margin-top:10px">
+      <div class="small">Raccourcis : <span class="kbd">/</span> chercher • <span class="kbd">N</span> nouveau problème • <span class="kbd">V</span> nouvelle visite</div>
+    </div>
   </nav>
 
   <main>
     <!-- PROBLEMS -->
-    <section id="problems" class="tab">
-      <div class="panel">
-        <div class="row">
-          <input id="qProblem" placeholder="🔎 Rechercher (titre, catégorie, acteur, description)…">
-          <button class="btn" id="clearSearch">Effacer</button>
-          <span class="right"></span>
-          <button class="btn primary" id="addProblemBtn">+ Nouveau problème</button>
-        </div>
-      </div>
-
+    <section id="tab-problems" class="tab">
       <div class="panel">
         <div class="grid cols-3">
           <div>
-            <label>Catégorie (filtre)</label>
+            <label>Recherche</label>
+            <input id="qProblem" placeholder="Titre, catégorie, acteur, description…"/>
+          </div>
+          <div>
+            <label>Catégorie</label>
             <select id="filterCat">
               <option value="">(toutes)</option>
               <option>Cabine</option><option>Sous-traitance</option><option>Query/Prépa</option>
-              <option>Pièces/Log</option><option>Effectifs/Planif</option><option>Documentation</option>
-              <option>Autre</option>
+              <option>Pièces/Log</option><option>Effectifs/Planif</option><option>Documentation</option><option>Autre</option>
             </select>
           </div>
           <div>
-            <label>Impact min (h)</label>
-            <input type="number" id="filterImpact" min="0" step="0.5" placeholder="0">
-          </div>
-          <div class="row" style="margin-top:22px">
-            <input type="checkbox" id="filterRecurring"><label for="filterRecurring">Récurrent seulement</label>
+            <label>Impact min (heures)</label>
+            <input type="number" id="filterImpact" min="0" step="0.5" placeholder="0"/>
           </div>
         </div>
+        <div class="row" style="margin-top:8px">
+          <label class="small row" style="gap:6px"><input type="checkbox" id="filterRecurring"/> Récurrent seulement</label>
+          <span class="right"></span>
+          <button class="btn2" id="clearSearch">Effacer</button>
+          <button class="btn2 primary" id="addProblemBtn">+ Nouveau problème</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div id="problemsList"></div>
       </div>
 
-      <div class="panel" id="problemsList"></div>
-
-      <!-- Dialog add/edit -->
       <dialog id="problemDlg">
-        <form method="dialog" class="panel" style="min-width:640px">
-          <h3 style="margin:0 0 8px">Problème</h3>
-          <div class="grid cols-2">
-            <div><label>Titre</label><input id="p_title" required></div>
-            <div>
-              <label>Catégorie</label>
-              <input id="p_cat" list="catList" placeholder="ex. Cabine">
-              <datalist id="catList">
-                <option value="Cabine"><option value="Sous-traitance"><option value="Query/Prépa">
-                <option value="Pièces/Log"><option value="Effectifs/Planif"><option value="Documentation"><option value="Autre">
-              </datalist>
+        <form method="dialog" style="min-width:640px">
+          <div class="panel">
+            <h3 style="margin:0 0 8px 0">Problème</h3>
+            <div class="grid cols-2">
+              <div><label>Titre</label><input id="p_title" required/></div>
+              <div><label>Catégorie</label>
+                <select id="p_cat"><option>Cabine</option><option>Sous-traitance</option><option>Query/Prépa</option><option>Pièces/Log</option><option>Effectifs/Planif</option><option>Documentation</option><option>Autre</option></select>
+              </div>
+              <div><label>Impact estimé (h)</label><input id="p_impact" type="number" min="0" step="0.5"/></div>
+              <div><label>Acteur / Responsable</label><input id="p_actor" placeholder="Cabine, STT, Query, Planif…"/></div>
             </div>
-            <div><label>Impact estimé (h)</label><input type="number" id="p_impact" step="0.5" min="0"></div>
-            <div><label>Acteur/Responsable</label><input id="p_actor" placeholder="Cabine, STT, Query…"></div>
-          </div>
-          <label>Description</label><textarea id="p_desc" placeholder="Contexte, symptômes, docs concernés…"></textarea>
-          <div class="row">
-            <label><input type="checkbox" id="p_recurring"> Récurrent</label>
-            <label><input type="checkbox" id="p_checkable" checked> Utilisable en checklist</label>
-            <span class="right"></span>
-            <button class="btn" value="cancel">Annuler</button>
-            <button class="btn primary" id="saveProblem" value="default">Enregistrer</button>
+            <div style="margin-top:8px"><label>Description</label><textarea id="p_desc" placeholder="Contexte, symptômes, doc…"></textarea></div>
+            <div class="row" style="margin-top:8px">
+              <label class="row small" style="gap:6px"><input type="checkbox" id="p_recurring"/> Récurrent</label>
+              <label class="row small" style="gap:6px"><input type="checkbox" id="p_checkable" checked/> Utilisable en checklist</label>
+              <span class="right"></span><button class="btn2" value="cancel">Annuler</button><button class="btn2 primary" id="saveProblem" value="default">Enregistrer</button>
+            </div>
           </div>
         </form>
       </dialog>
     </section>
 
     <!-- VISIT -->
-    <section id="visit" class="tab hidden">
+    <section id="tab-visit" class="tab" hidden>
       <div class="panel">
         <div class="row">
-          <button class="btn primary" id="newVisitBtn">+ Nouvelle visite</button>
+          <button class="btn2 primary" id="newVisitBtn">+ Nouvelle visite</button>
           <select id="visitSelect"></select>
-          <button class="btn" id="deleteVisitBtn">Supprimer</button>
-          <span class="small right">La HMO & l’effectif affichent l’<b>écart</b> et le <b>%</b>.</span>
+          <button class="btn2 bad" id="deleteVisitBtn">Supprimer visite</button>
+          <span class="right small help">Créer une checklist depuis les problèmes récurrents (ou une sélection)</span>
         </div>
       </div>
 
       <div class="panel">
         <div class="grid cols-4">
-          <div><label>Immatriculation</label><select id="v_reg"></select></div>
-          <div><label>Type de Check</label><select id="v_check"><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select></div>
-          <div><label>Arrivée prévue</label><input id="v_arrival_plan" type="datetime-local"></div>
-          <div><label>Arrivée réelle</label><input id="v_arrival_real" type="datetime-local"></div>
+          <div><label>Immatriculation (AF A350)</label><select id="v_reg"></select></div>
+          <div><label>Type de Check</label>
+            <select id="v_check"><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
+          </div>
+          <div><label>Arrivée prévue</label><input id="v_arrival" type="datetime-local"/></div>
+          <div><label>Départ prévu</label><input id="v_departure" type="datetime-local"/></div>
         </div>
 
         <div class="grid cols-4" style="margin-top:10px">
-          <div><label>Sortie prévue</label><input id="v_depart_plan" type="datetime-local"></div>
-          <div><label>Sortie réelle</label><input id="v_depart_real" type="datetime-local"></div>
-          <div><label>HMO prévue (h)</label><input id="v_hmo_plan" type="number" step="0.5" min="0"></div>
-          <div><label>HMO réelle (h)</label><input id="v_hmo_real" type="number" step="0.5" min="0"></div>
+          <div><label>HMO prévue (h)</label><input id="v_hmo_plan" type="number" min="0" step="0.5"/></div>
+          <div><label>HMO réelle (h)</label><input id="v_hmo_real" type="number" min="0" step="0.5"/></div>
+          <div><label>Effectif demandé (total)</label><input id="v_staff_plan" type="number" min="0" step="1"/></div>
+          <div><label>Effectif réel (total)</label><input id="v_staff_real" type="number" min="0" step="1"/></div>
         </div>
 
-        <div class="panel" style="margin:12px 0">
-          <div class="row"><b>Effectifs demandés / réels par vacation</b> <span class="small">(somme automatique)</span><span class="right"></span><button class="btn" id="addShiftBtn">+ Ajouter une vac</button></div>
-          <table id="shiftTable">
-            <thead><tr><th>Vacation</th><th>Demandé</th><th>Réel</th><th>Leader CME</th><th>Leader EIR</th><th></th></tr></thead>
-            <tbody></tbody>
-          </table>
-          <div class="row small">
-            <span id="staffDeltaBadge" class="badge">Δ effectif : 0</span>
-            <span id="hmoDeltaBadge" class="badge">Δ HMO : 0 h</span>
+        <div class="grid cols-4" style="margin-top:10px">
+          <div><label>Poids CME (total)</label><input id="v_cme" type="number" min="0" step="1"/></div>
+          <div><label>Poids EIR (total)</label><input id="v_eir" type="number" min="0" step="1"/></div>
+          <div><label>Nb lignes fin de chantier</label><input id="v_eol_lines" type="number" min="0" step="1"/></div>
+          <div><label>Extractions (nombre)</label><input id="v_extractions" type="number" min="0" step="1"/></div>
+        </div>
+
+        <div class="grid cols-1" style="margin-top:10px">
+          <div><label>Raison(s) extraction</label><input id="v_extraction_reason" placeholder="pièce, doc, STT, cabine…"/></div>
+        </div>
+      </div>
+
+      <!-- VAC: Leader / EIR / CME -->
+      <div class="panel">
+        <div class="row"><strong>Compétences par vac — Leader / EIR / CME</strong></div>
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label>Matin — Leader</label><input id="v_m_lead" type="number" min="0" step="1" placeholder="0"/>
+            <label style="margin-top:6px">Matin — EIR</label><input id="v_m_eir" type="number" min="0" step="1" placeholder="0"/>
+            <label style="margin-top:6px">Matin — CME</label><input id="v_m_cme" type="number" min="0" step="1" placeholder="0"/>
+          </div>
+          <div>
+            <label>Soir — Leader</label><input id="v_s_lead" type="number" min="0" step="1" placeholder="0"/>
+            <label style="margin-top:6px">Soir — EIR</label><input id="v_s_eir" type="number" min="0" step="1" placeholder="0"/>
+            <label style="margin-top:6px">Soir — CME</label><input id="v_s_cme" type="number" min="0" step="1" placeholder="0"/>
+          </div>
+          <div>
+            <label>Nuit — Leader</label><input id="v_n_lead" type="number" min="0" step="1" placeholder="0"/>
+            <label style="margin-top:6px">Nuit — EIR</label><input id="v_n_eir" type="number" min="0" step="1" placeholder="0"/>
+            <label style="margin-top:6px">Nuit — CME</label><input id="v_n_cme" type="number" min="0" step="1" placeholder="0"/>
           </div>
         </div>
-
-        <div class="grid cols-4">
-          <div><label>Poids CME (auto)</label><input id="v_cme" type="number" step="0.1" min="0"></div>
-          <div><label>Poids EIR (auto)</label><input id="v_eir" type="number" step="0.1" min="0"></div>
-          <div><label>Nb lignes fin de chantier</label><input id="v_eol_lines" type="number" step="1" min="0"></div>
-          <div><label>Extractions (nb)</label><input id="v_extractions" type="number" step="1" min="0"></div>
+        <div class="grid cols-3" style="margin-top:10px">
+          <div><label>Total Leader</label><input id="v_tot_lead" type="number" disabled/></div>
+          <div><label>Total EIR</label><input id="v_tot_eir" type="number" disabled/></div>
+          <div><label>Total CME</label><input id="v_tot_cme" type="number" disabled/></div>
         </div>
-        <label>Raison(s) des extractions</label><input id="v_extraction_reason" placeholder="pièce manquante, doc, STT, cabine…">
+        <div class="small muted" style="margin-top:6px">Les totaux EIR/CME sont recopiés automatiquement dans l’entête (Poids EIR / Poids CME).</div>
       </div>
 
       <div class="panel">
         <div class="row">
-          <button class="btn" id="autoChecklistBtn">Générer checklist (récurrents + top)</button>
-          <button class="btn" id="addItemBtn">+ Ajouter un item</button>
+          <button class="btn2" id="autoChecklistBtn">Générer checklist (récurrents + top)</button>
+          <button class="btn2" id="addItemBtn">+ Ajouter un item</button>
           <span class="right"></span>
-          <button class="btn good" id="markAllDoneBtn">Tout marquer fait</button>
+          <button class="btn2 good" id="markAllDoneBtn">Tout marquer fait</button>
         </div>
         <table class="table" id="visitTable">
           <thead><tr><th>✔</th><th>Problème</th><th>Cat.</th><th>Impact(h)</th><th>Acteur</th><th>Notes</th><th></th></tr></thead>
@@ -193,48 +204,55 @@ canvas{max-height:360px}
     </section>
 
     <!-- ANALYTICS -->
-    <section id="analytics" class="tab hidden">
+    <section id="tab-analytics" class="tab" hidden>
       <div class="panel">
-        <div class="row">
+        <div class="grid cols-3">
           <div>
-            <label>Mois</label>
-            <input type="month" id="monthFilter">
+            <label>Mois (sur la base de l’arrivée prévue)</label>
+            <input id="flt_month" type="month"/>
           </div>
-          <span class="right"></span>
-          <button class="btn" id="recountBtn">Actualiser</button>
+          <div>
+            <label>Filtre écart HMO (réel – prévu) min (h)</label>
+            <input id="flt_hmo" type="number" min="0" step="0.5" placeholder="0"/>
+          </div>
+          <div>
+            <label>Filtre écart effectif (réel – demandé) min</label>
+            <input id="flt_staff" type="number" min="0" step="1" placeholder="0"/>
+          </div>
         </div>
-      </div>
-
-      <div class="grid cols-2 panel" style="margin:12px">
-        <div>
-          <b>Pareto problèmes (Fréquence)</b>
-          <canvas id="paretoChart"></canvas>
-        </div>
-        <div>
-          <b>Répartition par catégorie</b>
-          <canvas id="pieChart"></canvas>
+        <div class="row" style="margin-top:8px">
+          <button class="btn2" id="recountBtn">Actualiser graphiques</button>
+          <span class="small muted right">Pareto = top problèmes utilisés en checklist • Camembert = catégories</span>
         </div>
       </div>
 
       <div class="panel">
-        <b>Indicateurs mensuels</b>
-        <table id="aggTable"><thead>
-          <tr><th>Visite</th><th>Immat</th><th>HMO (plan → réel / Δ)</th><th>Effectif (plan → réel / Δ)</th><th>Sortie plan → réel</th></tr>
-        </thead><tbody></tbody></table>
+        <div class="grid cols-2">
+          <div><canvas id="paretoChart" height="220"></canvas></div>
+          <div><canvas id="pieChart" height="220"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin:0 0 8px 0">Tableau d’indicateurs</h3>
+        <table class="table" id="freqTable">
+          <thead><tr><th>#</th><th>Problème</th><th>Cat.</th><th>Fréq</th><th>Impact médian (h)</th><th>Dernière utilisation</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 
     <!-- SETTINGS -->
-    <section id="settings" class="tab hidden">
+    <section id="tab-settings" class="tab" hidden>
       <div class="panel">
-        <h3 style="margin:0 0 8px">Flotte A350 AF – Immatriculations</h3>
-        <p class="small">Collez une immat par ligne. Exemple : F-HTYA</p>
-        <textarea id="fleetTextarea" rows="8" placeholder="F-HTYA
+        <h3 style="margin:0 0 8px 0">Flotte A350 Air France – Immatriculations</h3>
+        <p class="small">Collez une immatriculation par ligne (ex: F-HTYA). Le sélecteur de visite utilise cette liste.</p>
+        <textarea id="fleetTextarea" placeholder="F-HTYA
 F-HTYB
 F-HTYC"></textarea>
         <div class="row" style="margin-top:8px">
-          <button class="btn primary" id="saveFleetBtn">Enregistrer</button>
-          <button class="btn" id="loadDemoFleetBtn">Charger exemple</button>
+          <button class="btn2 primary" id="saveFleetBtn">Enregistrer la flotte</button>
+          <button class="btn2" id="loadDemoFleetBtn">Charger exemple</button>
         </div>
       </div>
     </section>
@@ -242,297 +260,257 @@ F-HTYC"></textarea>
 </div>
 
 <script>
-/* ------------ State & storage ------------ */
+/* ---------- stockage local ---------- */
 const store={get(){try{return JSON.parse(localStorage.getItem('rex-data')||'{}')}catch(e){return{}}},set(d){localStorage.setItem('rex-data',JSON.stringify(d))}};
 const data=store.get();
-if(!Array.isArray(data.problems)) data.problems=seedProblems();
-if(!Array.isArray(data.visits)) data.visits=[];
-if(!Array.isArray(data.fleet)) data.fleet=[];
+if(!data.problems)data.problems=seedProblems();
+if(!data.visits)data.visits=[];
+if(!Array.isArray(data.fleet))data.fleet=[];
 
-/* ------------ Tabs (robuste) ------------ */
-const tabs={problems:$('#problems'),visit:$('#visit'),analytics:$('#analytics'),settings:$('#settings')};
-$$('nav .tabbtn').forEach(b=>{
-  b.onclick=()=>{ $$('nav .tabbtn').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-    const t=b.dataset.tab; for(const k in tabs){tabs[k].classList.toggle('hidden',k!==t)}
-    if(t==='visit'){refreshVisitSelect(); renderVisit();} 
-    if(t==='analytics'){renderAnalytics();}
-    if(t==='settings'){renderFleet();}
-  };
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const rid=()=>Math.random().toString(36).slice(2,9);
+const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n};
+function save(){store.set(data)}
+function escapeHtml(s){return (s||'').replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+
+/* ---------- onglets ---------- */
+const tabs={problems:$('tab-problems'),visit:$('tab-visit'),analytics:$('tab-analytics'),settings:$('tab-settings')};
+document.querySelectorAll('nav .btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('nav .btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const t=b.dataset.tab; for(const k in tabs){tabs[k].hidden=(k!==t)}
+    if(t==='visit'){refreshVisitSelect();renderVisit()}
+    if(t==='analytics'){renderFreq();renderCharts()}
+    if(t==='settings'){renderFleetSettings()}
+  });
 });
 
-/* ------------ Helpers DOM ------------ */
-function $(sel,ctx=document){return ctx.querySelector(sel)}
-function $$(sel,ctx=document){return [...ctx.querySelectorAll(sel)]}
-function rid(){return Math.random().toString(36).slice(2,9)}
-function num(v){const n=parseFloat(v);return isNaN(n)?0:n}
-
-/* ------------ Problems list ------------ */
-const listEl=$('#problemsList'); const qEl=$('#qProblem'),fCat=$('#filterCat'),fImp=$('#filterImpact'),fRec=$('#filterRecurring');
-$('#addProblemBtn').onclick=()=>openProblemDlg();
-$('#clearSearch').onclick=()=>{qEl.value='';fCat.value='';fImp.value='';fRec.checked=false;renderProblems()}
-qEl.oninput=renderProblems; fCat.onchange=renderProblems; fImp.oninput=renderProblems; fRec.onchange=renderProblems;
-
+/* ---------- PROBLEMS ---------- */
+const qProblem=$('qProblem'),filterCat=$('filterCat'),filterRecurring=$('filterRecurring'),filterImpact=$('filterImpact'),clearSearch=$('clearSearch'),addProblemBtn=$('addProblemBtn'),problemsList=$('problemsList');
 function matches(p){
-  const q=(qEl.value||'').toLowerCase();
-  const okQ=!q || [p.title,p.category,p.actor,p.desc].join(' ').toLowerCase().includes(q);
-  const okC=!fCat.value || p.category===fCat.value;
-  const okI=!num(fImp.value) || num(p.impact)>=num(fImp.value);
-  const okR=!fRec.checked || !!p.recurring;
-  return okQ && okC && okI && okR;
+  const q=(qProblem.value||'').toLowerCase();
+  const okQ=!q||[p.title,p.category,p.actor,p.desc].join(' ').toLowerCase().includes(q);
+  const okC=!filterCat.value||p.category===filterCat.value;
+  const okR=!filterRecurring.checked||!!p.recurring;
+  const minI=num(filterImpact.value||0); const okI=!minI||(num(p.impact||0)>=minI);
+  return okQ&&okC&&okR&&okI;
 }
 function renderProblems(){
-  listEl.innerHTML='';
-  data.problems.filter(matches).sort((a,b)=>(b.recurring?1:0)-(a.recurring?1:0)||(b.freq||0)-(a.freq||0))
-    .forEach(p=>{
-      const card=document.createElement('div'); card.className='panel';
-      card.innerHTML=`
-        <div class="row">
-          <b>${escapeHtml(p.title)}</b>
-          ${p.recurring?'<span class="pill">récurrent</span>':''}
-          <span class="pill">${escapeHtml(p.category||'–')}</span>
-          <span class="pill">Impact: ${p.impact||0}h</span>
-          <span class="pill">Acteur: ${escapeHtml(p.actor||'–')}</span>
-          <span class="pill">Fréq: ${p.freq||0}</span>
-          <span class="right"></span>
-          <button class="btn" data-act="use">Ajouter à la visite</button>
-          <button class="btn" data-act="edit">Modifier</button>
-          <button class="btn bad" data-act="del">Supprimer</button>
-        </div>
-        <div class="small" style="margin-top:6px">${escapeHtml(p.desc||'')}</div>`;
-      card.onclick=(e)=>{
-        const a=e.target.closest('button'); if(!a) return;
-        if(a.dataset.act==='edit') openProblemDlg(p);
-        if(a.dataset.act==='del'){ if(confirm('Supprimer ce problème ?')){ data.problems=data.problems.filter(x=>x.id!==p.id); save(); renderProblems(); } }
-        if(a.dataset.act==='use'){ goVisit(); ensureVisit(); addProblemToVisit(p); }
-      };
-      listEl.appendChild(card);
-    });
+  problemsList.innerHTML='';
+  data.problems.filter(matches).sort((a,b)=>{
+    const rb=(b.recurring?1:0)-(a.recurring?1:0); if(rb) return rb;
+    const fb=(b.freq||0)-(a.freq||0); if(fb) return fb;
+    return a.title.localeCompare(b.title);
+  }).forEach(p=>{
+    const el=document.createElement('div'); el.className='panel';
+    el.innerHTML=`
+      <div class="row"><strong>${escapeHtml(p.title)}</strong> ${p.recurring?'<span class="tag">récurrent</span>':''}<span class="right small">Fréq: ${p.freq||0}</span></div>
+      <div class="row small" style="gap:6px;margin-top:6px">
+        <span class="tag">${escapeHtml(p.category)}</span>
+        <span class="tag">Impact: ${p.impact||0}h</span>
+        <span class="tag">Acteur: ${escapeHtml(p.actor||'–')}</span>
+      </div>
+      <div class="muted" style="margin-top:6px">${escapeHtml(p.desc||'')}</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn2" data-act="use">Ajouter à une visite</button>
+        <button class="btn2" data-act="dup">Dupliquer</button>
+        <button class="btn2" data-act="edit">Modifier</button>
+        <button class="btn2 bad" data-act="del">Supprimer</button>
+      </div>`;
+    el.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>onProblemAction(btn.dataset.act,p)));
+    problemsList.appendChild(el);
+  });
 }
-renderProblems();
-
-/* Dialog add/edit */
-const dlg=$('#problemDlg'); const p_title=$('#p_title'),p_cat=$('#p_cat'),p_imp=$('#p_impact'),p_actor=$('#p_actor'),p_desc=$('#p_desc'),p_rec=$('#p_recurring'),p_chk=$('#p_checkable');
+function onProblemAction(act,p){
+  if(act==='edit')openProblemDlg(p);
+  if(act==='dup'){const c={...p,id:rid(),title:p.title+' (copie)'};data.problems.push(c);save();renderProblems()}
+  if(act==='del'){if(confirm('Supprimer ce problème ?')){data.problems=data.problems.filter(x=>x.id!==p.id);save();renderProblems()}}
+  if(act==='use'){document.querySelector('[data-tab="visit"]').click();ensureVisit();addProblemToCurrentVisit(p)}
+}
+const dlg=$('problemDlg'),p_title=$('p_title'),p_cat=$('p_cat'),p_impact=$('p_impact'),p_actor=$('p_actor'),p_desc=$('p_desc'),p_recurring=$('p_recurring'),p_checkable=$('p_checkable');
 let editing=null;
-function openProblemDlg(p){
-  editing=p||null;
-  p_title.value=p?.title||''; p_cat.value=p?.category||''; p_imp.value=p?.impact??''; p_actor.value=p?.actor||''; p_desc.value=p?.desc||''; p_rec.checked=!!p?.recurring; p_chk.checked=p?.checkable!==false;
-  dlg.showModal();
-}
-$('#saveProblem').onclick=(ev)=>{
-  ev.preventDefault();
-  const obj={
-    id: editing?.id || rid(),
-    title: p_title.value.trim(),
-    category: (p_cat.value||'Autre').trim(),
-    impact: num(p_imp.value),
-    actor: p_actor.value.trim(),
-    desc: p_desc.value.trim(),
-    recurring: p_rec.checked,
-    checkable: p_chk.checked,
-    freq: editing?.freq||0,last: editing?.last||null,
-  };
-  if(!obj.title){ alert('Titre requis'); return }
-  if(editing){ const i=data.problems.findIndex(x=>x.id===editing.id); data.problems[i]=obj; }
-  else data.problems.push(obj);
-  save(); dlg.close(); renderProblems();
-}
+function openProblemDlg(p){editing=p||null;p_title.value=p?.title||'';p_cat.value=p?.category||'Cabine';p_impact.value=p?.impact||'';p_actor.value=p?.actor||'';p_desc.value=p?.desc||'';p_recurring.checked=!!p?.recurring;p_checkable.checked=p?.checkable!==false;dlg.showModal()}
+$('saveProblem').addEventListener('click',e=>{
+  e.preventDefault();
+  const obj={id:editing?.id||rid(),title:p_title.value.trim(),category:p_cat.value,impact:num(p_impact.value||0),actor:p_actor.value.trim(),desc:p_desc.value.trim(),recurring:p_recurring.checked,checkable:p_checkable.checked,freq:editing?.freq||0,last:editing?.last||null};
+  if(!obj.title){alert('Titre requis');return}
+  if(editing){const i=data.problems.findIndex(x=>x.id===editing.id);data.problems[i]=obj}else{data.problems.push(obj)}
+  save();dlg.close();renderProblems();
+});
+addProblemBtn.addEventListener('click',()=>openProblemDlg());
+[qProblem,filterCat,filterImpact].forEach(x=>x.addEventListener('input',renderProblems));
+filterRecurring.addEventListener('change',renderProblems);
+clearSearch.addEventListener('click',()=>{qProblem.value='';filterCat.value='';filterRecurring.checked=false;filterImpact.value='';renderProblems()})
 
-/* ------------ Visits / checklist ------------ */
-const visitSel=$('#visitSelect');
-const v_reg=$('#v_reg'), v_check=$('#v_check'), v_arr_plan=$('#v_arrival_plan'), v_arr_real=$('#v_arrival_real'),
-      v_dep_plan=$('#v_depart_plan'), v_dep_real=$('#v_depart_real'),
-      v_hmo_plan=$('#v_hmo_plan'), v_hmo_real=$('#v_hmo_real'),
-      v_cme=$('#v_cme'), v_eir=$('#v_eir'), v_eol=$('#v_eol_lines'),
-      v_ext=$('#v_extractions'), v_reason=$('#v_extraction_reason');
+/* ---------- VISITS ---------- */
+const visitSelect=$('visitSelect'),newVisitBtn=$('newVisitBtn'),deleteVisitBtn=$('deleteVisitBtn'),visitTable=$('visitTable').querySelector('tbody');
+const v_reg=$('v_reg'),v_check=$('v_check'),v_arrival=$('v_arrival'),v_departure=$('v_departure'),v_hmo_plan=$('v_hmo_plan'),v_hmo_real=$('v_hmo_real'),v_staff_plan=$('v_staff_plan'),v_staff_real=$('v_staff_real'),v_eol_lines=$('v_eol_lines'),v_extractions=$('v_extractions'),v_extraction_reason=$('v_extraction_reason'),v_cme=$('v_cme'),v_eir=$('v_eir');
 
-const visitTable=$('#visitTable tbody'); const addItemBtn=$('#addItemBtn'); const autoBtn=$('#autoChecklistBtn'); const markAllBtn=$('#markAllDoneBtn');
-const shiftBody=$('#shiftTable tbody'); const addShiftBtn=$('#addShiftBtn'); const staffDeltaBadge=$('#staffDeltaBadge'); const hmoDeltaBadge=$('#hmoDeltaBadge');
-
-let currentVisitId=null;
-
-function ensureVisit(){ if(!currentVisitId) createVisit(); }
+let currentVisitId=data.visits[0]?.id||null;
+function ensureVisit(){if(!currentVisitId)createVisit()}
 function createVisit(){
-  const v={id:rid(),reg:'',check:'A1',
-   arrival_plan:'',arrival_real:'', depart_plan:'', depart_real:'',
-   hmo_plan:0,hmo_real:0, shifts:[{name:'Matin',plan:0,real:0,cme:0,eir:0},{name:'Soir',plan:0,real:0,cme:0,eir:0},{name:'Nuit',plan:0,real:0,cme:0,eir:0}],
-   cme:0,eir:0, eol:0, extractions:0, reason:'', items:[], created:Date.now()
-  };
+  const v={id:rid(),reg:'',check:'A1',arrival:'',departure:'',hmo_plan:null,hmo_real:null,staff_plan:null,staff_real:null,eol_lines:null,extractions:null,extraction_reason:'',cme:null,eir:null,
+    vac:{m:{lead:0,eir:0,cme:0},s:{lead:0,eir:0,cme:0},n:{lead:0,eir:0,cme:0},total:{lead:0,eir:0,cme:0}},items:[],created:Date.now()};
   data.visits.unshift(v); currentVisitId=v.id; save(); refreshVisitSelect(); renderVisit();
 }
 function refreshVisitSelect(){
-  visitSel.innerHTML=''; data.visits.forEach(v=>{
-    const o=document.createElement('option'); o.value=v.id; o.textContent=`${v.reg||'(?immat)'} – ${v.check} – ${v.arrival_plan?new Date(v.arrival_plan).toLocaleDateString():''}`; visitSel.appendChild(o);
+  visitSelect.innerHTML='';
+  data.visits.forEach(v=>{
+    const opt=document.createElement('option');
+    const d=v.arrival?(' – '+new Date(v.arrival).toLocaleDateString()):'';
+    opt.value=v.id; opt.textContent=`${v.reg||'Immat ?'} – ${v.check}${d}`;
+    visitSelect.appendChild(opt);
   });
-  if(currentVisitId && data.visits.find(x=>x.id===currentVisitId)) visitSel.value=currentVisitId; else currentVisitId=data.visits[0]?.id||null;
+  if(currentVisitId && data.visits.find(x=>x.id===currentVisitId)) visitSelect.value=currentVisitId;
 }
-visitSel.onchange=()=>{ currentVisitId=visitSel.value; renderVisit(); }
-$('#newVisitBtn').onclick=createVisit;
-$('#deleteVisitBtn').onclick=()=>{ if(!currentVisitId) return; if(!confirm('Supprimer cette visite ?')) return;
-  data.visits=data.visits.filter(v=>v.id!==currentVisitId); currentVisitId=data.visits[0]?.id||null; save(); refreshVisitSelect(); renderVisit();
-}
+function getV(){ return data.visits.find(x=>x.id===currentVisitId) }
+newVisitBtn.addEventListener('click',createVisit);
+visitSelect.addEventListener('change',()=>{currentVisitId=visitSelect.value;renderVisit()});
+deleteVisitBtn.addEventListener('click',()=>{if(!currentVisitId)return;if(!confirm('Supprimer cette visite ?'))return;data.visits=data.visits.filter(v=>v.id!==currentVisitId);currentVisitId=data.visits[0]?.id||null;save();refreshVisitSelect();renderVisit()});
 
-function getV(){ return data.visits.find(v=>v.id===currentVisitId) }
+function fillRegSelect(){v_reg.innerHTML='';const ph=document.createElement('option');ph.value='';ph.textContent='— choisir —';v_reg.appendChild(ph);data.fleet.forEach(r=>{const o=document.createElement('option');o.value=o.textContent=r;v_reg.appendChild(o)})}
 
-function renderVisit(){
-  const v=getV(); if(!v){ visitTable.innerHTML=''; shiftBody.innerHTML=''; return }
-  fillFleet();
-  v_reg.value=v.reg||''; v_check.value=v.check||'A1';
-  v_arr_plan.value=v.arrival_plan||''; v_arr_real.value=v.arrival_real||''; v_dep_plan.value=v.depart_plan||''; v_dep_real.value=v.depart_real||'';
-  v_hmo_plan.value=v.hmo_plan??''; v_hmo_real.value=v.hmo_real??''; v_cme.value=v.cme??''; v_eir.value=v.eir??''; v_eol.value=v.eol??''; v_ext.value=v.extractions??''; v_reason.value=v.reason||'';
-
-  // Shifts
-  shiftBody.innerHTML='';
-  v.shifts.forEach((s,i)=>shiftBody.appendChild(renderShiftRow(s,i)));
-  updateAutoTotals(v);
-  // Items
-  visitTable.innerHTML=''; v.items.forEach((it,idx)=>visitTable.appendChild(renderItemRow(it,idx)));
-  updateBadges(v);
-}
-function renderShiftRow(s,i){
-  const tr=document.createElement('tr');
-  tr.innerHTML=`
-    <td><input value="${escapeAttr(s.name)}" data-i="${i}" data-k="name"></td>
-    <td><input type="number" step="1" min="0" value="${s.plan||0}" data-i="${i}" data-k="plan"></td>
-    <td><input type="number" step="1" min="0" value="${s.real||0}" data-i="${i}" data-k="real"></td>
-    <td><input type="number" step="0.1" min="0" value="${s.cme||0}" data-i="${i}" data-k="cme"></td>
-    <td><input type="number" step="0.1" min="0" value="${s.eir||0}" data-i="${i}" data-k="eir"></td>
-    <td><button class="btn bad" data-i="${i}" data-act="rm">Retirer</button></td>`;
-  tr.oninput=(e)=>{ const v=getV(); const k=e.target.dataset.k; const idx=+e.target.dataset.i; if(v&&k){ v.shifts[idx][k]=k==='name'?e.target.value:num(e.target.value); save(); updateAutoTotals(v); updateBadges(v);} }
-  tr.onclick=(e)=>{ if(e.target.dataset.act==='rm'){ const v=getV(); v.shifts.splice(+e.target.dataset.i,1); save(); renderVisit(); } }
-  return tr;
-}
-addShiftBtn.onclick=()=>{ const v=getV(); v.shifts.push({name:'Vac',plan:0,real:0,cme:0,eir:0}); save(); renderVisit(); }
-
-function updateAutoTotals(v){
-  // CME/EIR total from leaders
-  v.cme = v.shifts.reduce((a,s)=>a+num(s.cme),0);
-  v_eir.value = v.eir = v.shifts.reduce((a,s)=>a+num(s.eir),0);
-  v_cme.value = v.cme;
+/* VAC — recalcul + binding */
+function recalcVacTotals(){
+  const v=getV(); if(!v) return;
+  v.vac.m.lead = num($('v_m_lead').value); v.vac.m.eir = num($('v_m_eir').value); v.vac.m.cme = num($('v_m_cme').value);
+  v.vac.s.lead = num($('v_s_lead').value); v.vac.s.eir = num($('v_s_eir').value); v.vac.s.cme = num($('v_s_cme').value);
+  v.vac.n.lead = num($('v_n_lead').value); v.vac.n.eir = num($('v_n_eir').value); v.vac.n.cme = num($('v_n_cme').value);
+  v.vac.total.lead = v.vac.m.lead+v.vac.s.lead+v.vac.n.lead;
+  v.vac.total.eir  = v.vac.m.eir +v.vac.s.eir +v.vac.n.eir ;
+  v.vac.total.cme  = v.vac.m.cme +v.vac.s.cme +v.vac.n.cme ;
+  $('v_tot_lead').value=v.vac.total.lead; $('v_tot_eir').value=v.vac.total.eir; $('v_tot_cme').value=v.vac.total.cme;
+  // recopie entête Poids
+  v.eir=v.vac.total.eir; v.cme=v.vac.total.cme;
+  v_eir.value=v.eir; v_cme.value=v.cme;
   save();
 }
-function updateBadges(v){
-  const hDelta=num(v.hmo_real)-num(v.hmo_plan);
-  hmoDeltaBadge.textContent=`Δ HMO : ${hDelta.toFixed(1)} h ${pct(num(v.hmo_real),num(v.hmo_plan))}`;
-  hmoDeltaBadge.className='badge '+(hDelta>0?'neg':(hDelta<0?'pos':''));  
-
-  const p=v.shifts.reduce((a,s)=>a+num(s.plan),0), r=v.shifts.reduce((a,s)=>a+num(s.real),0);
-  const sDelta=r-p;
-  staffDeltaBadge.textContent=`Δ effectif : ${sDelta} ${pct(r,p)}`;
-  staffDeltaBadge.className='badge '+(sDelta>0?'neg':(sDelta<0?'pos':''));
+function bindVacInputs(){
+  ['v_m_lead','v_m_eir','v_m_cme','v_s_lead','v_s_eir','v_s_cme','v_n_lead','v_n_eir','v_n_cme']
+  .forEach(id=>{const x=$(id);if(x){x.removeEventListener('input',recalcVacTotals);x.addEventListener('input',recalcVacTotals)}});
 }
-function pct(a,b){ if(b<=0) return ''; const v=((a-b)/b*100); return `(${v>=0?'+':''}${v.toFixed(0)}%)` }
 
-[v_reg,v_check,v_arr_plan,v_arr_real,v_dep_plan,v_dep_real,v_hmo_plan,v_hmo_real,v_cme,v_eir,v_eol,v_ext,v_reason].forEach(el=>{
-  el.oninput=()=>{ const v=getV(); if(!v) return;
-    if(el===v_reg) v.reg=v_reg.value; else if(el===v_check) v.check=v_check.value;
-    else if(el===v_arr_plan) v.arrival_plan=el.value; else if(el===v_arr_real) v.arrival_real=el.value;
-    else if(el===v_dep_plan) v.depart_plan=el.value; else if(el===v_dep_real) v.depart_real=el.value;
-    else if(el===v_hmo_plan) v.hmo_plan=num(el.value); else if(el===v_hmo_real) v.hmo_real=num(el.value);
-    else if(el===v_cme) v.cme=num(el.value); else if(el===v_eir) v.eir=num(el.value);
-    else if(el===v_eol) v.eol=num(el.value); else if(el===v_ext) v.extractions=num(el.value);
-    else if(el===v_reason) v.reason=el.value;
-    save(); updateBadges(v);
-  }
-});
+function renderVisit(){
+  const v=getV(); if(!v){visitTable.innerHTML='';return}
+  fillRegSelect();
+  v_reg.value=v.reg||''; v_check.value=v.check||'A1'; v_arrival.value=v.arrival||''; v_departure.value=v.departure||'';
+  v_hmo_plan.value=v.hmo_plan??''; v_hmo_real.value=v.hmo_real??''; v_staff_plan.value=v.staff_plan??''; v_staff_real.value=v.staff_real??'';
+  v_cme.value=v.cme??''; v_eir.value=v.eir??''; v_eol_lines.value=v.eol_lines??''; v_extractions.value=v.extractions??''; v_extraction_reason.value=v.extraction_reason||'';
 
-function renderItemRow(it,idx){
-  const tr=document.createElement('tr');
-  tr.innerHTML=`
-    <td><input type="checkbox" ${it.done?'checked':''} data-idx="${idx}" data-k="done"></td>
-    <td class="small mono">${escapeHtml(it.title||'')}</td>
-    <td class="small">${escapeHtml(it.category||'')}</td>
-    <td>${it.impact||0}</td>
-    <td class="small">${escapeHtml(it.actor||'')}</td>
-    <td><input value="${escapeAttr(it.note||'')}" data-idx="${idx}" data-k="note"></td>
-    <td><button class="btn bad" data-idx="${idx}" data-act="rm">Retirer</button></td>`;
-  tr.oninput=(e)=>{ const v=getV(); const i=+e.target.dataset.idx; const k=e.target.dataset.k; if(!v) return;
-    if(e.target.type==='checkbox') v.items[i][k]=e.target.checked; else v.items[i][k]=e.target.value; save();
-  };
-  tr.onclick=(e)=>{ if(e.target.dataset.act==='rm'){ const v=getV(); v.items.splice(+e.target.dataset.idx,1); save(); renderVisit(); } }
-  return tr;
+  // VAC
+  $('v_m_lead').value=v.vac?.m?.lead??0; $('v_m_eir').value=v.vac?.m?.eir??0; $('v_m_cme').value=v.vac?.m?.cme??0;
+  $('v_s_lead').value=v.vac?.s?.lead??0; $('v_s_eir').value=v.vac?.s?.eir??0; $('v_s_cme').value=v.vac?.s?.cme??0;
+  $('v_n_lead').value=v.vac?.n?.lead??0; $('v_n_eir').value=v.vac?.n?.eir??0; $('v_n_cme').value=v.vac?.n?.cme??0;
+  bindVacInputs(); recalcVacTotals();
+
+  // items
+  visitTable.innerHTML='';
+  v.items.forEach((it,idx)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input type="checkbox" ${it.done?'checked':''} data-idx="${idx}" data-k="done"></td>
+      <td class="small">${escapeHtml(it.title||'')}</td>
+      <td class="small">${escapeHtml(it.category||'')}</td>
+      <td>${it.impact||0}</td>
+      <td class="small">${escapeHtml(it.actor||'')}</td>
+      <td><input value="${escapeHtml(it.note||'')}" data-idx="${idx}" data-k="note"/></td>
+      <td><button class="btn2 bad" data-idx="${idx}" data-act="rm">Retirer</button></td>`;
+    tr.querySelectorAll('input,button').forEach(x=>x.addEventListener('input',onVisitEdit));
+    tr.querySelectorAll('button').forEach(x=>x.addEventListener('click',onVisitEdit));
+    visitTable.appendChild(tr);
+  });
 }
-addItemBtn.onclick=()=>openPicker();
-autoBtn.onclick=()=>{ const v=getV(); if(!v) return;
-  const cands=[...data.problems].filter(p=>p.checkable!==false).sort((a,b)=>(b.recurring?1:0)-(a.recurring?1:0)||(b.freq||0)-(a.freq||0)).slice(0,25);
-  cands.forEach(p=>addProblemToVisit(p));
-}
-markAllBtn.onclick=()=>{ const v=getV(); if(!v) return; v.items.forEach(i=>i.done=true); save(); renderVisit(); }
-function addProblemToVisit(p){
+function onVisitEdit(e){
   const v=getV(); if(!v) return;
-  v.items.push({pid:p.id,title:p.title,category:p.category,impact:p.impact,actor:p.actor,done:false,note:''});
-  const ref=data.problems.find(x=>x.id===p.id); if(ref){ ref.freq=(ref.freq||0)+1; ref.last=Date.now(); }
+  const idx=+e.target.dataset.idx; const k=e.target.dataset.k;
+  if(e.target.type==='checkbox'){v.items[idx][k]=e.target.checked}
+  else if(e.target.tagName==='INPUT' && k){v.items[idx][k]=e.target.value}
+  if(e.target.dataset.act==='rm'){v.items.splice(idx,1)}
   save(); renderVisit();
 }
-function openPicker(){ const pick=prompt('Ajouter problème (mot-clé) :'); if(!pick) return;
-  const p=data.problems.find(x=>x.title.toLowerCase().includes(pick.toLowerCase())); if(!p) return alert('Aucun trouvé'); addProblemToVisit(p);
+[v_reg,v_check,v_arrival,v_departure,v_hmo_plan,v_hmo_real,v_staff_plan,v_staff_real,v_cme,v_eir,v_eol_lines,v_extractions,v_extraction_reason]
+.forEach(x=>x.addEventListener('input',()=>{const v=getV(); if(!v) return; v.reg=v_reg.value; v.check=v_check.value; v.arrival=v_arrival.value; v.departure=v_departure.value; v.hmo_plan=num(v_hmo_plan.value); v.hmo_real=num(v_hmo_real.value); v.staff_plan=num(v_staff_plan.value); v.staff_real=num(v_staff_real.value); v.cme=num(v_cme.value); v.eir=num(v_eir.value); v.eol_lines=num(v_eol_lines.value); v.extractions=num(v_extractions.value); v.extraction_reason=v_extraction_reason.value; save();}));
+
+function addProblemToCurrentVisit(p){
+  const v=getV(); if(!v) return;
+  v.items.push({pid:p.id,title:p.title,category:p.category,impact:p.impact,actor:p.actor,done:false,note:''});
+  const ref=data.problems.find(x=>x.id===p.id); if(ref){ref.freq=(ref.freq||0)+1;ref.last=Date.now();}
+  save(); renderVisit();
 }
-
-/* ------------ Analytics ------------ */
-let paretoChart=null, pieChart=null;
-function renderAnalytics(){
-  const m=$('#monthFilter').value; // yyyy-mm
-  // dataset
-  const problemsUsed={}; const catCount={}; const rows=[];
-  data.visits.forEach(v=>{
-    const monthStr=v.arrival_plan? v.arrival_plan.slice(0,7) : '';
-    if(m && monthStr!==m) return;
-    const p=v.shifts.reduce((a,s)=>a+num(s.plan),0), r=v.shifts.reduce((a,s)=>a+num(s.real),0);
-    rows.push([v.check,v.reg,`${v.hmo_plan} → ${v.hmo_real} (${(num(v.hmo_real)-num(v.hmo_plan)).toFixed(1)}h)`,
-               `${p} → ${r} (${r-p})`, `${fmtDT(v.depart_plan)} → ${fmtDT(v.depart_real)}`]);
-    v.items.forEach(it=>{ problemsUsed[it.title]=(problemsUsed[it.title]||0)+1; catCount[it.category]=(catCount[it.category]||0)+1; })
-  });
-  // table
-  const tb=$('#aggTable tbody'); tb.innerHTML=''; rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r[0]}</td><td>${r[1]||''}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td>`; tb.appendChild(tr) });
-
-  // pareto
-  const sorted=Object.entries(problemsUsed).sort((a,b)=>b[1]-a[1]).slice(0,12);
-  const labels=sorted.map(x=>x[0]); const vals=sorted.map(x=>x[1]);
-  const ctx1=$('#paretoChart').getContext('2d');
-  if(paretoChart) paretoChart.destroy();
-  paretoChart=new Chart(ctx1,{type:'bar',data:{labels,datasets:[{label:'Fréquence',data:vals}]},options:{plugins:{legend:{display:false}}}});
-
-  // pie
-  const cSorted=Object.entries(catCount).sort((a,b)=>b[1]-a[1]);
-  const cl=cSorted.map(x=>x[0]||'–'), cv=cSorted.map(x=>x[1]);
-  const ctx2=$('#pieChart').getContext('2d');
-  if(pieChart) pieChart.destroy();
-  pieChart=new Chart(ctx2,{type:'pie',data:{labels:cl,datasets:[{data:cv}]}});
-}
-$('#recountBtn').onclick=renderAnalytics;
-
-/* ------------ Settings / Fleet ------------ */
-function renderFleet(){ $('#fleetTextarea').value=(data.fleet||[]).join('\n'); }
-function fillFleet(){
-  v_reg.innerHTML='<option value="">— choisir —</option>'+ (data.fleet||[]).map(r=>`<option>${r}</option>`).join('');
-  const v=getV(); if(v) v_reg.value=v.reg||'';
-}
-$('#saveFleetBtn').onclick=()=>{ const lines=$('#fleetTextarea').value.split(/\n+/).map(s=>s.trim()).filter(Boolean); data.fleet=[...new Set(lines)]; save(); alert('Flotte mise à jour.'); }
-$('#loadDemoFleetBtn').onclick=()=>{ data.fleet=['F-HTYA','F-HTYB','F-HTYC','F-HTYD','F-HTYE']; save(); renderFleet(); alert('Exemple chargé.'); }
-
-/* ------------ Import/Export ------------ */
-$('#exportBtn').onclick=()=>{ const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-planning-a350.json'; a.click(); URL.revokeObjectURL(a.href); }
-$('#importFile').onchange=(e)=>{ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>{ try{ const o=JSON.parse(r.result); if(o.problems&&o.visits){ data.problems=o.problems; data.visits=o.visits; data.fleet=Array.isArray(o.fleet)?o.fleet:[]; save(); renderProblems(); refreshVisitSelect(); renderVisit(); alert('Import OK'); } else alert('Fichier invalide'); }catch(err){ alert('Erreur JSON') } }; r.readAsText(f); }
-
-/* ------------ Seed & utils ------------ */
-function seedProblems(){
-  return [
-    {id:rid(),title:'Cabine – confirmation STT manquante S-1',category:'Cabine',impact:2,actor:'Cabine/STT',desc:'Absence de confirmation sur lot housses/rideaux.',recurring:true,checkable:true,freq:0},
-    {id:rid(),title:'Query – Tâche FH critique mal séquencée',category:'Query/Prépa',impact:3,actor:'Prépa',desc:'Chevauchement interventions.',recurring:true,checkable:true,freq:0},
-    {id:rid(),title:'Pièces – Référence manquante (BTC)',category:'Pièces/Log',impact:4,actor:'Log',desc:'Commande non visible / retard BTC.',recurring:true,checkable:true,freq:0},
-    {id:rid(),title:'Effectif – indisponibilité équipe nuit J-1',category:'Effectifs/Planif',impact:2,actor:'Planif',desc:'Sous-capacité créneau critique.',recurring:true,checkable:true,freq:0},
-    {id:rid(),title:'Documentation – RUM incomplet',category:'Documentation',impact:1,actor:'DOC',desc:'Procédure manquante.',recurring:false,checkable:true,freq:0}
-  ];
-}
-function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
-function escapeAttr(s){return escapeHtml(s).replace(/"/g,'&quot;')}
-function fmtDT(x){return x?new Date(x).toLocaleString():''}
-function save(){ store.set(data) }
-function goVisit(){ $$('nav .tabbtn').forEach(b=>b.classList.remove('active')); $$('nav .tabbtn')[1].classList.add('active'); for(const k in tabs){tabs[k].classList.toggle('hidden',k!=='visit')} }
-window.addEventListener('keydown',e=>{
-  if(e.key==='/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)){ e.preventDefault(); qEl.focus() }
-  if((e.key==='n'||e.key==='N') && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) openProblemDlg();
-  if((e.key==='v'||e.key==='V') && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) { goVisit(); ensureVisit(); }
+$('addItemBtn').addEventListener('click',()=>{
+  const pick=prompt('Ajouter un problème existant (mot-clé dans le titre):'); if(!pick) return;
+  const p=data.problems.find(p=>p.title.toLowerCase().includes(pick.toLowerCase())); if(p) addProblemToCurrentVisit(p); else alert('Aucun problème correspondant');
 });
+$('markAllDoneBtn').addEventListener('click',()=>{const v=getV(); if(!v) return; v.items.forEach(it=>it.done=true); save(); renderVisit();});
+$('autoChecklistBtn').addEventListener('click',()=>{
+  const v=getV(); if(!v) return;
+  [...data.problems].filter(p=>p.checkable!==false).sort((a,b)=>(b.recurring?1:0)-(a.recurring?1:0)||(b.freq||0)-(a.freq||0)).slice(0,25).forEach(p=>addProblemToCurrentVisit(p));
+});
+
+/* ---------- ANALYTICS (Pareto + Pie) ---------- */
+let paretoChart=null,pieChart=null;
+function renderFreq(){
+  const arr=[...data.problems].filter(p=>(p.freq||0)>0).sort((a,b)=>(b.freq||0)-(a.freq||0));
+  const tb=$('freqTable').querySelector('tbody'); tb.innerHTML='';
+  arr.forEach((p,i)=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${i+1}</td><td class="small">${escapeHtml(p.title)}</td><td class="small">${escapeHtml(p.category||'')}</td><td>${p.freq||0}</td><td>${p.impact||0}</td><td>${p.last?new Date(p.last).toLocaleDateString():'–'}</td>`; tb.appendChild(tr)});
+}
+function monthKey(d){const dt=new Date(d); if(!d||isNaN(dt)) return null; return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')}
+function filteredVisits(){
+  const m=$('flt_month').value||null;
+  const h=num($('flt_hmo').value||0), s=num($('flt_staff').value||0);
+  return data.visits.filter(v=>{
+    const okM = !m || monthKey(v.arrival)===m;
+    const okH = !h || (num(v.hmo_real)-num(v.hmo_plan))>=h;
+    const okS = !s || (num(v.staff_real)-num(v.staff_plan))>=s;
+    return okM&&okH&&okS;
+  });
+}
+function renderCharts(){
+  // Pareto: problèmes utilisés dans les visites filtrées
+  const useCount={}; filteredVisits().forEach(v=>v.items.forEach(it=>{useCount[it.title]=(useCount[it.title]||0)+1}));
+  const pareto=Object.entries(useCount).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const labelsP=pareto.map(x=>x[0]), dataP=pareto.map(x=>x[1]);
+
+  if(paretoChart){paretoChart.destroy()}
+  paretoChart=new Chart($('paretoChart'),{type:'bar',data:{labels:labelsP,datasets:[{label:'Utilisations',data:dataP}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+  // Pie: catégories des items sélectionnés
+  const byCat={}; filteredVisits().forEach(v=>v.items.forEach(it=>{byCat[it.category]=(byCat[it.category]||0)+1}));
+  const labelsC=Object.keys(byCat), dataC=Object.values(byCat);
+  if(pieChart){pieChart.destroy()}
+  pieChart=new Chart($('pieChart'),{type:'pie',data:{labels:labelsC,datasets:[{data:dataC}]}});
+}
+$('recountBtn').addEventListener('click',()=>{renderFreq();renderCharts()});
+
+/* ---------- SETTINGS (fleet) ---------- */
+const fleetTextarea=$('fleetTextarea');
+function renderFleetSettings(){fleetTextarea.value=(data.fleet||[]).join('\n')}
+$('saveFleetBtn').addEventListener('click',()=>{const lines=fleetTextarea.value.split(/\n+/).map(s=>s.trim()).filter(Boolean);data.fleet=Array.from(new Set(lines));save();alert('Flotte mise à jour ('+data.fleet.length+')')});
+$('loadDemoFleetBtn').addEventListener('click',()=>{data.fleet=['F-HTYA','F-HTYB','F-HTYC','F-HTYD','F-HTYE','F-HUVA','F-HUVB','F-HUVC','F-HUVD'];save();renderFleetSettings();alert('Exemple chargé')});
+
+/* ---------- import / export ---------- */
+$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rex-a350.json';a.click();URL.revokeObjectURL(a.href)});
+$('importFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const obj=JSON.parse(r.result);if(obj.problems&&obj.visits){data.problems=obj.problems;data.visits=obj.visits;if(Array.isArray(obj.fleet))data.fleet=obj.fleet;save();renderProblems();refreshVisitSelect();renderVisit();alert('Import OK')}else alert('Fichier invalide')}catch(err){alert('Erreur JSON')}};r.readAsText(f)});
+
+/* ---------- seed ---------- */
+function seedProblems(){return[
+  {id:rid(),title:'Cabine – confirmation sous-traitant manquante à S-1',category:'Cabine',impact:2,actor:'Cabine/STT',desc:'Absence de confirmation lot housses/rideaux.',recurring:true,checkable:true,freq:0},
+  {id:rid(),title:'Query – tâche critique mal séquencée',category:'Query/Prépa',impact:3,actor:'Prépa',desc:'Chevauchement d’une FH critique.',recurring:true,checkable:true,freq:0},
+  {id:rid(),title:'Pièces – référence manquante (BTC)',category:'Pièces/Log',impact:4,actor:'Log',desc:'Référence à commander non visible.',recurring:true,checkable:true,freq:0},
+  {id:rid(),title:'Effectif – indisponibilité équipe nuit J-1',category:'Effectifs/Planif',impact:2,actor:'Planif',desc:'Sous-capacité sur créneau critique.',recurring:true,checkable:true,freq:0},
+  {id:rid(),title:'Documentation – RUM incomplet',category:'Documentation',impact:1,actor:'DOC',desc:'Procédure manquante pour tâche cabine.',recurring:false,checkable:true,freq:0}
+]}
+
+/* ---------- clavier ---------- */
+window.addEventListener('keydown',e=>{
+  if(e.key==='/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)){e.preventDefault();$('qProblem').focus()}
+  if((e.key==='n'||e.key==='N') && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) openProblemDlg();
+  if((e.key==='v'||e.key==='V') && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {document.querySelector('[data-tab="visit"]').click();ensureVisit();}
+});
+
+/* init */
+renderProblems(); refreshVisitSelect(); renderVisit();
 </script>
 </body>
 </html>
