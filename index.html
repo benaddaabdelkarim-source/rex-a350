@@ -39,6 +39,14 @@ thead th{background:#0b1220;position:sticky;top:0}
 .kpi .pill{padding:8px 10px;border-radius:999px;background:#0b1220;border:1px solid var(--line)}
 .hidden{display:none}
 .topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
+.tag{font-size:11px;opacity:.75;padding:2px 6px;border:1px solid var(--line);border-radius:999px}
+dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#0b1220;color:var(--text)}
+dialog .head{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+dialog .body{padding:12px 14px}
+
+/* ✅ Correctif camembert (hauteur contrôlée, responsive) */
+.chart-wrap{height:320px; max-height:50vh;}
+.chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 </style>
 </head>
 <body>
@@ -62,6 +70,25 @@ thead th{background:#0b1220;position:sticky;top:0}
     <!-- VISITE -->
     <section id="tab-visit">
       <h1>Visite (Check A)</h1>
+
+      <!-- Liste des visites -->
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Liste des visites</h2>
+          <button id="btnNewVisit" class="btn ok">+ Nouvelle visite</button>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table id="visitsTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>Dep. prév</th>
+                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="visitsBody"></tbody>
+          </table>
+        </div>
+      </div>
 
       <div class="card">
         <h2>Informations visite</h2>
@@ -179,6 +206,19 @@ thead th{background:#0b1220;position:sticky;top:0}
           <button id="btnClearVisit" class="btn bad">🧹 Effacer le formulaire</button>
         </div>
       </div>
+
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Problèmes liés à cette visite</h2>
+          <button id="btnLinkProblem" class="btn">+ Ajouter depuis la bibliothèque</button>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table>
+            <thead><tr><th>#</th><th>Titre</th><th>Cat.</th><th>Impact(h)</th><th>Réc.</th><th></th></tr></thead>
+            <tbody id="visitProblemsBody"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
 
     <!-- PROBLÈMES -->
@@ -222,6 +262,8 @@ thead th{background:#0b1220;position:sticky;top:0}
       <div class="card">
         <h2>Problèmes enregistrés</h2>
         <div class="row">
+          <div><label>Recherche</label><input id="pbSearch" placeholder="titre/cat/acteur…"></div>
+          <div><label>Récurrents seulement</label><input id="pbRecOnly" type="checkbox"></div>
           <div><label>Début</label><input id="fStart" type="date"></div>
           <div><label>Fin</label><input id="fEnd" type="date"></div>
           <div><label>Immat</label><input id="fImmat" placeholder="Toutes"></div>
@@ -264,7 +306,6 @@ thead th{background:#0b1220;position:sticky;top:0}
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
         </div>
       </div>
-
       <div class="grid cols-2">
         <div class="card">
           <h2>Pareto par catégorie</h2>
@@ -275,16 +316,43 @@ thead th{background:#0b1220;position:sticky;top:0}
         </div>
         <div class="card">
           <h2>Répartition (camembert)</h2>
-          <canvas id="pie" height="210"></canvas>
+          <div class="chart-wrap">
+            <canvas id="pie"></canvas>
+          </div>
         </div>
       </div>
     </section>
   </main>
 </div>
 
+<!-- Sélecteur de problèmes (assignation à une visite) -->
+<dialog id="dlgPick">
+  <div class="head">
+    <div style="font-weight:600">Ajouter des problèmes à la visite</div>
+    <button class="btn" onclick="dlgPick.close()">Fermer</button>
+  </div>
+  <div class="body">
+    <div class="row">
+      <input id="pickSearch" placeholder="Rechercher (titre/cat/acteur)…" style="flex:1">
+      <label class="row small"><input id="pickRec" type="checkbox"> Récurrents seulement</label>
+      <button id="pickRefresh" class="btn">Rechercher</button>
+    </div>
+    <div style="max-height:50vh;overflow:auto;margin-top:10px">
+      <table>
+        <thead><tr><th>Choisir</th><th>Titre</th><th>Cat.</th><th>Impact</th><th>Réc.</th></tr></thead>
+        <tbody id="pickBody"></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="pickAdd" class="btn ok">+ Ajouter à la visite</button>
+      <span class="small" style="margin-left:auto;opacity:.7">Les éléments cochés seront ajoutés avec confirmation.</span>
+    </div>
+  </div>
+</dialog>
+
 <script>
 /* ========================= stockage & base immats ========================= */
-const LS_KEY="rexA350_checkA_v2";
+const LS_KEY="rexA350_checkA_v3fix";
 const BASE_IMMATS=[
   "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
   "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
@@ -303,8 +371,9 @@ state.immat=Array.from(new Set([...state.immat,...BASE_IMMATS])).sort();
 const $=(q,root=document)=>root.querySelector(q);
 const $$=(q,root=document)=>Array.from(root.querySelectorAll(q));
 const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n}
-const fmtPct=(a,b)=> b? Math.round((a-b)*100/b):0;
 const within=(d,a,b)=>{ if(!d) return false; const t=new Date(d).getTime(); const ta=a?new Date(a).getTime():-1e15; const tb=b?new Date(b).getTime()+86399999:1e15; return t>=ta&&t<=tb }
+function fmtDate(v){ if(!v) return "—"; const d=new Date(v); return isNaN(d)?"—":d.toLocaleString() }
+function uuid(){ return Math.random().toString(36).slice(2,10) }
 
 /* ================================ onglets ================================= */
 $$('aside .menu button').forEach(btn=>{
@@ -314,6 +383,7 @@ $$('aside .menu button').forEach(btn=>{
     $('#tab-'+btn.dataset.tab).classList.remove('hidden');
     if(btn.dataset.tab==='perf') renderPerf();
     if(btn.dataset.tab==='problems') renderProblems();
+    if(btn.dataset.tab==='visit') { renderVisitsList(); }
   })
 })
 
@@ -350,7 +420,7 @@ function seedVacs(){ vacBody.innerHTML=''; ['Matin','Soir','Nuit'].forEach(vacRo
 seedVacs();
 
 vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
-vacBody.addEventListener('click', e=>{ if(e.target.classList.contains('delVac')){ e.target.closest('tr').remove(); recalcTotals(); }});
+vacBody.addEventListener('click', e=>{ if(e.target.classList.contains('delVac')){ if(confirm('Retirer cette vacation ?')){ e.target.closest('tr').remove(); recalcTotals(); } }});
 $('#btnAddVac').onclick=()=>vacRow('Vac.');
 
 /* ========================== calculs (totaux & KPI) ======================== */
@@ -374,11 +444,7 @@ function recalcTotals(){
   $('#vHmoDelta').textContent = dHmo.toFixed(1)+' h';
   $('#deltaHmoBadge').textContent = dHmo.toFixed(1)+' h';
 }
-
-/* =========================== HMO inputs (manuel) ========================== */
-;['vHmoPlan','vHmoReal'].forEach(id=>{
-  $('#'+id).addEventListener('input', recalcTotals);
-});
+;['vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).addEventListener('input', recalcTotals));
 
 /* =============================== Import XML =============================== */
 $('#btnImportXml').onclick=()=>{
@@ -387,14 +453,14 @@ $('#btnImportXml').onclick=()=>{
   r.onload=()=>{
     try{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
-      // immat (regex F-Hxxx ou balise)
+      // immat par motif F-HTxx / F-HUVx etc.
       const tx=r.result;
       const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
-      // dates (premier ISO trouvé)
-      const dt = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);
-      if(dt){ $('#vArrReal').value = dt[0].replace(' ','T'); }
-      // HMO explicites
+      // dates (premier ISO)
+      const iso = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);
+      if(iso){ $('#vArrReal').value = iso[0].replace(' ','T'); }
+      // HMO explicites ou somme durations
       const getNumNode = sel => {
         const n=xml.querySelector(sel); if(!n) return NaN;
         const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
@@ -402,7 +468,6 @@ $('#btnImportXml').onclick=()=>{
       let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO');
       let hReal = getNumNode('HMOReal, HmoReal, RealHMO');
       if(isNaN(hPlan) || isNaN(hReal)){
-        // fallback: somme durations
         let sum=0;
         xml.querySelectorAll('[duration]').forEach(n=>{
           const v=parseFloat(n.getAttribute('duration')); if(!isNaN(v)) sum+=v;
@@ -419,14 +484,17 @@ $('#btnImportXml').onclick=()=>{
   r.readAsText(f);
 };
 
-/* ============================== Enregistrer =============================== */
-$('#btnSaveVisit').onclick=()=>{
+/* ========================= Enregistrer / Brouillon ======================== */
+let currentVisitId = null; // id de la visite chargée dans le formulaire
+
+function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
     name:$(".vacName",tr).value.trim(),
     cmeDem:num($('.cmeD',tr).value), eirDem:num($('.eirD',tr).value), leadDem:num($('.leadD',tr).value),
     cmeReal:num($('.cmeR',tr).value), eirReal:num($('.eirR',tr).value), leadReal:num($('.leadR',tr).value)
   }));
-  const v={
+  return {
+    id: currentVisitId || uuid(),
     immat: $('#vImmat').value.trim().toUpperCase(),
     check: $('#vCheck').value,
     arrPrev: $('#vArrPrev').value || null,
@@ -438,19 +506,204 @@ $('#btnSaveVisit').onclick=()=>{
     unassigned: num($('#vUnassigned').value),
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
-    vacs, createdAt: new Date().toISOString()
+    vacs,
+    problems: (getCurrentVisit()?.problems)||[], // conserve les liens
+    createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
+}
+
+function getCurrentVisit(){
+  return state.visits.find(v=>v.id===currentVisitId) || null;
+}
+
+function renderFormFromVisit(v){
+  currentVisitId = v?.id || null;
+  $('#vImmat').value = v?.immat||'';
+  $('#vCheck').value = v?.check||'A1';
+  $('#vArrPrev').value = v?.arrPrev||'';
+  $('#vArrReal').value = v?.arrReal||'';
+  $('#vDepPrev').value = v?.depPrev||'';
+  $('#vDepReal').value = v?.depReal||'';
+  $('#vHmoPlan').value = v?.hmoPlan??0;
+  $('#vHmoReal').value = v?.hmoReal??0;
+  $('#vUnassigned').value = v?.unassigned??0;
+  $('#vUnassignedReason').value = v?.unassignedReason||'';
+  $('#vEndLines').value = v?.endLines??0;
+  vacBody.innerHTML='';
+  (v?.vacs?.length?v.vacs:[{name:'Matin'},{name:'Soir'},{name:'Nuit'}]).forEach(x=>{
+    vacRow(x.name||''); 
+    const tr=vacBody.lastElementChild;
+    $('.cmeD',tr).value=x.cmeDem||0; $('.eirD',tr).value=x.eirDem||0; $('.leadD',tr).value=x.leadDem||0;
+    $('.cmeR',tr).value=x.cmeReal||0; $('.eirR',tr).value=x.eirReal||0; $('.leadR',tr).value=x.leadReal||0;
+  });
+  recalcTotals();
+  renderVisitProblems(v||{problems:[]});
+}
+
+$('#btnSaveVisit').onclick=()=>{
+  const v = collectVisitFromForm();
+  const idx = state.visits.findIndex(x=>x.id===v.id);
+  if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
-  state.visits.push(v); save();
+  save(); renderVisitsList();
   alert('Visite enregistrée ✅');
 }
 
-/* ============================== Effacer form ============================== */
 $('#btnClearVisit').onclick=()=>{
-  if(!confirm('Effacer le formulaire ?')) return;
-  ['vImmat','vImmatAdd','vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
+  if(!confirm('Effacer le formulaire en cours ?')) return;
+  currentVisitId=null;
+  $('#vImmat').value=''; $('#vImmatAdd').value='';
+  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
     .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
-  vacBody.innerHTML=''; seedVacs(); recalcTotals();
+  seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
+}
+
+$('#btnNewVisit').onclick=()=>{
+  if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
+  const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
+    hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0,
+    vacs:[{name:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {name:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {name:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
+    problems:[], createdAt:new Date().toISOString()
+  };
+  state.visits.push(v); save();
+  renderVisitsList(); renderFormFromVisit(v);
+}
+
+/* ============================ Liste des visites =========================== */
+function renderVisitsList(){
+  const tb=$('#visitsBody'); tb.innerHTML='';
+  state.visits.slice().reverse().forEach((v,idx)=>{
+    const dH = (v.hmoReal||0)-(v.hmoPlan||0);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${state.visits.length-idx}</td>
+      <td>${v.immat||'—'}</td>
+      <td>${v.check||'A?'}</td>
+      <td>${fmtDate(v.arrPrev)}</td>
+      <td>${fmtDate(v.depPrev)}</td>
+      <td>${v.hmoPlan||0}</td>
+      <td>${v.hmoReal||0}</td>
+      <td>${dH>0?'+':''}${dH||0}</td>
+      <td>
+        <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
+        <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
+        <button class="btn bad" data-act="del" data-id="${v.id}">Supprimer</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+}
+renderVisitsList();
+
+$('#visitsTable').addEventListener('click', (e)=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const id=b.dataset.id; const act=b.dataset.act;
+  const v=state.visits.find(x=>x.id===id); if(!v) return;
+  if(act==='open'){ renderFormFromVisit(v); }
+  if(act==='pbl'){ openPickDialogFor(id); }
+  if(act==='del'){
+    if(confirm('Supprimer définitivement cette visite ? Cette action affecte les statistiques REX.')){
+      state.visits=state.visits.filter(x=>x.id!==id); save(); renderVisitsList();
+      if(currentVisitId===id){ $('#btnClearVisit').click(); }
+    }
+  }
+});
+
+/* ==================== Problèmes liés à une visite (table) ================= */
+function renderVisitProblems(v){
+  const tb=$('#visitProblemsBody'); tb.innerHTML='';
+  (v.problems||[]).forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${p.title}</td><td>${p.cat||'—'}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td>
+    <td><button class="btn bad" data-i="${i}">Retirer</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+$('#visitProblemsBody').addEventListener('click',(e)=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const i=Number(b.dataset.i);
+  const v=getCurrentVisit(); if(!v) return alert('Aucune visite chargée');
+  if(confirm('Retirer ce problème de la visite ?')){
+    v.problems.splice(i,1); save(); renderVisitProblems(v);
+  }
+});
+
+/* ============== Bibliothèque Problèmes (ajout & filtrage) ================= */
+$('#btnAddProblem').onclick=()=>{
+  const title=$('#pTitle').value.trim(); if(!title) return alert('Titre manquant');
+  const last=state.visits[state.visits.length-1]||{};
+  const p={
+    id: uuid(),
+    title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
+    recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
+    immat:last.immat||'', check:last.check||'', ts:new Date().toISOString()
+  };
+  state.problems.push(p); save();
+  $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
+  renderProblems();
+}
+function filterProblemsList(list){
+  const q=$('#pbSearch').value.trim().toLowerCase();
+  const rec=$('#pbRecOnly').checked;
+  const s=$('#fStart').value, e=$('#fEnd').value, im=($('#fImmat').value||'').toUpperCase(), ck=$('#fCheck').value, cat=$('#fCat').value;
+  return list.filter(p=>{
+    const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
+    const inRec=!rec || !!p.recurring;
+    const inP = within(p.ts,s||null,e||null);
+    const inI = im? p.immat===im : true;
+    const inC = ck? p.check===ck : true;
+    const inCat = cat? p.cat===cat : true;
+    return inQ && inRec && inP && inI && inC && inCat;
+  });
+}
+function renderProblems(){
+  const tbody=$('#problemsBody'); tbody.innerHTML='';
+  filterProblemsList(state.problems).forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${p.title}</td><td>${p.cat}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td><td>${p.immat||'—'}</td><td>${p.check||'—'}</td><td>${new Date(p.ts).toLocaleString()}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+$('#btnFilterProblems').onclick=renderProblems;
+renderProblems();
+
+/* ================ Dialog: assigner problèmes à une visite ================= */
+const dlgPick = $('#dlgPick');
+function openPickDialogFor(visitId){
+  const v = state.visits.find(x=>x.id===visitId); if(!v) return;
+  currentVisitId = visitId;
+  $('#pickSearch').value=''; $('#pickRec').checked=false;
+  renderPickList();
+  dlgPick.showModal();
+}
+function renderPickList(){
+  const tb=$('#pickBody'); tb.innerHTML='';
+  // filtre rapide sur la bibliothèque
+  const q=$('#pickSearch').value.trim().toLowerCase();
+  const rec=$('#pickRec').checked;
+  state.problems.filter(p=>{
+    const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
+    const inRec=!rec || !!p.recurring;
+    return inQ && inRec;
+  }).forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="text-align:center"><input type="checkbox" data-id="${p.id}"></td>
+      <td>${p.title}</td><td>${p.cat||'—'}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+$('#pickRefresh').onclick=renderPickList;
+$('#pickAdd').onclick=()=>{
+  const v=getCurrentVisit(); if(!v) return alert('Aucune visite chargée');
+  const ids=$$('#pickBody input[type="checkbox"]:checked').map(x=>x.dataset.id);
+  if(!ids.length) return alert('Sélectionne au moins un problème.');
+  if(!confirm(`Ajouter ${ids.length} problème(s) à cette visite ?`)) return;
+  const toAdd = state.problems.filter(p=>ids.includes(p.id)).map(p=>({
+    pid:p.id, title:p.title, cat:p.cat, impact:p.impact, recurring:!!p.recurring
+  }));
+  v.problems = (v.problems||[]).concat(toAdd);
+  save(); renderVisitProblems(v); dlgPick.close();
 }
 
 /* ============================ Export / Import JSON ======================== */
@@ -466,42 +719,15 @@ $('#importJsonFile').addEventListener('change', e=>{
     try{
       const d=JSON.parse(r.result);
       if(d && d.visits && d.problems){
-        state=d; // remplace tout
-        // retouche immats (fusion/tri)
+        state=d; 
         state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
-        save(); refreshImmatList(); renderProblems(); renderPerf();
+        save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
         alert('Import OK ✅');
       } else alert('JSON invalide');
     }catch{ alert('Erreur JSON'); }
   };
   r.readAsText(f);
 });
-
-/* ================================ Problèmes =============================== */
-$('#btnAddProblem').onclick=()=>{
-  const title=$('#pTitle').value.trim(); if(!title) return alert('Titre manquant');
-  const last=state.visits[state.visits.length-1]||{};
-  const p={
-    title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
-    recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
-    immat:last.immat||'', check:last.check||'', ts:new Date().toISOString()
-  };
-  state.problems.push(p); save();
-  $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
-  renderProblems();
-}
-function renderProblems(){
-  const tbody=$('#problemsBody'); tbody.innerHTML='';
-  const s=$('#fStart').value, e=$('#fEnd').value, im=($('#fImmat').value||'').toUpperCase(), ck=$('#fCheck').value, cat=$('#fCat').value;
-  state.problems.filter(p=>{
-    return within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true) && (cat? p.cat===cat:true)
-  }).forEach((p,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${i+1}</td><td>${p.title}</td><td>${p.cat}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td><td>${p.immat||'—'}</td><td>${p.check||'—'}</td><td>${new Date(p.ts).toLocaleString()}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-$('#btnFilterProblems').onclick=renderProblems;
 
 /* ================================ Performance ============================= */
 let pie=null;
@@ -510,11 +736,11 @@ function renderPerf(){
   const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
 
   // KPIs
-  let res=0,tot=0, sumDH=0,sumHD=0,sumHR=0, sumPctEff=0, cntPct=0;
+  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
-    sumDH += dH; sumHD += (v.hmoPlan||0); sumHR += (v.hmoReal||0);
+    sumDH += dH; sumHD += (v.hmoPlan||0);
     const dem = v.vacs.reduce((a,x)=>a+x.cmeDem+x.eirDem+x.leadDem,0);
     const rea = v.vacs.reduce((a,x)=>a+x.cmeReal+x.eirReal+x.leadReal,0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
@@ -543,7 +769,7 @@ function renderPerf(){
 $('#btnPerfRefresh').onclick=renderPerf;
 
 /* ================================ init UI ================================= */
-refreshImmatList(); renderProblems();
+refreshImmatList(); renderProblems(); renderVisitsList();
 </script>
 </body>
 </html>
