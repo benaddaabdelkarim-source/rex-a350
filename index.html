@@ -3,202 +3,562 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX Planning A350 – Check A</title>
+<title>REX Planning A350 – Check A (complet)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--sub:#cbd5e1;
-  --accent:#60a5fa;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#1e293b
+  --bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--accent:#60a5fa;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#27324a;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,Segoe UI,Roboto,Ubuntu}
-header{display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,23,42,.9);backdrop-filter:saturate(140%) blur(8px);z-index:2}
-h1{font-size:16px;margin:0;font-weight:700}
-.small{font-size:12px;color:var(--sub)}
-.tag{padding:2px 8px;border-radius:999px;background:var(--muted);color:#dbeafe;font-size:12px}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui,Segoe UI,Roboto,Ubuntu}
+h1{font-size:18px;margin:0;font-weight:600}
+header{display:flex;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--muted);position:sticky;top:0;background:rgba(15,23,42,.9);backdrop-filter:saturate(140%) blur(8px)}
+.tag{background:#0ea5e9; color:#00111b;border-radius:6px;padding:3px 8px;font-weight:600}
 .right{margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:8px;background:#0ea5e9;border:none;border-radius:10px;padding:8px 12px;color:#00111b;font-weight:700;cursor:pointer}
+.btn.outline{background:transparent;border:1px solid #334155;color:#e5e7eb}
+.btn.danger{background:#ef4444;color:#090b0f}
+.btn.muted{background:#1f2937;color:#cbd5e1}
+.btn.small{padding:5px 9px;border-radius:7px;font-size:12px}
+.btn:disabled{opacity:.5;pointer-events:none}
 .wrap{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 56px)}
-nav{border-right:1px solid var(--line);background:#0b1222;padding:10px}
-nav .btn{display:block;width:100%;text-align:left;margin:6px 0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#0f1a30;color:#dbeafe;cursor:pointer}
-nav .btn.active{outline:2px solid var(--accent)}
-main{padding:14px}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:12px 0}
+nav#tabs{border-right:1px solid var(--muted);padding:12px}
+nav#tabs .tabbtn{display:block;width:100%;text-align:left;background:#0b1220;border:1px solid #243044;padding:10px 12px;margin:8px 0;border-radius:10px;color:#e5e7eb;cursor:pointer}
+nav#tabs .tabbtn.active{background:#0ea5e9;color:#00111b;border-color:#0ea5e9}
+main{padding:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
 .grid{display:grid;gap:10px}
-.grid.cols-2{grid-template-columns:1fr 1fr}
-.grid.cols-3{grid-template-columns:repeat(3,1fr)}
-.grid.cols-4{grid-template-columns:repeat(4,1fr)}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-input,select,textarea{width:100%;background:#0b1222;border:1px solid #223050;color:var(--text);border-radius:10px;padding:10px}
-textarea{min-height:76px}
-label{font-size:12px;color:#93b3d9}
-.btn2{border:1px solid #223050;background:#0b1222;border-radius:10px;padding:8px 10px;color:var(--text);cursor:pointer}
-.btn2.primary{background:#11345a;border-color:#1d4ed8}
-.btn2.good{background:#0d2d1b;border-color:#16a34a}
-.btn2.bad{background:#3a0a0a;border-color:#ef4444}
-.table{width:100%;border-collapse:collapse}
-.table th,.table td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
-.table th{color:#9fb5d6}
-.kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:#0c1528;border:1px solid #273146;border-radius:6px;padding:1px 6px}
-.badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:12px;line-height:1;border:1px solid #223050;background:#0b1222}
-.badge.ok{border-color:#14532d;background:#052e16;color:#86efac}
-.badge.warn{border-color:#78350f;background:#3a2a0a;color:#fed7aa}
-.badge.bad{border-color:#7f1d1d;background:#3a0a0a;color:#fecaca}
-.muted{color:#93b3d9}
-.center{text-align:center}
-.hr{height:1px;background:var(--line);margin:8px 0}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.cols-4{grid-template-columns:repeat(4,1fr)}
+label{font-size:12px;opacity:.8}
+input,select,textarea{width:100%;background:#0b1220;border:1px solid #334155;color:#e5e7eb;border-radius:10px;padding:10px}
+textarea{min-height:90px}
+table{width:100%;border-collapse:collapse}
+th,td{border-bottom:1px solid #223049;padding:8px;text-align:left}
+thead th{position:sticky;top:0;background:#0b1220;z-index:1}
+tfoot td{background:#0b1220;font-weight:700}
+.kpi{display:grid;gap:10px;grid-template-columns:repeat(4,1fr)}
+.kpi .card{background:#0b1220;border:1px solid #223049;border-radius:14px;padding:12px}
+.kpi .big{font-size:22px;font-weight:800}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Liberation Mono","Courier New",monospace}
+.badge{display:inline-flex;align-items:center;gap:6px;background:#0b1220;border:1px solid #223049;border-radius:999px;padding:4px 10px;font-size:12px}
+.ok{color:#22c55e}.warn{color:#f59e0b}.bad{color:#ef4444}
+.small{opacity:.75}
+.table-mini td{border-bottom: none;padding:4px 8px}
+hr.sep{border:none;border-top:1px dashed #223049;margin:12px 0}
+.flex{display:flex;gap:10px;align-items:center}
+footer.note{font-size:12px;opacity:.7}
+.del{color:#ef4444;cursor:pointer}
 </style>
 </head>
 <body>
 <header>
-  <h1>REX Planning A350 – Check A</h1>
-  <span class="tag">Local (JSON / localStorage)</span>
+  <h1>REX Planning A350 – <span class="tag">Check A</span></h1>
   <span class="right"></span>
-  <button class="btn2" id="exportBtn">Exporter JSON</button>
-  <label class="btn2" for="importFile">Importer JSON</label>
-  <input id="importFile" type="file" accept="application/json" style="display:none"/>
+  <button class="btn outline" id="exportJson">Exporter JSON</button>
+  <label class="btn muted" for="importJson">Importer JSON</label>
+  <input id="importJson" type="file" accept="application/json" style="display:none">
 </header>
 
 <div class="wrap">
-  <nav>
-    <button class="btn active" data-tab="problems">📚 Bibliothèque Problèmes</button>
-    <button class="btn" data-tab="visit">🧾 Checklist Visite</button>
-    <button class="btn" data-tab="analytics">📊 Analytics / REX</button>
-    <button class="btn" data-tab="settings">⚙️ Paramètres flotte</button>
+  <nav id="tabs">
+    <button class="tabbtn active" data-tab="problems">📚 Problèmes</button>
+    <button class="tabbtn" data-tab="visit">🧰 Visite (Check A)</button>
+    <button class="tabbtn" data-tab="perf">📈 Performance REX</button>
+    <button class="tabbtn" data-tab="settings">⚙️ Paramètres</button>
   </nav>
 
   <main>
-    <section id="tab-problems" class="tab">
-      <div class="panel"><h3>Bibliothèque de problèmes</h3>
-        <button class="btn2 primary" id="addProblemBtn">+ Nouveau problème</button>
-        <div id="problemsList"></div>
+    <!-- PROBLEMES -->
+    <section id="problems" class="panel">
+      <h2>Librairie de problèmes</h2>
+      <div class="grid cols-3">
+        <div>
+          <label>Titre</label>
+          <input id="p_title" placeholder="ex. Cabine – PAX seat defect…">
+        </div>
+        <div>
+          <label>Catégorie</label>
+          <select id="p_cat">
+            <option>Cabine</option><option>Sous-traitance</option><option>Query/Prépa</option>
+            <option>Pièces/Log</option><option>Eff. & Planif</option><option>Documentation</option>
+            <option>Autres</option>
+          </select>
+        </div>
+        <div>
+          <label>Impact estimé (heures)</label>
+          <input id="p_impact" type="number" step="0.5" min="0" placeholder="0">
+        </div>
+      </div>
+      <div class="grid cols-2">
+        <div>
+          <label>Acteur/Responsable</label>
+          <input id="p_actor" placeholder="ex. Cabine, STT, Query, Planif…">
+        </div>
+        <div>
+          <label>Récurrent ?</label>
+          <div class="flex"><input id="p_rec" type="checkbox"><span class="small">Réapparait souvent</span></div>
+        </div>
+      </div>
+      <div>
+        <label>Description</label>
+        <textarea id="p_desc" placeholder="Contexte, symptômes, documents concernés…"></textarea>
+      </div>
+      <div class="flex">
+        <button class="btn" id="addProblem">+ Nouveau problème</button>
+        <span class="small">Astuce : tape <span class="mono">/</span> pour chercher</span>
+      </div>
+      <hr class="sep">
+      <table id="problemsTable">
+        <thead><tr><th>#</th><th>Problème</th><th>Cat.</th><th>Fréquence</th><th>Impact(h) médian</th><th>Dernière utilisation</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <hr class="sep">
+      <div class="grid cols-2">
+        <div class="panel">
+          <h3>Pareto par catégorie</h3>
+          <table class="table-mini" id="paretoTable">
+            <thead><tr><th>Catégorie</th><th>Comptes</th><th>%</th><th>Cumul %</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Répartition (camembert)</h3>
+          <canvas id="pieCat" height="140"></canvas>
+        </div>
       </div>
     </section>
 
-    <section id="tab-visit" class="tab" hidden>
-      <div class="panel"><h3>Checklist Visite</h3>
-        <button class="btn2 primary" id="newVisitBtn">+ Nouvelle visite</button>
-        <select id="visitSelect"></select>
+    <!-- VISITE -->
+    <section id="visit" class="panel" style="display:none">
+      <h2>Créer une visite – Check A</h2>
+
+      <div class="grid cols-4">
+        <div>
+          <label>Immatriculation</label>
+          <input list="immatList" id="v_immat" placeholder="ex. F-HUVK">
+          <datalist id="immatList">
+            <option>F-HTYA</option><option>F-HTYB</option><option>F-HTYC</option><option>F-HTYD</option>
+            <option>F-HTYE</option><option>F-HTYF</option><option>F-HTYG</option><option>F-HTYH</option>
+            <option>F-HTYI</option><option>F-HTYJ</option><option>F-HTYK</option><option>F-HTYL</option>
+            <option>F-HTYM</option><option>F-HTYN</option><option>F-HTYO</option><option>F-HTYP</option>
+            <option>F-HTYQ</option><option>F-HTYR</option><option>F-HTYS</option><option>F-HTYT</option>
+            <option>F-HUVA</option><option>F-HUVB</option><option>F-HUVC</option><option>F-HUVD</option>
+            <option>F-HUVE</option><option>F-HUVF</option><option>F-HUVG</option><option>F-HUVH</option>
+            <option>F-HUVI</option><option>F-HUVJ</option><option>F-HUVK</option><option>F-HUVL</option>
+            <option>F-HUVM</option><option>F-HUVN</option><option>F-HUVO</option><option>F-HUVP</option>
+            <option>F-HUVQ</option><option>F-HUVR</option><option>F-HUVS</option><option>F-HUVT</option>
+          </datalist>
+        </div>
+        <div>
+          <label>Zone / Hangar</label>
+          <input id="v_zone" placeholder="ex. S36, S12…">
+        </div>
+        <div>
+          <label>Arrivée prévue</label>
+          <input id="v_arr_plan" type="datetime-local">
+        </div>
+        <div>
+          <label>Arrivée réelle</label>
+          <input id="v_arr_real" type="datetime-local">
+        </div>
+        <div>
+          <label>Départ prévu</label>
+          <input id="v_dep_plan" type="datetime-local">
+        </div>
+        <div>
+          <label>Départ réel</label>
+          <input id="v_dep_real" type="datetime-local">
+        </div>
+        <div>
+          <label>Nb lignes désassignées</label>
+          <input id="v_unassign" type="number" min="0" step="1" value="0">
+        </div>
+        <div>
+          <label>Raison(s) désassignation</label>
+          <input id="v_unassign_reason" placeholder="ex. pièce manquante, outillage…">
+        </div>
+        <div>
+          <label>Nb lignes fin de chantier</label>
+          <input id="v_eoj" type="number" min="0" step="1" value="0">
+        </div>
+        <div class="flex">
+          <label class="btn muted" for="xmlImport">Importer XML</label>
+          <input id="xmlImport" type="file" accept=".xml" style="display:none">
+          <span class="small">ex. <span class="mono">F-HUVK A06-S36.xml</span></span>
+        </div>
       </div>
 
       <div class="panel">
-        <h3>Effectifs par vacation</h3>
-        <table class="table" id="staffTable">
+        <div class="flex">
+          <h3 class="right">Effectifs par vacation</h3>
+          <button class="btn small" id="addVac">+ Ajouter une vacation</button>
+        </div>
+        <table id="vacTable">
           <thead>
-            <tr><th>Vacation</th><th colspan="4" class="center">Demandé</th><th colspan="4" class="center">Réel</th></tr>
-            <tr class="small"><th></th><th>Total</th><th>CME</th><th>EIR</th><th>Leader</th><th>Total</th><th>CME</th><th>EIR</th><th>Leader</th></tr>
+            <tr>
+              <th>Vacation</th>
+              <th>CME dem.</th><th>EIR dem.</th><th>Leader dem.</th><th>Eff. demandé total</th>
+              <th>CME réel</th><th>EIR réel</th><th>Leader réel</th><th>Eff. réel total</th>
+              <th></th>
+            </tr>
           </thead>
-          <tbody id="staffBody"></tbody>
+          <tbody></tbody>
           <tfoot>
-            <tr class="small"><th>Total général</th>
-              <th id="tot_dem_total"></th><th id="tot_dem_cme"></th><th id="tot_dem_eir"></th><th id="tot_dem_lead"></th>
-              <th id="tot_real_total"></th><th id="tot_real_cme"></th><th id="tot_real_eir"></th><th id="tot_real_lead"></th>
+            <tr>
+              <td><b>Total général</b></td>
+              <td id="tg_cme_dem">0</td><td id="tg_eir_dem">0</td><td id="tg_lead_dem">0</td><td id="tg_dem">0</td>
+              <td id="tg_cme_real">0</td><td id="tg_eir_real">0</td><td id="tg_lead_real">0</td><td id="tg_real">0</td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
-        <div class="small muted">Les totaux se calculent automatiquement.</div>
-        <div class="small muted" id="deltaInfo"></div>
+        <div class="small flex">
+          <span class="badge">Δ Effectif : <span id="deltaEff">0</span></span>
+          <span class="badge">Δ HMO : <span id="deltaHmo">0h</span></span>
+        </div>
+      </div>
+
+      <div class="flex">
+        <button class="btn" id="saveVisit">💾 Enregistrer la visite</button>
+        <span class="small">Les données sont mémorisées localement.</span>
       </div>
     </section>
 
-    <section id="tab-analytics" class="tab" hidden>
-      <div class="panel"><h3>Analytics & REX</h3>
-        <canvas id="paretoChart" height="200"></canvas>
+    <!-- PERFORMANCE -->
+    <section id="perf" class="panel" style="display:none">
+      <h2>Performance REX</h2>
+
+      <div class="grid cols-4">
+        <div>
+          <label>Du</label>
+          <input id="f_from" type="date">
+        </div>
+        <div>
+          <label>Au</label>
+          <input id="f_to" type="date">
+        </div>
+        <div>
+          <label>Immat</label>
+          <input id="f_immat" list="immatList" placeholder="Tous">
+        </div>
+        <div>
+          <label>Zone / Hangar</label>
+          <input id="f_zone" placeholder="Tous">
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="card"><div class="small">Écart Effectif (moy.)</div><div class="big" id="kpiEff">0%</div></div>
+        <div class="card"><div class="small">Écart HMO (moy.)</div><div class="big" id="kpiHmo">0%</div></div>
+        <div class="card"><div class="small">Respect planning (sortie)</div><div class="big" id="kpiOnTime">0%</div></div>
+        <div class="card"><div class="small">Retard moyen (arr./dep.)</div><div class="big" id="kpiDelay">0′ / 0′</div></div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="panel">
+          <h3>Pareto catégories</h3>
+          <canvas id="paretoCat" height="140"></canvas>
+        </div>
+        <div class="panel">
+          <h3>Répartition catégories</h3>
+          <canvas id="piePerf" height="140"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Visites filtrées</h3>
+        <table id="perfTable">
+          <thead><tr>
+            <th>Date</th><th>Immat</th><th>Zone</th>
+            <th>Eff. dem.</th><th>Eff. réel</th><th>ΔEff</th>
+            <th>HMO dem.</th><th>HMO réel</th><th>ΔHMO</th>
+            <th>Arrivée</th><th>Départ</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 
-    <section id="tab-settings" class="tab" hidden>
-      <div class="panel"><h3>Paramètres flotte A350</h3>
-        <textarea id="fleetTextarea" rows="10" placeholder="F-HTYA&#10;F-HTYB&#10;F-HTYC"></textarea>
-        <div class="row"><button class="btn2 primary" id="saveFleetBtn">Enregistrer</button></div>
-      </div>
+    <!-- PARAMS -->
+    <section id="settings" class="panel" style="display:none">
+      <h2>Paramètres</h2>
+      <table class="table-mini">
+        <tr><td>Hypothèse durée par visite (h) si arrivée/départ manquants</td>
+          <td><input id="s_hours" type="number" min="1" step="0.5" value="10"></td></tr>
+      </table>
+      <footer class="note">Les paramètres et toutes les données sont stockés dans <b>localStorage</b>.</footer>
     </section>
+
   </main>
 </div>
 
 <script>
-const $=id=>document.getElementById(id);
-const data=JSON.parse(localStorage.getItem('rex-data')||'{}');if(!data.visits)data.visits=[];if(!data.fleet)data.fleet=[];
-function save(){localStorage.setItem('rex-data',JSON.stringify(data))}
+/* ------------------ utils ------------------ */
+const $ = (sel, ctx=document)=>ctx.querySelector(sel);
+const $$ = (sel, ctx=document)=>Array.from(ctx.querySelectorAll(sel));
+const fmtPct = x => isFinite(x)? (x*100).toFixed(0)+'%':'0%';
+const fmtH  = h => (Math.round(h*10)/10)+'h';
+const toDate = v => v? new Date(v):null;
+const minutes = (ms)=>Math.round(ms/60000);
 
-/* navigation */
-document.querySelectorAll('nav .btn').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('nav .btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('main .tab').forEach(tab=>tab.hidden=true);
-    $('tab-'+btn.dataset.tab).hidden=false;
-    if(btn.dataset.tab==='visit') renderStaff();
-  });
+/* ------------------ state ------------------ */
+const db = {
+  problems: JSON.parse(localStorage.getItem('rex_problems')||'[]'),
+  visits  : JSON.parse(localStorage.getItem('rex_visits')||'[]'),
+  params  : JSON.parse(localStorage.getItem('rex_params')||'{"hours":10}')
+};
+const saveDB = ()=> {
+  localStorage.setItem('rex_problems', JSON.stringify(db.problems));
+  localStorage.setItem('rex_visits', JSON.stringify(db.visits));
+  localStorage.setItem('rex_params', JSON.stringify(db.params));
+};
+
+/* ------------------ tabs ------------------ */
+$$('#tabs .tabbtn').forEach(b=>{
+  b.onclick=()=>{
+    $$('#tabs .tabbtn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    ['problems','visit','perf','settings'].forEach(id=>$('#'+id).style.display='none');
+    $('#'+b.dataset.tab).style.display='';
+    if(b.dataset.tab==='perf') renderPerf();
+    if(b.dataset.tab==='problems') renderProblems();
+  }
 });
 
-/* VISITES */
-const VAC=['Matin','Soir','Nuit'];
-if(!data.staff)data.staff={};
-function renderStaff(){
-  const body=$('staffBody');body.innerHTML='';
-  VAC.forEach(vac=>{
-    if(!data.staff[vac])data.staff[vac]={cme_d:0,eir_d:0,lead_d:0,cme_r:0,eir_r:0,lead_r:0};
-    const s=data.staff[vac];
+/* ------------------ export/import json ------------------ */
+$('#exportJson').onclick=()=>{
+  const blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'});
+  const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'rex-data.json'});
+  a.click(); URL.revokeObjectURL(a.href);
+};
+$('#importJson').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>{const d=JSON.parse(t); Object.assign(db,d); saveDB(); renderProblems(); alert('Import OK');});
+};
+
+/* ------------------ PROBLEMES ------------------ */
+function renderProblems(){
+  const body = $('#problemsTable tbody'); body.innerHTML='';
+  db.problems.forEach((p,i)=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${vac}</td>
-      <td class="dem_total"></td>
-      <td><input type="number" min="0" step="1" data-v="${vac}" data-k="cme_d" value="${s.cme_d}"/></td>
-      <td><input type="number" min="0" step="1" data-v="${vac}" data-k="eir_d" value="${s.eir_d}"/></td>
-      <td><input type="number" min="0" step="1" data-v="${vac}" data-k="lead_d" value="${s.lead_d}"/></td>
-      <td class="real_total"></td>
-      <td><input type="number" min="0" step="1" data-v="${vac}" data-k="cme_r" value="${s.cme_r}"/></td>
-      <td><input type="number" min="0" step="1" data-v="${vac}" data-k="eir_r" value="${s.eir_r}"/></td>
-      <td><input type="number" min="0" step="1" data-v="${vac}" data-k="lead_r" value="${s.lead_r}"/></td>`;
+    tr.innerHTML=`<td>${i+1}</td><td>${p.title}</td><td>${p.cat}</td>
+      <td>${p.freq||0}</td><td>${p.impact||0}</td><td>${p.last?new Date(p.last).toLocaleString():'—'}</td>
+      <td><span class="del" data-i="${i}">Suppr.</span></td>`;
     body.appendChild(tr);
   });
-  document.querySelectorAll('#staffBody input').forEach(inp=>inp.addEventListener('input',updateStaff));
-  recalcTotals();
-}
-function updateStaff(e){
-  const vac=e.target.dataset.v,k=e.target.dataset.k;
-  data.staff[vac][k]=parseInt(e.target.value)||0;
-  save();recalcTotals();
-}
-function recalcTotals(){
-  let tdCME=0,tdEIR=0,tdL=0,trCME=0,trEIR=0,trL=0;
-  VAC.forEach(v=>{
-    const s=data.staff[v];
-    const dem=(s.cme_d+s.eir_d+s.lead_d);
-    const real=(s.cme_r+s.eir_r+s.lead_r);
-    const row=[...document.querySelectorAll(`#staffBody tr`)][VAC.indexOf(v)];
-    row.querySelector('.dem_total').textContent=dem;
-    row.querySelector('.real_total').textContent=real;
-    tdCME+=s.cme_d;tdEIR+=s.eir_d;tdL+=s.lead_d;
-    trCME+=s.cme_r;trEIR+=s.eir_r;trL+=s.lead_r;
+  body.onclick=e=>{
+    if(e.target.classList.contains('del')){
+      db.problems.splice(+e.target.dataset.i,1); saveDB(); renderProblems(); renderPerf();
+    }
+  };
+  // Pareto/pie depuis problèmes
+  const cats = {};
+  db.problems.forEach(p=>cats[p.cat]=(cats[p.cat]||0)+1);
+  const total = Object.values(cats).reduce((a,b)=>a+b,0)||1;
+  const rows = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const tb = $('#paretoTable tbody'); tb.innerHTML='';
+  let acc=0;
+  rows.forEach(([c,n])=>{
+    acc += n/total;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${c}</td><td>${n}</td><td>${fmtPct(n/total)}</td><td>${fmtPct(acc)}</td>`;
+    tb.appendChild(tr);
   });
-  const totDem=tdCME+tdEIR+tdL,totReal=trCME+trEIR+trL;
-  $('tot_dem_total').textContent=totDem;$('tot_dem_cme').textContent=tdCME;$('tot_dem_eir').textContent=tdEIR;$('tot_dem_lead').textContent=tdL;
-  $('tot_real_total').textContent=totReal;$('tot_real_cme').textContent=trCME;$('tot_real_eir').textContent=trEIR;$('tot_real_lead').textContent=trL;
-  $('deltaInfo').textContent=`Δ Effectif total : ${totReal-totDem>=0?'+':''}${totReal-totDem}`;
+  drawPie('pieCat', rows.map(r=>r[1]), rows.map(r=>r[0]));
 }
+$('#addProblem').onclick=()=>{
+  const p={
+    title:$('#p_title').value.trim()||'Sans titre',
+    cat:$('#p_cat').value, impact:+$('#p_impact').value||0,
+    actor:$('#p_actor').value, rec:$('#p_rec').checked, desc:$('#p_desc').value,
+    freq:0, last:null
+  };
+  db.problems.push(p); saveDB(); renderProblems();
+  ['p_title','p_impact','p_actor','p_desc'].forEach(id=>$('#'+id).value=''); $('#p_rec').checked=false;
+};
+renderProblems();
 
-/* EXPORT / IMPORT */
-$('exportBtn').addEventListener('click',()=>{
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rex-a350.json';a.click();
-});
-$('importFile').addEventListener('change',e=>{
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{try{Object.assign(data,JSON.parse(r.result));save();renderStaff();alert('Import réussi');}catch(err){alert('Erreur JSON');}};
-  r.readAsText(f);
+/* ------------------ VISITE (vacations) ------------------ */
+const vacTbody = $('#vacTable tbody');
+function vacRow(name='Matin'){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="vac_name" value="${name}"></td>
+    <td><input class="cme_dem" type="number" min="0" step="1" value="0"></td>
+    <td><input class="eir_dem" type="number" min="0" step="1" value="0"></td>
+    <td><input class="lead_dem" type="number" min="0" step="1" value="0"></td>
+    <td class="dem_tot">0</td>
+    <td><input class="cme_real" type="number" min="0" step="1" value="0"></td>
+    <td><input class="eir_real" type="number" min="0" step="1" value="0"></td>
+    <td><input class="lead_real" type="number" min="0" step="1" value="0"></td>
+    <td class="real_tot">0</td>
+    <td><button class="btn small muted delrow">Retirer</button></td>`;
+  return tr;
+}
+function seedVac(){ vacTbody.innerHTML=''; ['Matin','Soir','Nuit'].forEach(n=>vacTbody.appendChild(vacRow(n))); recalcVac(); }
+seedVac();
+
+$('#addVac').onclick=()=>{ vacTbody.appendChild(vacRow('Vac.')); };
+vacTbody.addEventListener('input', e=>{ if(e.target.matches('input')) recalcVac(); });
+vacTbody.addEventListener('click', e=>{
+  if(e.target.classList.contains('delrow')){ e.target.closest('tr').remove(); recalcVac(); }
 });
 
-/* PARAMÈTRES FLOTTES */
-$('saveFleetBtn').addEventListener('click',()=>{
-  data.fleet=$('fleetTextarea').value.split(/\n+/).map(x=>x.trim()).filter(Boolean);
-  save();alert('Flotte mise à jour : '+data.fleet.length+' avions');
-});
+function recalcVac(){
+  let tg={cme_dem:0,eir_dem:0,lead_dem:0,dem:0,cme_real:0,eir_real:0,lead_real:0,real:0};
+  $$('#vacTable tbody tr').forEach(tr=>{
+    const n = +$('.cme_dem',tr).value + +$('.eir_dem',tr).value + +$('.lead_dem',tr).value;
+    const r = +$('.cme_real',tr).value + +$('.eir_real',tr).value + +$('.lead_real',tr).value;
+    $('.dem_tot',tr).textContent=n; $('.real_tot',tr).textContent=r;
+    tg.cme_dem += +$('.cme_dem',tr).value;
+    tg.eir_dem += +$('.eir_dem',tr).value;
+    tg.lead_dem += +$('.lead_dem',tr).value;
+    tg.dem += n;
+    tg.cme_real += +$('.cme_real',tr).value;
+    tg.eir_real += +$('.eir_real',tr).value;
+    tg.lead_real += +$('.lead_real',tr).value;
+    tg.real += r;
+  });
+  $('#tg_cme_dem').textContent=tg.cme_dem;
+  $('#tg_eir_dem').textContent=tg.eir_dem;
+  $('#tg_lead_dem').textContent=tg.lead_dem;
+  $('#tg_dem').textContent=tg.dem;
+  $('#tg_cme_real').textContent=tg.cme_real;
+  $('#tg_eir_real').textContent=tg.eir_real;
+  $('#tg_lead_real').textContent=tg.lead_real;
+  $('#tg_real').textContent=tg.real;
 
-/* INIT */
-renderStaff();
+  // deltas
+  const arrR = toDate($('#v_arr_real').value), depR = toDate($('#v_dep_real').value);
+  let hours = db.params.hours;
+  if(arrR && depR && depR>arrR) hours = (depR-arrR)/3600000;
+  const Hdem = tg.dem * hours, Hreal = tg.real * hours;
+  $('#deltaEff').textContent = (tg.real - tg.dem);
+  $('#deltaHmo').textContent = fmtH(Hreal - Hdem);
+}
+['v_arr_real','v_dep_real'].forEach(id=>$('#'+id).addEventListener('input',recalcVac));
+
+/* Import XML “lightweight”: file name -> immat + zone ; try date extraction */
+$('#xmlImport').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const name=f.name;
+  const mat = (name.match(/F-?H.../i)||[])[0]?.toUpperCase().replace(/(F)(H)/,'F-H')||'';
+  if(mat) $('#v_immat').value=mat;
+  const z = (name.match(/S\d+/i)||[])[0]?.toUpperCase(); if(z) $('#v_zone').value=z;
+  f.text().then(t=>{
+    const stamp = (t.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/)||[])[0];
+    if(stamp && !$('#v_arr_real').value) $('#v_arr_real').value = stamp.slice(0,16);
+    alert('XML importé (immat/zone détectés). Complète les champs si besoin.');
+  });
+};
+
+/* Save visit */
+$('#saveVisit').onclick=()=>{
+  const vac = $$('#vacTable tbody tr').map(tr=>({
+    name:$('.vac_name',tr).value.trim()||'Vac.',
+    cmeDem:+$('.cme_dem',tr).value||0,
+    eirDem:+$('.eir_dem',tr).value||0,
+    leadDem:+$('.lead_dem',tr).value||0,
+    cmeReal:+$('.cme_real',tr).value||0,
+    eirReal:+$('.eir_real',tr).value||0,
+    leadReal:+$('.lead_real',tr).value||0
+  }));
+  const sum = vac.reduce((a,v)=>({
+    dem:a.dem+v.cmeDem+v.eirDem+v.leadDem,
+    real:a.real+v.cmeReal+v.eirReal+v.leadReal
+  }),{dem:0,real:0});
+  const arrR=toDate($('#v_arr_real').value), depR=toDate($('#v_dep_real').value);
+  let hours=db.params.hours; if(arrR&&depR&&depR>arrR) hours=(depR-arrR)/3600000;
+  const visit={
+    id:Date.now(),
+    immat:$('#v_immat').value.trim(),
+    zone:$('#v_zone').value.trim(),
+    arrPlan:$('#v_arr_plan').value, arrReal:$('#v_arr_real').value,
+    depPlan:$('#v_dep_plan').value, depReal:$('#v_dep_real').value,
+    unassign:+$('#v_unassign').value||0, unassignReason:$('#v_unassign_reason').value,
+    endOfJob:+$('#v_eoj').value||0,
+    vac,
+    effDem:sum.dem, effReal:sum.real,
+    hmoDem:sum.dem*hours, hmoReal:sum.real*hours,
+    createdAt:new Date().toISOString()
+  };
+  db.visits.push(visit); saveDB();
+  // incrémente fréquences côté problèmes (pour alimenter Pareto de perf)
+  if(db.problems.length) db.problems.forEach(p=>{ p.freq=(p.freq||0)+0; });
+  alert('Visite enregistrée');
+  renderPerf();
+};
+
+/* ------------------ PERFORMANCE ------------------ */
+function filteredVisits(){
+  const from = $('#f_from').value? new Date($('#f_from').value): new Date('2000-01-01');
+  const to   = $('#f_to').value? new Date($('#f_to').value): new Date('2100-01-01');
+  to.setHours(23,59,59,999);
+  const im = $('#f_immat').value.trim().toUpperCase();
+  const z  = $('#f_zone').value.trim().toUpperCase();
+  return db.visits.filter(v=>{
+    const d = v.arrReal? new Date(v.arrReal): (v.createdAt?new Date(v.createdAt):new Date());
+    if(d<from || d>to) return false;
+    if(im && v.immat.toUpperCase()!=im) return false;
+    if(z && (v.zone||'').toUpperCase()!=z) return false;
+    return true;
+  });
+}
+let charts={};
+function drawBar(id,data,labels){
+  charts[id]?.destroy();
+  charts[id]=new Chart($('#'+id),{type:'bar',data:{labels,datasets:[{data,borderWidth:1}]},
+    options:{plugins:{legend:{display:false}}}});
+}
+function drawPie(id,data,labels){
+  charts[id]?.destroy();
+  charts[id]=new Chart($('#'+id),{type:'pie',data:{labels,datasets:[{data}]},
+    options:{plugins:{legend:{position:'bottom'}}}});
+}
+function renderPerf(){
+  // KPIs à partir des visites filtrées
+  const vs = filteredVisits();
+  const tb = $('#perfTable tbody'); tb.innerHTML='';
+  let sumEffDem=0,sumEffReal=0,sumHdem=0,sumHreal=0,onTime=0, cnt=0, arrTotMin=0, depTotMin=0;
+  vs.forEach(v=>{
+    sumEffDem+=v.effDem; sumEffReal+=v.effReal; sumHdem+=v.hmoDem; sumHreal+=v.hmoReal;
+    const arr = v.arrReal && v.arrPlan ? minutes(new Date(v.arrReal)-new Date(v.arrPlan)) : 0;
+    const dep = v.depReal && v.depPlan ? minutes(new Date(v.depReal)-new Date(v.depPlan)) : 0;
+    if(v.depReal && v.depPlan && new Date(v.depReal) <= new Date(v.depPlan)) onTime++;
+    cnt++; arrTotMin+=arr; depTotMin+=dep;
+    const tr=document.createElement('tr');
+    const d = v.arrReal ? new Date(v.arrReal) : new Date(v.createdAt);
+    tr.innerHTML=`<td>${d.toLocaleDateString()}</td><td>${v.immat||'—'}</td><td>${v.zone||'—'}</td>
+      <td>${v.effDem}</td><td>${v.effReal}</td><td>${v.effReal-v.effDem}</td>
+      <td>${fmtH(v.hmoDem)}</td><td>${fmtH(v.hmoReal)}</td><td>${fmtH(v.hmoReal-v.hmoDem)}</td>
+      <td>${v.arrPlan?new Date(v.arrPlan).toLocaleTimeString():'—'} → ${v.arrReal?new Date(v.arrReal).toLocaleTimeString():'—'}</td>
+      <td>${v.depPlan?new Date(v.depPlan).toLocaleTimeString():'—'} → ${v.depReal?new Date(v.depReal).toLocaleTimeString():'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  const effPct = sumEffDem? (sumEffReal-sumEffDem)/sumEffDem : 0;
+  const hmoPct = sumHdem? (sumHreal-sumHdem)/sumHdem : 0;
+  $('#kpiEff').textContent=fmtPct(effPct);
+  $('#kpiHmo').textContent=fmtPct(hmoPct);
+  $('#kpiOnTime').textContent=fmtPct(cnt? onTime/cnt:0);
+  $('#kpiDelay').textContent=`${cnt? Math.round(arrTotMin/cnt):0}′ / ${cnt? Math.round(depTotMin/cnt):0}′`;
+
+  // Pareto depuis PROBLEMES
+  const cats = {};
+  db.problems.forEach(p=>cats[p.cat]=(cats[p.cat]||0)+(p.freq||1));
+  const entries = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  drawBar('paretoCat', entries.map(e=>e[1]), entries.map(e=>e[0]));
+  drawPie('piePerf', entries.map(e=>e[1]), entries.map(e=>e[0]));
+}
+['f_from','f_to','f_immat','f_zone'].forEach(id=>$('#'+id).addEventListener('input',renderPerf));
+renderPerf();
+
+/* ------------------ Paramètres ------------------ */
+$('#s_hours').value = db.params.hours||10;
+$('#s_hours').oninput = e=>{ db.params.hours=+e.target.value||10; saveDB(); recalcVac(); renderPerf(); };
 </script>
 </body>
 </html>
