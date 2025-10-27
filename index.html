@@ -17,16 +17,16 @@ main{padding:16px}
 h1{margin:0 0 12px;font-size:20px}
 h2{margin:0 0 8px;font-size:16px}
 .menu h3{font-size:12px;letter-spacing:.08em;color:#93a3b8;margin:0 0 10px;text-transform:uppercase}
-.menu button{display:block;width:100%;text-align:left;background:#0b1220;border:1px solid var(--line);color:var(--text);padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer}
+.menu button{display:block;width:100%;text-align:left;background:#0b1220;border:1px solid var(--line);color:#e5e7eb;padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer}
 .menu button.active{outline:2px solid var(--accent)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
 .grid{display:grid;gap:12px}
 .cols-2{grid-template-columns:1fr 1fr}
 .cols-3{grid-template-columns:repeat(3,1fr)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input,select,textarea{width:100%;background:#0b1220;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px}
+input,select,textarea{width:100%;background:#0b1220;border:1px solid var(--line);color:#e5e7eb;border-radius:10px;padding:10px}
 input[type="number"]{text-align:right}
-.btn{border:1px solid var(--line);background:#0b1220;color:var(--text);border-radius:10px;padding:8px 12px;cursor:pointer}
+.btn{border:1px solid var(--line);background:#0b1220;color:#e5e7eb;border-radius:10px;padding:8px 12px;cursor:pointer}
 .btn.ok{background:#0d2517;border-color:#154a2c;color:#bbf7d0}
 .btn.bad{background:#2a0e12;border-color:#5b111c;color:#fecaca}
 .btn.ghost{background:transparent}
@@ -40,13 +40,12 @@ thead th{background:#0b1220;position:sticky;top:0}
 .hidden{display:none}
 .topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
 .tag{font-size:11px;opacity:.75;padding:2px 6px;border:1px solid var(--line);border-radius:999px}
-dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#0b1220;color:var(--text)}
+dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#0b1220;color:#e5e7eb}
 dialog .head{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
 dialog .body{padding:12px 14px}
-
-/* ✅ Correctif camembert (hauteur contrôlée, responsive) */
-.chart-wrap{height:320px; max-height:50vh;}
-.chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
+/* Camembert responsive */
+.chart-wrap{height:320px;max-height:50vh}
+.chart-wrap canvas{width:100%!important;height:100%!important;display:block}
 </style>
 </head>
 <body>
@@ -374,6 +373,13 @@ const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n}
 const within=(d,a,b)=>{ if(!d) return false; const t=new Date(d).getTime(); const ta=a?new Date(a).getTime():-1e15; const tb=b?new Date(b).getTime()+86399999:1e15; return t>=ta&&t<=tb }
 function fmtDate(v){ if(!v) return "—"; const d=new Date(v); return isNaN(d)?"—":d.toLocaleString() }
 function uuid(){ return Math.random().toString(36).slice(2,10) }
+const pad2=n=>String(n).padStart(2,'0');
+function toLocalDatetimeInput(val){
+  if(!val) return '';
+  const d=new Date(val);
+  if(isNaN(d)) return '';
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
 
 /* ================================ onglets ================================= */
 $$('aside .menu button').forEach(btn=>{
@@ -453,20 +459,34 @@ $('#btnImportXml').onclick=()=>{
   r.onload=()=>{
     try{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
-      // immat par motif F-HTxx / F-HUVx etc.
       const tx=r.result;
+
+      // --- helpers ---
+      const getNodeVal=(node)=>{
+        if(!node) return '';
+        const attrs=['value','val','datetime','date','time','ts','ts_utc'];
+        for(const a of attrs){ if(node.getAttribute && node.getAttribute(a)) return node.getAttribute(a); }
+        return (node.textContent||'').trim();
+      };
+      const pickFirst=(selectors)=>{
+        for(const s of selectors){
+          const n=xml.querySelector(s);
+          const v=getNodeVal(n);
+          if(v) return v;
+        }
+        return '';
+      };
+      const firstISO=(str)=> (str||'').match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?/);
+
+      // Immat (F-Hxxx)
       const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
-      // dates (premier ISO)
-      const iso = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);
-      if(iso){ $('#vArrReal').value = iso[0].replace(' ','T'); }
-      // HMO explicites ou somme durations
-      const getNumNode = sel => {
-        const n=xml.querySelector(sel); if(!n) return NaN;
-        const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
-      }
-      let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO');
-      let hReal = getNumNode('HMOReal, HmoReal, RealHMO');
+
+      // HMO plan / réel depuis balises connues sinon somme des durations
+      const toNum=(v)=>{const n=parseFloat(v);return isNaN(n)?NaN:n};
+      let hPlan = toNum(pickFirst(['HMOPlan','HmoPlan','PlanHMO','ExpectedHMO','PlannedHMO']));
+      let hReal = toNum(pickFirst(['HMOReal','HmoReal','RealHMO','ActualHMO']));
+
       if(isNaN(hPlan) || isNaN(hReal)){
         let sum=0;
         xml.querySelectorAll('[duration]').forEach(n=>{
@@ -477,16 +497,36 @@ $('#btnImportXml').onclick=()=>{
       }
       $('#vHmoPlan').value = isNaN(hPlan)? 0 : hPlan;
       $('#vHmoReal').value = isNaN(hReal)? 0 : hReal;
+
+      // Dates prévues (si vides) et réelles (si disponibles)
+      const arrPrev = pickFirst(['ArrivalPlanned','ArriveePrevue','ScheduledIn','STA','PlannedIn','InPlanned']);
+      const depPrev = pickFirst(['DeparturePlanned','DepartPrevu','ScheduledOut','STD','PlannedOut','OutPlanned']);
+      const arrReal = pickFirst(['ArrivalActual','ArriveeReelle','ATA','ActualIn','InActual']);
+      const depReal = pickFirst(['DepartureActual','DepartReel','ATD','ActualOut','OutActual']);
+
+      if(arrPrev && !$('#vArrPrev').value) $('#vArrPrev').value = toLocalDatetimeInput(arrPrev);
+      if(depPrev && !$('#vDepPrev').value) $('#vDepPrev').value = toLocalDatetimeInput(depPrev);
+      if(arrReal && !$('#vArrReal').value) $('#vArrReal').value = toLocalDatetimeInput(arrReal);
+      if(depReal && !$('#vDepReal').value) $('#vDepReal').value = toLocalDatetimeInput(depReal);
+
+      // Fallback : prendre les 2 premiers timestamps du texte pour arr/dep prévus si toujours vides
+      if(!$('#vArrPrev').value || !$('#vDepPrev').value){
+        const allISO = [...tx.matchAll(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?/g)].map(m=>m[0]);
+        if(allISO.length){
+          if(!$('#vArrPrev').value) $('#vArrPrev').value = allISO[0].replace(' ','T').slice(0,16);
+          if(allISO.length>1 && !$('#vDepPrev').value) $('#vDepPrev').value = allISO[1].replace(' ','T').slice(0,16);
+        }
+      }
+
       recalcTotals();
-      alert('XML importé ✅');
+      alert('XML importé ✅ (HMO plan/réel + dates prévues/réelles préremplies, modifiables)');
     }catch(e){ alert('XML invalide'); }
   };
   r.readAsText(f);
 };
 
 /* ========================= Enregistrer / Brouillon ======================== */
-let currentVisitId = null; // id de la visite chargée dans le formulaire
-
+let currentVisitId = null;
 function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
     name:$(".vacName",tr).value.trim(),
@@ -507,14 +547,11 @@ function collectVisitFromForm(){
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
     vacs,
-    problems: (getCurrentVisit()?.problems)||[], // conserve les liens
+    problems: (getCurrentVisit()?.problems)||[],
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
 }
-
-function getCurrentVisit(){
-  return state.visits.find(v=>v.id===currentVisitId) || null;
-}
+function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
 
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
@@ -531,7 +568,7 @@ function renderFormFromVisit(v){
   $('#vEndLines').value = v?.endLines??0;
   vacBody.innerHTML='';
   (v?.vacs?.length?v.vacs:[{name:'Matin'},{name:'Soir'},{name:'Nuit'}]).forEach(x=>{
-    vacRow(x.name||''); 
+    vacRow(x.name||'');
     const tr=vacBody.lastElementChild;
     $('.cmeD',tr).value=x.cmeDem||0; $('.eirD',tr).value=x.eirDem||0; $('.leadD',tr).value=x.leadDem||0;
     $('.cmeR',tr).value=x.cmeReal||0; $('.eirR',tr).value=x.eirReal||0; $('.leadR',tr).value=x.leadReal||0;
@@ -548,7 +585,6 @@ $('#btnSaveVisit').onclick=()=>{
   save(); renderVisitsList();
   alert('Visite enregistrée ✅');
 }
-
 $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
@@ -557,7 +593,6 @@ $('#btnClearVisit').onclick=()=>{
     .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
 }
-
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
   const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
@@ -595,7 +630,6 @@ function renderVisitsList(){
   });
 }
 renderVisitsList();
-
 $('#visitsTable').addEventListener('click', (e)=>{
   const b=e.target.closest('button'); if(!b) return;
   const id=b.dataset.id; const act=b.dataset.act;
@@ -679,15 +713,10 @@ function renderProblems(){
 document.getElementById('problemsBody').addEventListener('click', (e)=>{
   const id = e.target?.dataset?.del;
   if(!id) return;
-
   const cascade = confirm(
     "Supprimer ce problème de la bibliothèque ?\n\nOK = supprime aussi ce problème de toutes les visites."
   );
-
-  // Supprimer le problème de la liste principale
   state.problems = state.problems.filter(p => p.id !== id);
-
-  // Optionnel : supprimer aussi dans les visites
   if (cascade) {
     state.visits.forEach(v=>{
       if (Array.isArray(v.problems)) {
@@ -695,19 +724,12 @@ document.getElementById('problemsBody').addEventListener('click', (e)=>{
       }
     });
   }
-
   save();
   renderProblems();
-
-  // Met à jour la liste de la visite ouverte si besoin
-  if (typeof renderVisitProblems === 'function') {
-    const v = state.visits.find(x => x.id === (currentVisitId||''));
-    if (v) renderVisitProblems(v);
-  }
-
+  const v = state.visits.find(x => x.id === (currentVisitId||''));
+  if (v) renderVisitProblems(v);
   alert('Problème supprimé ✅' + (cascade ? ' (et retiré des visites)' : ''));
 });
-}
 $('#btnFilterProblems').onclick=renderProblems;
 renderProblems();
 
@@ -722,7 +744,6 @@ function openPickDialogFor(visitId){
 }
 function renderPickList(){
   const tb=$('#pickBody'); tb.innerHTML='';
-  // filtre rapide sur la bibliothèque
   const q=$('#pickSearch').value.trim().toLowerCase();
   const rec=$('#pickRec').checked;
   state.problems.filter(p=>{
@@ -762,7 +783,7 @@ $('#importJsonFile').addEventListener('change', e=>{
     try{
       const d=JSON.parse(r.result);
       if(d && d.visits && d.problems){
-        state=d; 
+        state=d;
         state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
         save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
         alert('Import OK ✅');
@@ -794,7 +815,7 @@ function renderPerf(){
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
 
-  // Pareto / pie depuis problems filtrés
+  // Pareto / camembert
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
   const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
   const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
@@ -811,7 +832,7 @@ function renderPerf(){
 }
 $('#btnPerfRefresh').onclick=renderPerf;
 
-/* ================================ init UI ================================= */
+/* ================================== init ================================== */
 refreshImmatList(); renderProblems(); renderVisitsList();
 </script>
 </body>
