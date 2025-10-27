@@ -707,13 +707,6 @@ document.getElementById('problemsBody').addEventListener('click', (e)=>{
 
   alert('Problème supprimé ✅' + (cascade ? ' (et retiré des visites)' : ''));
 });
-
-  const tbody=$('#problemsBody'); tbody.innerHTML='';
-  filterProblemsList(state.problems).forEach((p,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${i+1}</td><td>${p.title}</td><td>${p.cat}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td><td>${p.immat||'—'}</td><td>${p.check||'—'}</td><td>${new Date(p.ts).toLocaleString()}</td>`;
-    tbody.appendChild(tr);
-  });
 }
 $('#btnFilterProblems').onclick=renderProblems;
 renderProblems();
