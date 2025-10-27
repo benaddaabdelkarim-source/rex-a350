@@ -3,172 +3,78 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX Planning A350 – Check A (complet)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>REX A350 – Check A (simple & fiable)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-:root{
-  --bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--accent:#60a5fa;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--line:#27324a;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui,Segoe UI,Roboto,Ubuntu}
-h1{font-size:18px;margin:0;font-weight:600}
-header{display:flex;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--muted);position:sticky;top:0;background:rgba(15,23,42,.9);backdrop-filter:saturate(140%) blur(8px)}
-.tag{background:#0ea5e9; color:#00111b;border-radius:6px;padding:3px 8px;font-weight:600}
+:root{--bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--accent:#60a5fa;--line:#27324a;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 Inter,system-ui}
+h1{font-size:18px;margin:0;font-weight:700}
+header{display:flex;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--muted);position:sticky;top:0;background:rgba(15,23,42,.9);backdrop-filter:saturate(140%) blur(8px)}
+.tag{background:#0ea5e9;color:#00111b;border-radius:6px;padding:3px 8px;font-weight:700}
 .right{margin-left:auto}
-.btn{display:inline-flex;align-items:center;gap:8px;background:#0ea5e9;border:none;border-radius:10px;padding:8px 12px;color:#00111b;font-weight:700;cursor:pointer}
-.btn.outline{background:transparent;border:1px solid #334155;color:#e5e7eb}
-.btn.danger{background:#ef4444;color:#090b0f}
-.btn.muted{background:#1f2937;color:#cbd5e1}
-.btn.small{padding:5px 9px;border-radius:7px;font-size:12px}
-.btn:disabled{opacity:.5;pointer-events:none}
-.wrap{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 56px)}
-nav#tabs{border-right:1px solid var(--muted);padding:12px}
-nav#tabs .tabbtn{display:block;width:100%;text-align:left;background:#0b1220;border:1px solid #243044;padding:10px 12px;margin:8px 0;border-radius:10px;color:#e5e7eb;cursor:pointer}
-nav#tabs .tabbtn.active{background:#0ea5e9;color:#00111b;border-color:#0ea5e9}
+.btn{display:inline-flex;gap:8px;align-items:center;background:#0ea5e9;border:none;border-radius:10px;padding:8px 12px;color:#00111b;font-weight:700;cursor:pointer}
+.btn.small{padding:5px 9px;border-radius:8px;font-size:12px}
+.btn.ghost{background:transparent;border:1px solid #344055;color:#e5e7eb}
+.wrap{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 56px)}
+nav{border-right:1px solid var(--muted);padding:12px}
+nav .tab{display:block;width:100%;text-align:left;background:#0b1220;border:1px solid #243044;padding:10px 12px;margin:8px 0;border-radius:10px;color:#e5e7eb;cursor:pointer}
+nav .tab.active{background:#0ea5e9;color:#00111b;border-color:#0ea5e9}
 main{padding:16px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
 .grid{display:grid;gap:10px}
-.cols-2{grid-template-columns:1fr 1fr}
-.cols-3{grid-template-columns:repeat(3,1fr)}
-.cols-4{grid-template-columns:repeat(4,1fr)}
+.cols-2{grid-template-columns:1fr 1fr}.cols-3{grid-template-columns:repeat(3,1fr)}.cols-4{grid-template-columns:repeat(4,1fr)}
 label{font-size:12px;opacity:.8}
 input,select,textarea{width:100%;background:#0b1220;border:1px solid #334155;color:#e5e7eb;border-radius:10px;padding:10px}
-textarea{min-height:90px}
-table{width:100%;border-collapse:collapse}
-th,td{border-bottom:1px solid #223049;padding:8px;text-align:left}
-thead th{position:sticky;top:0;background:#0b1220;z-index:1}
-tfoot td{background:#0b1220;font-weight:700}
-.kpi{display:grid;gap:10px;grid-template-columns:repeat(4,1fr)}
-.kpi .card{background:#0b1220;border:1px solid #223049;border-radius:14px;padding:12px}
-.kpi .big{font-size:22px;font-weight:800}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Liberation Mono","Courier New",monospace}
-.badge{display:inline-flex;align-items:center;gap:6px;background:#0b1220;border:1px solid #223049;border-radius:999px;padding:4px 10px;font-size:12px}
-.ok{color:#22c55e}.warn{color:#f59e0b}.bad{color:#ef4444}
+table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #223049;padding:8px;text-align:left}
+thead th{position:sticky;top:0;background:#0b1220;z-index:1}tfoot td{background:#0b1220;font-weight:700}
+.badge{display:inline-flex;gap:6px;align-items:center;background:#0b1220;border:1px solid #223049;border-radius:999px;padding:4px 10px;font-size:12px}
 .small{opacity:.75}
-.table-mini td{border-bottom: none;padding:4px 8px}
-hr.sep{border:none;border-top:1px dashed #223049;margin:12px 0}
-.flex{display:flex;gap:10px;align-items:center}
-footer.note{font-size:12px;opacity:.7}
-.del{color:#ef4444;cursor:pointer}
+.delbtn{background:#1f2937;color:#e5e7eb;border:1px solid #334155;border-radius:8px;padding:4px 8px;cursor:pointer}
 </style>
 </head>
 <body>
 <header>
-  <h1>REX Planning A350 – <span class="tag">Check A</span></h1>
+  <h1>REX A350 – <span class="tag">Check A</span></h1>
   <span class="right"></span>
-  <button class="btn outline" id="exportJson">Exporter JSON</button>
-  <label class="btn muted" for="importJson">Importer JSON</label>
+  <button id="exportJson" class="btn ghost">Exporter JSON</button>
+  <label class="btn ghost" for="importJson">Importer JSON</label>
   <input id="importJson" type="file" accept="application/json" style="display:none">
 </header>
 
 <div class="wrap">
-  <nav id="tabs">
-    <button class="tabbtn active" data-tab="problems">📚 Problèmes</button>
-    <button class="tabbtn" data-tab="visit">🧰 Visite (Check A)</button>
-    <button class="tabbtn" data-tab="perf">📈 Performance REX</button>
-    <button class="tabbtn" data-tab="settings">⚙️ Paramètres</button>
+  <nav>
+    <button class="tab active" data-tab="visit">🧰 Visite</button>
+    <button class="tab" data-tab="perf">📈 Performance</button>
   </nav>
 
   <main>
-    <!-- PROBLEMES -->
-    <section id="problems" class="panel">
-      <h2>Librairie de problèmes</h2>
-      <div class="grid cols-3">
-        <div>
-          <label>Titre</label>
-          <input id="p_title" placeholder="ex. Cabine – PAX seat defect…">
-        </div>
-        <div>
-          <label>Catégorie</label>
-          <select id="p_cat">
-            <option>Cabine</option><option>Sous-traitance</option><option>Query/Prépa</option>
-            <option>Pièces/Log</option><option>Eff. & Planif</option><option>Documentation</option>
-            <option>Autres</option>
-          </select>
-        </div>
-        <div>
-          <label>Impact estimé (heures)</label>
-          <input id="p_impact" type="number" step="0.5" min="0" placeholder="0">
-        </div>
-      </div>
-      <div class="grid cols-2">
-        <div>
-          <label>Acteur/Responsable</label>
-          <input id="p_actor" placeholder="ex. Cabine, STT, Query, Planif…">
-        </div>
-        <div>
-          <label>Récurrent ?</label>
-          <div class="flex"><input id="p_rec" type="checkbox"><span class="small">Réapparait souvent</span></div>
-        </div>
-      </div>
-      <div>
-        <label>Description</label>
-        <textarea id="p_desc" placeholder="Contexte, symptômes, documents concernés…"></textarea>
-      </div>
-      <div class="flex">
-        <button class="btn" id="addProblem">+ Nouveau problème</button>
-        <span class="small">Astuce : tape <span class="mono">/</span> pour chercher</span>
-      </div>
-      <hr class="sep">
-      <table id="problemsTable">
-        <thead><tr><th>#</th><th>Problème</th><th>Cat.</th><th>Fréquence</th><th>Impact(h) médian</th><th>Dernière utilisation</th><th></th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <hr class="sep">
-      <div class="grid cols-2">
-        <div class="panel">
-          <h3>Pareto par catégorie</h3>
-          <table class="table-mini" id="paretoTable">
-            <thead><tr><th>Catégorie</th><th>Comptes</th><th>%</th><th>Cumul %</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="panel">
-          <h3>Répartition (camembert)</h3>
-          <canvas id="pieCat" height="140"></canvas>
-        </div>
-      </div>
-    </section>
-
     <!-- VISITE -->
-    <section id="visit" class="panel" style="display:none">
-      <h2>Créer une visite – Check A</h2>
-
+    <section id="visit" class="panel">
+      <h2>Visite (Check A)</h2>
       <div class="grid cols-4">
         <div>
           <label>Immatriculation</label>
-          <input list="immatList" id="v_immat" placeholder="ex. F-HUVK">
+          <input id="v_immat" list="immatList" placeholder="ex. F-HUVK">
           <datalist id="immatList">
             <option>F-HTYA</option><option>F-HTYB</option><option>F-HTYC</option><option>F-HTYD</option>
             <option>F-HTYE</option><option>F-HTYF</option><option>F-HTYG</option><option>F-HTYH</option>
             <option>F-HTYI</option><option>F-HTYJ</option><option>F-HTYK</option><option>F-HTYL</option>
-            <option>F-HTYM</option><option>F-HTYN</option><option>F-HTYO</option><option>F-HTYP</option>
-            <option>F-HTYQ</option><option>F-HTYR</option><option>F-HTYS</option><option>F-HTYT</option>
-            <option>F-HUVA</option><option>F-HUVB</option><option>F-HUVC</option><option>F-HUVD</option>
-            <option>F-HUVE</option><option>F-HUVF</option><option>F-HUVG</option><option>F-HUVH</option>
-            <option>F-HUVI</option><option>F-HUVJ</option><option>F-HUVK</option><option>F-HUVL</option>
-            <option>F-HUVM</option><option>F-HUVN</option><option>F-HUVO</option><option>F-HUVP</option>
-            <option>F-HUVQ</option><option>F-HUVR</option><option>F-HUVS</option><option>F-HUVT</option>
+            <option>F-HTYM</option><option>F-HTYN</option><option>F-HUVK</option><option>F-HUVL</option>
           </datalist>
         </div>
-        <div>
-          <label>Zone / Hangar</label>
-          <input id="v_zone" placeholder="ex. S36, S12…">
-        </div>
-        <div>
-          <label>Arrivée prévue</label>
-          <input id="v_arr_plan" type="datetime-local">
+        <div class="grid cols-2">
+          <div>
+            <label>Ajouter une immat</label>
+            <input id="newImmat" placeholder="ex. F-HUVP">
+          </div>
+          <div style="align-self:end">
+            <button class="btn small ghost" id="addImmat">+ Ajouter</button>
+          </div>
         </div>
         <div>
           <label>Arrivée réelle</label>
           <input id="v_arr_real" type="datetime-local">
-        </div>
-        <div>
-          <label>Départ prévu</label>
-          <input id="v_dep_plan" type="datetime-local">
         </div>
         <div>
           <label>Départ réel</label>
@@ -176,27 +82,26 @@ footer.note{font-size:12px;opacity:.7}
         </div>
         <div>
           <label>Nb lignes désassignées</label>
-          <input id="v_unassign" type="number" min="0" step="1" value="0">
+          <input id="v_unassign" type="number" min="0" value="0">
         </div>
         <div>
-          <label>Raison(s) désassignation</label>
+          <label>Raison(s)</label>
           <input id="v_unassign_reason" placeholder="ex. pièce manquante, outillage…">
         </div>
         <div>
           <label>Nb lignes fin de chantier</label>
-          <input id="v_eoj" type="number" min="0" step="1" value="0">
+          <input id="v_eoj" type="number" min="0" value="0">
         </div>
-        <div class="flex">
-          <label class="btn muted" for="xmlImport">Importer XML</label>
+        <div style="align-self:end">
+          <label class="btn ghost" for="xmlImport">Importer XML</label>
           <input id="xmlImport" type="file" accept=".xml" style="display:none">
-          <span class="small">ex. <span class="mono">F-HUVK A06-S36.xml</span></span>
         </div>
       </div>
 
       <div class="panel">
-        <div class="flex">
-          <h3 class="right">Effectifs par vacation</h3>
-          <button class="btn small" id="addVac">+ Ajouter une vacation</button>
+        <div style="display:flex;align-items:center;gap:10px">
+          <h3 style="margin:0">Effectifs par vacation</h3>
+          <button id="addVac" class="btn small">+ Ajouter une vacation</button>
         </div>
         <table id="vacTable">
           <thead>
@@ -217,64 +122,38 @@ footer.note{font-size:12px;opacity:.7}
             </tr>
           </tfoot>
         </table>
-        <div class="small flex">
+        <div class="small" style="display:flex;gap:10px;margin-top:8px">
           <span class="badge">Δ Effectif : <span id="deltaEff">0</span></span>
-          <span class="badge">Δ HMO : <span id="deltaHmo">0h</span></span>
+          <span class="badge">Δ HMO : <span id="deltaHmo">—</span></span>
         </div>
       </div>
 
-      <div class="flex">
-        <button class="btn" id="saveVisit">💾 Enregistrer la visite</button>
-        <span class="small">Les données sont mémorisées localement.</span>
+      <div style="display:flex;gap:10px">
+        <button id="saveVisit" class="btn">💾 Enregistrer</button>
+        <button id="clearForm" class="btn ghost">Effacer le formulaire</button>
       </div>
     </section>
 
     <!-- PERFORMANCE -->
     <section id="perf" class="panel" style="display:none">
-      <h2>Performance REX</h2>
-
+      <h2>Performance</h2>
       <div class="grid cols-4">
-        <div>
-          <label>Du</label>
-          <input id="f_from" type="date">
-        </div>
-        <div>
-          <label>Au</label>
-          <input id="f_to" type="date">
-        </div>
-        <div>
-          <label>Immat</label>
-          <input id="f_immat" list="immatList" placeholder="Tous">
-        </div>
-        <div>
-          <label>Zone / Hangar</label>
-          <input id="f_zone" placeholder="Tous">
-        </div>
+        <div><label>Du</label><input id="f_from" type="date"></div>
+        <div><label>Au</label><input id="f_to" type="date"></div>
+        <div><label>Immat</label><input id="f_immat" list="immatList" placeholder="Toutes"></div>
       </div>
 
-      <div class="kpi">
-        <div class="card"><div class="small">Écart Effectif (moy.)</div><div class="big" id="kpiEff">0%</div></div>
-        <div class="card"><div class="small">Écart HMO (moy.)</div><div class="big" id="kpiHmo">0%</div></div>
-        <div class="card"><div class="small">Respect planning (sortie)</div><div class="big" id="kpiOnTime">0%</div></div>
-        <div class="card"><div class="small">Retard moyen (arr./dep.)</div><div class="big" id="kpiDelay">0′ / 0′</div></div>
-      </div>
-
-      <div class="grid cols-2">
-        <div class="panel">
-          <h3>Pareto catégories</h3>
-          <canvas id="paretoCat" height="140"></canvas>
-        </div>
-        <div class="panel">
-          <h3>Répartition catégories</h3>
-          <canvas id="piePerf" height="140"></canvas>
-        </div>
+      <div class="grid cols-3" style="margin-top:10px">
+        <div class="panel"><div class="small">Écart Effectif (moy.)</div><div id="kpiEff" style="font-size:22px;font-weight:800">0%</div></div>
+        <div class="panel"><div class="small">Écart HMO (moy.)</div><div id="kpiHmo" style="font-size:22px;font-weight:800">0%</div></div>
+        <div class="panel"><div class="small">Respect planning (sortie à l’heure)</div><div id="kpiOnTime" style="font-size:22px;font-weight:800">0%</div></div>
       </div>
 
       <div class="panel">
-        <h3>Visites filtrées</h3>
+        <h3>Visites</h3>
         <table id="perfTable">
           <thead><tr>
-            <th>Date</th><th>Immat</th><th>Zone</th>
+            <th>Date</th><th>Immat</th>
             <th>Eff. dem.</th><th>Eff. réel</th><th>ΔEff</th>
             <th>HMO dem.</th><th>HMO réel</th><th>ΔHMO</th>
             <th>Arrivée</th><th>Départ</th>
@@ -283,111 +162,48 @@ footer.note{font-size:12px;opacity:.7}
         </table>
       </div>
     </section>
-
-    <!-- PARAMS -->
-    <section id="settings" class="panel" style="display:none">
-      <h2>Paramètres</h2>
-      <table class="table-mini">
-        <tr><td>Hypothèse durée par visite (h) si arrivée/départ manquants</td>
-          <td><input id="s_hours" type="number" min="1" step="0.5" value="10"></td></tr>
-      </table>
-      <footer class="note">Les paramètres et toutes les données sont stockés dans <b>localStorage</b>.</footer>
-    </section>
-
   </main>
 </div>
 
 <script>
-/* ------------------ utils ------------------ */
-const $ = (sel, ctx=document)=>ctx.querySelector(sel);
-const $$ = (sel, ctx=document)=>Array.from(ctx.querySelectorAll(sel));
-const fmtPct = x => isFinite(x)? (x*100).toFixed(0)+'%':'0%';
-const fmtH  = h => (Math.round(h*10)/10)+'h';
-const toDate = v => v? new Date(v):null;
-const minutes = (ms)=>Math.round(ms/60000);
+const $ = (s,ctx=document)=>ctx.querySelector(s);
+const $$=(s,ctx=document)=>Array.from(ctx.querySelectorAll(s));
 
-/* ------------------ state ------------------ */
-const db = {
-  problems: JSON.parse(localStorage.getItem('rex_problems')||'[]'),
-  visits  : JSON.parse(localStorage.getItem('rex_visits')||'[]'),
-  params  : JSON.parse(localStorage.getItem('rex_params')||'{"hours":10}')
-};
-const saveDB = ()=> {
-  localStorage.setItem('rex_problems', JSON.stringify(db.problems));
-  localStorage.setItem('rex_visits', JSON.stringify(db.visits));
-  localStorage.setItem('rex_params', JSON.stringify(db.params));
-};
-
-/* ------------------ tabs ------------------ */
-$$('#tabs .tabbtn').forEach(b=>{
+/* ------------ Tabs ------------ */
+$$('nav .tab').forEach(b=>{
   b.onclick=()=>{
-    $$('#tabs .tabbtn').forEach(x=>x.classList.remove('active'));
+    $$('nav .tab').forEach(x=>x.classList.remove('active'));
     b.classList.add('active');
-    ['problems','visit','perf','settings'].forEach(id=>$('#'+id).style.display='none');
+    ['visit','perf'].forEach(id=>$('#'+id).style.display='none');
     $('#'+b.dataset.tab).style.display='';
     if(b.dataset.tab==='perf') renderPerf();
-    if(b.dataset.tab==='problems') renderProblems();
-  }
+  };
 });
 
-/* ------------------ export/import json ------------------ */
-$('#exportJson').onclick=()=>{
-  const blob = new Blob([JSON.stringify(db,null,2)], {type:'application/json'});
-  const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'rex-data.json'});
-  a.click(); URL.revokeObjectURL(a.href);
+/* ------------ Data store ------------ */
+const db = {
+  visits : JSON.parse(localStorage.getItem('rex_min_visits')||'[]')
 };
-$('#importJson').onchange=e=>{
-  const f=e.target.files[0]; if(!f) return;
-  f.text().then(t=>{const d=JSON.parse(t); Object.assign(db,d); saveDB(); renderProblems(); alert('Import OK');});
+const save = ()=>localStorage.setItem('rex_min_visits',JSON.stringify(db.visits));
+
+/* ------------ Immat add ------------ */
+$('#addImmat').onclick=()=>{
+  const v=$('#newImmat').value.trim().toUpperCase();
+  if(!v) return;
+  const dl=$('#immatList');
+  if(!$$('option',dl).some(o=>o.value===v)){
+    const op=document.createElement('option'); op.value=v; dl.appendChild(op);
+  }
+  $('#v_immat').value=v; $('#newImmat').value='';
 };
 
-/* ------------------ PROBLEMES ------------------ */
-function renderProblems(){
-  const body = $('#problemsTable tbody'); body.innerHTML='';
-  db.problems.forEach((p,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${i+1}</td><td>${p.title}</td><td>${p.cat}</td>
-      <td>${p.freq||0}</td><td>${p.impact||0}</td><td>${p.last?new Date(p.last).toLocaleString():'—'}</td>
-      <td><span class="del" data-i="${i}">Suppr.</span></td>`;
-    body.appendChild(tr);
-  });
-  body.onclick=e=>{
-    if(e.target.classList.contains('del')){
-      db.problems.splice(+e.target.dataset.i,1); saveDB(); renderProblems(); renderPerf();
-    }
-  };
-  // Pareto/pie depuis problèmes
-  const cats = {};
-  db.problems.forEach(p=>cats[p.cat]=(cats[p.cat]||0)+1);
-  const total = Object.values(cats).reduce((a,b)=>a+b,0)||1;
-  const rows = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  const tb = $('#paretoTable tbody'); tb.innerHTML='';
-  let acc=0;
-  rows.forEach(([c,n])=>{
-    acc += n/total;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${c}</td><td>${n}</td><td>${fmtPct(n/total)}</td><td>${fmtPct(acc)}</td>`;
-    tb.appendChild(tr);
-  });
-  drawPie('pieCat', rows.map(r=>r[1]), rows.map(r=>r[0]));
-}
-$('#addProblem').onclick=()=>{
-  const p={
-    title:$('#p_title').value.trim()||'Sans titre',
-    cat:$('#p_cat').value, impact:+$('#p_impact').value||0,
-    actor:$('#p_actor').value, rec:$('#p_rec').checked, desc:$('#p_desc').value,
-    freq:0, last:null
-  };
-  db.problems.push(p); saveDB(); renderProblems();
-  ['p_title','p_impact','p_actor','p_desc'].forEach(id=>$('#'+id).value=''); $('#p_rec').checked=false;
-};
-renderProblems();
+/* ------------ Vacations table ------------ */
+const vacBody = $('#vacTable tbody');
 
-/* ------------------ VISITE (vacations) ------------------ */
-const vacTbody = $('#vacTable tbody');
-function vacRow(name='Matin'){
+function rowVac(name='Matin'){
   const tr=document.createElement('tr');
-  tr.innerHTML=`<td><input class="vac_name" value="${name}"></td>
+  tr.innerHTML=`
+    <td><input class="vac_name" value="${name}"></td>
     <td><input class="cme_dem" type="number" min="0" step="1" value="0"></td>
     <td><input class="eir_dem" type="number" min="0" step="1" value="0"></td>
     <td><input class="lead_dem" type="number" min="0" step="1" value="0"></td>
@@ -396,169 +212,123 @@ function vacRow(name='Matin'){
     <td><input class="eir_real" type="number" min="0" step="1" value="0"></td>
     <td><input class="lead_real" type="number" min="0" step="1" value="0"></td>
     <td class="real_tot">0</td>
-    <td><button class="btn small muted delrow">Retirer</button></td>`;
+    <td><button class="delbtn">Retirer</button></td>`;
   return tr;
 }
-function seedVac(){ vacTbody.innerHTML=''; ['Matin','Soir','Nuit'].forEach(n=>vacTbody.appendChild(vacRow(n))); recalcVac(); }
+function seedVac(){ vacBody.innerHTML=''; ['Matin','Soir','Nuit'].forEach(n=>vacBody.appendChild(rowVac(n))); recalc(); }
 seedVac();
 
-$('#addVac').onclick=()=>{ vacTbody.appendChild(vacRow('Vac.')); };
-vacTbody.addEventListener('input', e=>{ if(e.target.matches('input')) recalcVac(); });
-vacTbody.addEventListener('click', e=>{
-  if(e.target.classList.contains('delrow')){ e.target.closest('tr').remove(); recalcVac(); }
+$('#addVac').onclick=()=>{ vacBody.appendChild(rowVac('Vac.')); };
+
+vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalc(); });
+vacBody.addEventListener('click', e=>{
+  if(e.target.classList.contains('delbtn')){ e.target.closest('tr').remove(); recalc(); }
 });
 
-function recalcVac(){
+/* ------------ Calculs ------------ */
+function recalc(){
   let tg={cme_dem:0,eir_dem:0,lead_dem:0,dem:0,cme_real:0,eir_real:0,lead_real:0,real:0};
   $$('#vacTable tbody tr').forEach(tr=>{
-    const n = +$('.cme_dem',tr).value + +$('.eir_dem',tr).value + +$('.lead_dem',tr).value;
+    const d = +$('.cme_dem',tr).value + +$('.eir_dem',tr).value + +$('.lead_dem',tr).value;
     const r = +$('.cme_real',tr).value + +$('.eir_real',tr).value + +$('.lead_real',tr).value;
-    $('.dem_tot',tr).textContent=n; $('.real_tot',tr).textContent=r;
-    tg.cme_dem += +$('.cme_dem',tr).value;
-    tg.eir_dem += +$('.eir_dem',tr).value;
-    tg.lead_dem += +$('.lead_dem',tr).value;
-    tg.dem += n;
-    tg.cme_real += +$('.cme_real',tr).value;
-    tg.eir_real += +$('.eir_real',tr).value;
-    tg.lead_real += +$('.lead_real',tr).value;
-    tg.real += r;
+    $('.dem_tot',tr).textContent=d; $('.real_tot',tr).textContent=r;
+    tg.cme_dem+= +$('.cme_dem',tr).value; tg.eir_dem+= +$('.eir_dem',tr).value; tg.lead_dem+= +$('.lead_dem',tr).value; tg.dem+=d;
+    tg.cme_real+= +$('.cme_real',tr).value; tg.eir_real+= +$('.eir_real',tr).value; tg.lead_real+= +$('.lead_real',tr).value; tg.real+=r;
   });
-  $('#tg_cme_dem').textContent=tg.cme_dem;
-  $('#tg_eir_dem').textContent=tg.eir_dem;
-  $('#tg_lead_dem').textContent=tg.lead_dem;
-  $('#tg_dem').textContent=tg.dem;
-  $('#tg_cme_real').textContent=tg.cme_real;
-  $('#tg_eir_real').textContent=tg.eir_real;
-  $('#tg_lead_real').textContent=tg.lead_real;
-  $('#tg_real').textContent=tg.real;
+  $('#tg_cme_dem').textContent=tg.cme_dem; $('#tg_eir_dem').textContent=tg.eir_dem; $('#tg_lead_dem').textContent=tg.lead_dem; $('#tg_dem').textContent=tg.dem;
+  $('#tg_cme_real').textContent=tg.cme_real; $('#tg_eir_real').textContent=tg.eir_real; $('#tg_lead_real').textContent=tg.lead_real; $('#tg_real').textContent=tg.real;
+  $('#deltaEff').textContent = tg.real - tg.dem;
 
-  // deltas
-  const arrR = toDate($('#v_arr_real').value), depR = toDate($('#v_dep_real').value);
-  let hours = db.params.hours;
-  if(arrR && depR && depR>arrR) hours = (depR-arrR)/3600000;
-  const Hdem = tg.dem * hours, Hreal = tg.real * hours;
-  $('#deltaEff').textContent = (tg.real - tg.dem);
-  $('#deltaHmo').textContent = fmtH(Hreal - Hdem);
+  const arr = $('#v_arr_real').value? new Date($('#v_arr_real').value):null;
+  const dep = $('#v_dep_real').value? new Date($('#v_dep_real').value):null;
+  if(arr && dep && dep>arr){
+    const hours=(dep-arr)/3600000;
+    const hDem=tg.dem*hours, hReal=tg.real*hours;
+    $('#deltaHmo').textContent=((hReal-hDem)>=0?'+':'')+ (Math.round((hReal-hDem)*10)/10)+'h';
+  }else{
+    $('#deltaHmo').textContent='—';
+  }
 }
-['v_arr_real','v_dep_real'].forEach(id=>$('#'+id).addEventListener('input',recalcVac));
+['v_arr_real','v_dep_real'].forEach(id=>$('#'+id).addEventListener('input',recalc));
 
-/* Import XML “lightweight”: file name -> immat + zone ; try date extraction */
+/* ------------ XML (nom de fichier) ------------ */
 $('#xmlImport').onchange=e=>{
   const f=e.target.files[0]; if(!f) return;
   const name=f.name;
-  const mat = (name.match(/F-?H.../i)||[])[0]?.toUpperCase().replace(/(F)(H)/,'F-H')||'';
-  if(mat) $('#v_immat').value=mat;
-  const z = (name.match(/S\d+/i)||[])[0]?.toUpperCase(); if(z) $('#v_zone').value=z;
+  const im=(name.match(/F-?H.../i)||[])[0]; if(im) $('#v_immat').value=im.toUpperCase().replace(/(F)(H)/,'F-H');
   f.text().then(t=>{
-    const stamp = (t.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/)||[])[0];
-    if(stamp && !$('#v_arr_real').value) $('#v_arr_real').value = stamp.slice(0,16);
-    alert('XML importé (immat/zone détectés). Complète les champs si besoin.');
+    const ts=(t.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/)||[])[0];
+    if(ts && !$('#v_arr_real').value) $('#v_arr_real').value=ts.slice(0,16);
+    alert('XML importé (immat détectée si possible).');
   });
 };
 
-/* Save visit */
+/* ------------ Enregistrer / Effacer ------------ */
 $('#saveVisit').onclick=()=>{
   const vac = $$('#vacTable tbody tr').map(tr=>({
-    name:$('.vac_name',tr).value.trim()||'Vac.',
-    cmeDem:+$('.cme_dem',tr).value||0,
-    eirDem:+$('.eir_dem',tr).value||0,
-    leadDem:+$('.lead_dem',tr).value||0,
-    cmeReal:+$('.cme_real',tr).value||0,
-    eirReal:+$('.eir_real',tr).value||0,
-    leadReal:+$('.lead_real',tr).value||0
+    n:$('.vac_name',tr).value.trim()||'Vac.',
+    cd:+$('.cme_dem',tr).value||0, ed:+$('.eir_dem',tr).value||0, ld:+$('.lead_dem',tr).value||0,
+    cr:+$('.cme_real',tr).value||0, er:+$('.eir_real',tr).value||0, lr:+$('.lead_real',tr).value||0
   }));
-  const sum = vac.reduce((a,v)=>({
-    dem:a.dem+v.cmeDem+v.eirDem+v.leadDem,
-    real:a.real+v.cmeReal+v.eirReal+v.leadReal
-  }),{dem:0,real:0});
-  const arrR=toDate($('#v_arr_real').value), depR=toDate($('#v_dep_real').value);
-  let hours=db.params.hours; if(arrR&&depR&&depR>arrR) hours=(depR-arrR)/3600000;
+  const sum = vac.reduce((a,v)=>({dem:a.dem+v.cd+v.ed+v.ld, real:a.real+v.cr+v.er+v.lr}),{dem:0,real:0});
+  const arr=$('#v_arr_real').value? new Date($('#v_arr_real').value):null;
+  const dep=$('#v_dep_real').value? new Date($('#v_dep_real').value):null;
+  let hDem=0,hReal=0;
+  if(arr&&dep&&dep>arr){ const h=(dep-arr)/3600000; hDem=sum.dem*h; hReal=sum.real*h; }
   const visit={
-    id:Date.now(),
-    immat:$('#v_immat').value.trim(),
-    zone:$('#v_zone').value.trim(),
-    arrPlan:$('#v_arr_plan').value, arrReal:$('#v_arr_real').value,
-    depPlan:$('#v_dep_plan').value, depReal:$('#v_dep_real').value,
-    unassign:+$('#v_unassign').value||0, unassignReason:$('#v_unassign_reason').value,
-    endOfJob:+$('#v_eoj').value||0,
-    vac,
-    effDem:sum.dem, effReal:sum.real,
-    hmoDem:sum.dem*hours, hmoReal:sum.real*hours,
+    id:Date.now(), immat:($('#v_immat').value||'').toUpperCase(),
+    arrReal:$('#v_arr_real').value, depReal:$('#v_dep_real').value,
+    unassign:+$('#v_unassign').value||0, reason:$('#v_unassign_reason').value, eoj:+$('#v_eoj').value||0,
+    vac, effDem:sum.dem, effReal:sum.real, hmoDem:hDem, hmoReal:hReal,
     createdAt:new Date().toISOString()
   };
-  db.visits.push(visit); saveDB();
-  // incrémente fréquences côté problèmes (pour alimenter Pareto de perf)
-  if(db.problems.length) db.problems.forEach(p=>{ p.freq=(p.freq||0)+0; });
-  alert('Visite enregistrée');
-  renderPerf();
+  db.visits.push(visit); save(); alert('Visite enregistrée'); renderPerf();
+};
+$('#clearForm').onclick=()=>{ seedVac(); ['v_immat','v_arr_real','v_dep_real','v_unassign_reason','newImmat'].forEach(id=>$('#'+id).value=''); $('#v_unassign').value=0; $('#v_eoj').value=0; recalc(); };
+
+/* ------------ Export / Import JSON ------------ */
+$('#exportJson').onclick=()=>{
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:'rex-data.json'}); a.click(); URL.revokeObjectURL(a.href);
+};
+$('#importJson').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  f.text().then(t=>{ const d=JSON.parse(t); if(d.visits) db.visits=d.visits; save(); alert('Import OK'); renderPerf(); });
 };
 
-/* ------------------ PERFORMANCE ------------------ */
-function filteredVisits(){
-  const from = $('#f_from').value? new Date($('#f_from').value): new Date('2000-01-01');
-  const to   = $('#f_to').value? new Date($('#f_to').value): new Date('2100-01-01');
-  to.setHours(23,59,59,999);
-  const im = $('#f_immat').value.trim().toUpperCase();
-  const z  = $('#f_zone').value.trim().toUpperCase();
-  return db.visits.filter(v=>{
-    const d = v.arrReal? new Date(v.arrReal): (v.createdAt?new Date(v.createdAt):new Date());
-    if(d<from || d>to) return false;
-    if(im && v.immat.toUpperCase()!=im) return false;
-    if(z && (v.zone||'').toUpperCase()!=z) return false;
-    return true;
-  });
+/* ------------ Performance ------------ */
+function rangeFilter(v){
+  const from=$('#f_from').value? new Date($('#f_from').value): new Date('2000-01-01');
+  const to  =$('#f_to').value? new Date($('#f_to').value): new Date('2100-01-01'); to.setHours(23,59,59,999);
+  const im=$('#f_immat').value.trim().toUpperCase();
+  const d=v.arrReal? new Date(v.arrReal):new Date(v.createdAt);
+  if(d<from||d>to) return false;
+  if(im && v.immat!==im) return false;
+  return true;
 }
-let charts={};
-function drawBar(id,data,labels){
-  charts[id]?.destroy();
-  charts[id]=new Chart($('#'+id),{type:'bar',data:{labels,datasets:[{data,borderWidth:1}]},
-    options:{plugins:{legend:{display:false}}}});
-}
-function drawPie(id,data,labels){
-  charts[id]?.destroy();
-  charts[id]=new Chart($('#'+id),{type:'pie',data:{labels,datasets:[{data}]},
-    options:{plugins:{legend:{position:'bottom'}}}});
-}
+function fmtH(x){return (Math.round(x*10)/10)+'h';}
+function pct(a,b){return b? ((a-b)/b):0;}
 function renderPerf(){
-  // KPIs à partir des visites filtrées
-  const vs = filteredVisits();
-  const tb = $('#perfTable tbody'); tb.innerHTML='';
-  let sumEffDem=0,sumEffReal=0,sumHdem=0,sumHreal=0,onTime=0, cnt=0, arrTotMin=0, depTotMin=0;
+  const vs=db.visits.filter(rangeFilter);
+  const tb=$('#perfTable tbody'); tb.innerHTML='';
+  let eD=0,eR=0,hD=0,hR=0,on=0,c=0;
   vs.forEach(v=>{
-    sumEffDem+=v.effDem; sumEffReal+=v.effReal; sumHdem+=v.hmoDem; sumHreal+=v.hmoReal;
-    const arr = v.arrReal && v.arrPlan ? minutes(new Date(v.arrReal)-new Date(v.arrPlan)) : 0;
-    const dep = v.depReal && v.depPlan ? minutes(new Date(v.depReal)-new Date(v.depPlan)) : 0;
-    if(v.depReal && v.depPlan && new Date(v.depReal) <= new Date(v.depPlan)) onTime++;
-    cnt++; arrTotMin+=arr; depTotMin+=dep;
+    eD+=v.effDem; eR+=v.effReal; hD+=v.hmoDem; hR+=v.hmoReal; c++;
+    if(v.depReal && v.arrReal && v.depReal>=v.arrReal) on++; // sortie “valide” simple
+    const d=v.arrReal? new Date(v.arrReal): new Date(v.createdAt);
     const tr=document.createElement('tr');
-    const d = v.arrReal ? new Date(v.arrReal) : new Date(v.createdAt);
-    tr.innerHTML=`<td>${d.toLocaleDateString()}</td><td>${v.immat||'—'}</td><td>${v.zone||'—'}</td>
+    tr.innerHTML=`<td>${d.toLocaleDateString()}</td><td>${v.immat||'—'}</td>
       <td>${v.effDem}</td><td>${v.effReal}</td><td>${v.effReal-v.effDem}</td>
-      <td>${fmtH(v.hmoDem)}</td><td>${fmtH(v.hmoReal)}</td><td>${fmtH(v.hmoReal-v.hmoDem)}</td>
-      <td>${v.arrPlan?new Date(v.arrPlan).toLocaleTimeString():'—'} → ${v.arrReal?new Date(v.arrReal).toLocaleTimeString():'—'}</td>
-      <td>${v.depPlan?new Date(v.depPlan).toLocaleTimeString():'—'} → ${v.depReal?new Date(v.depReal).toLocaleTimeString():'—'}</td>`;
+      <td>${v.hmoDem?fmtH(v.hmoDem):'—'}</td><td>${v.hmoReal?fmtH(v.hmoReal):'—'}</td><td>${(v.hmoDem||v.hmoReal)?fmtH((v.hmoReal||0)-(v.hmoDem||0)):'—'}</td>
+      <td>${v.arrReal?new Date(v.arrReal).toLocaleTimeString():'—'}</td><td>${v.depReal?new Date(v.depReal).toLocaleTimeString():'—'}</td>`;
     tb.appendChild(tr);
   });
-  const effPct = sumEffDem? (sumEffReal-sumEffDem)/sumEffDem : 0;
-  const hmoPct = sumHdem? (sumHreal-sumHdem)/sumHdem : 0;
-  $('#kpiEff').textContent=fmtPct(effPct);
-  $('#kpiHmo').textContent=fmtPct(hmoPct);
-  $('#kpiOnTime').textContent=fmtPct(cnt? onTime/cnt:0);
-  $('#kpiDelay').textContent=`${cnt? Math.round(arrTotMin/cnt):0}′ / ${cnt? Math.round(depTotMin/cnt):0}′`;
-
-  // Pareto depuis PROBLEMES
-  const cats = {};
-  db.problems.forEach(p=>cats[p.cat]=(cats[p.cat]||0)+(p.freq||1));
-  const entries = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  drawBar('paretoCat', entries.map(e=>e[1]), entries.map(e=>e[0]));
-  drawPie('piePerf', entries.map(e=>e[1]), entries.map(e=>e[0]));
+  $('#kpiEff').textContent = (eD? Math.round(pct(eR,eD)*100):0)+'%';
+  $('#kpiHmo').textContent = (hD? Math.round(pct(hR,hD)*100):0)+'%';
+  $('#kpiOnTime').textContent= (c? Math.round(on/c*100):0)+'%';
 }
-['f_from','f_to','f_immat','f_zone'].forEach(id=>$('#'+id).addEventListener('input',renderPerf));
+['f_from','f_to','f_immat'].forEach(id=>$('#'+id).addEventListener('input',renderPerf));
 renderPerf();
-
-/* ------------------ Paramètres ------------------ */
-$('#s_hours').value = db.params.hours||10;
-$('#s_hours').oninput = e=>{ db.params.hours=+e.target.value||10; saveDB(); recalcVac(); renderPerf(); };
 </script>
 </body>
 </html>
