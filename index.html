@@ -513,12 +513,33 @@ $('#trfxChips').addEventListener('click',(e)=>{
   renderTrfxChips(v.trfx||[]);
 });
 
-/* ============================ vacs (table effectifs) ====================== */
-const vacBody=$('#vacBody');
-function vacRow(name){
+<!-- ============================ vacs (table effectifs) ====================== -->
+<script>
+const vacBody = document.getElementById('vacBody');
+
+const SHIFT_CYCLE = ['matin','soir','nuit'];
+const nextShift = s => SHIFT_CYCLE[(SHIFT_CYCLE.indexOf(s)+1)%SHIFT_CYCLE.length];
+
+function makeShiftSelect(value='matin'){
+  const sel = document.createElement('select');
+  sel.className = 'shift';
+  ['matin','soir','nuit'].forEach(opt=>{
+    const o=document.createElement('option');
+    o.value=opt; o.textContent=opt.charAt(0).toUpperCase()+opt.slice(1);
+    if(opt===value) o.selected=true;
+    sel.appendChild(o);
+  });
+  return sel;
+}
+
+function formatVacName(idx, shift){
+  return `Vac ${idx+1} ${shift}`;
+}
+
+function vacRow(shift='matin'){
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><input class="vacName" value="${name}"></td>
+    <td class="vacTitle"></td>
     <td><input class="cmeD clean-zeros" type="number" min="0" placeholder="0"></td>
     <td><input class="eirD clean-zeros" type="number" min="0" placeholder="0"></td>
     <td><input class="leadD clean-zeros" type="number" min="0" placeholder="0"></td>
@@ -529,35 +550,103 @@ function vacRow(name){
     <td class="realTot">0</td>
     <td><button class="btn bad delVac">Retirer</button></td>`;
   vacBody.appendChild(tr);
+
+  // insérer sélecteur shift au début dans la cellule titre
+  const titleCell = tr.querySelector('.vacTitle');
+  const wrap = document.createElement('div');
+  wrap.className = 'row';
+  const sel = makeShiftSelect(shift);
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'vacName';
+  wrap.appendChild(sel);
+  wrap.appendChild(nameSpan);
+  titleCell.appendChild(wrap);
+
+  setupCleanZeros();
+  return tr;
 }
+
+/* Renumérote toutes les lignes et met à jour le libellé “Vac N {shift}” */
+function renumberVacNames(){
+  const rows = Array.from(vacBody.querySelectorAll('tr'));
+  rows.forEach((tr,idx)=>{
+    const sel = tr.querySelector('select.shift');
+    const shift = sel?.value || 'matin';
+    tr.querySelector('.vacName').textContent = formatVacName(idx, shift);
+  });
+}
+
+/* À partir d’un index donné, impose la succession des shifts en cycle */
+function cascadeShiftsFrom(startIdx){
+  const rows = Array.from(vacBody.querySelectorAll('tr'));
+  if(rows.length===0) return;
+  // point de départ = shift de startIdx (ou matin si absent)
+  let curShift = rows[startIdx]?.querySelector('select.shift')?.value || 'matin';
+  // Les suivants suivent le cycle
+  for(let i=startIdx+1; i<rows.length; i++){
+    curShift = nextShift(curShift);
+    const sel = rows[i].querySelector('select.shift');
+    if(sel.value !== curShift){
+      sel.value = curShift;
+    }
+  }
+  renumberVacNames();
+}
+
+/* Graine initiale : Matin / Soir / Nuit */
 function seedVacs(){
   vacBody.innerHTML='';
-  const names=['Vac 1 matin','Vac 2 soir','Vac 3 nuit'];
-  names.forEach(vacRow);
-  setupCleanZeros();
+  ['matin','soir','nuit'].forEach(s=>vacRow(s));
+  renumberVacNames();
   recalcTotals();
 }
-seedVacs();
 
-function nextVacName(){
-  const rows=$$('#vacBody tr');
-  const n=rows.length+1;
-  // cycle matin -> soir -> nuit
-  const cycle=['matin','soir','nuit'];
-  const idx=(n-1)%3;
-  return `Vac ${n} ${cycle[idx]}`;
+/* Nom/shift de la prochaine vac à l’ajout : on prend le shift suivant du dernier */
+function nextVacShift(){
+  const rows = Array.from(vacBody.querySelectorAll('tr'));
+  if(rows.length===0) return 'matin';
+  const lastShift = rows[rows.length-1].querySelector('select.shift').value || 'matin';
+  return nextShift(lastShift);
 }
-$('#btnAddVac').onclick=()=>{
-  vacRow(nextVacName());
-  setupCleanZeros();
+
+document.getElementById('btnAddVac').onclick=()=>{
+  vacRow(nextVacShift());
+  renumberVacNames();
   recalcTotals();
 };
-vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
-vacBody.addEventListener('click', e=>{
-  if(e.target.classList.contains('delVac')){
-    if(confirm('Retirer cette vac ?')){ e.target.closest('tr').remove(); recalcTotals(); }
+
+/* Écouteurs */
+vacBody.addEventListener('input', e=>{
+  if(e.target.tagName==='INPUT') recalcTotals();
+});
+
+vacBody.addEventListener('change', e=>{
+  // changement du type de vac (matin/soir/nuit)
+  if(e.target.classList.contains('shift')){
+    const tr = e.target.closest('tr');
+    const rowIdx = Array.from(vacBody.querySelectorAll('tr')).indexOf(tr);
+    // renomme cette ligne et cascade sur les suivantes
+    renumberVacNames();
+    cascadeShiftsFrom(rowIdx);
   }
 });
+
+vacBody.addEventListener('click', e=>{
+  if(e.target.classList.contains('delVac')){
+    if(confirm('Retirer cette vac ?')){
+      e.target.closest('tr').remove();
+      // après suppression, on recalcule la cascade en partant de la première
+      if(vacBody.querySelectorAll('tr').length>0){
+        cascadeShiftsFrom(0);
+      }
+      recalcTotals();
+    }
+  }
+});
+
+/* Init */
+seedVacs();
+</script>
 
 /* ========================== calculs (totaux & KPI) ======================== */
 function recalcTotals(){
