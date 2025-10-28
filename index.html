@@ -13,11 +13,12 @@
   --panel:#ffffff;        /* cartes/panneaux blancs */
   --muted:#eef3fb;        /* fonds secondaires */
   --text:#0b1220;         /* texte principal sombre */
-  --accent:#2563eb;       /* accent (bleu prévu) */
-  --real:#16a34a;         /* vert réel */
+  --accent:#2563eb;       /* accent (bleu) */
   --ok:#16a34a;           /* vert ok */
   --bad:#dc2626;          /* rouge */
   --line:#d1d9e6;         /* bordures */
+  --prev:#1d4ed8;         /* bleu prévu */
+  --real:#047857;         /* vert réel */
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -37,12 +38,14 @@ h2{margin:0 0 8px;font-size:16px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .grid{display:grid;gap:12px}
 .cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 input,select,textarea{
   width:100%;background:#fff;border:1px solid var(--line);color:var(--text);
   border-radius:10px;padding:10px
 }
 input[type="number"]{text-align:right}
+input::placeholder{color:#94a3b8}
 .btn{
   border:1px solid var(--line);background:#f5f8ff;color:var(--text);
   border-radius:10px;padding:8px 12px;cursor:pointer
@@ -66,19 +69,13 @@ dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800
 dialog .head{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
 dialog .body{padding:12px 14px}
 
+/* pastilles couleur prévus / réels */
+.label-prev{font-weight:600;color:var(--prev)}
+.label-real{font-weight:600;color:var(--real)}
+
 /* Camembert responsive */
 .chart-wrap{height:320px; max-height:50vh;}
 .chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
-
-/* Codes couleur PREVU / REEL */
-label .flag{font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid}
-.flag.prev{color:#1e3a8a;border-color:#bfdbfe;background:#e7efff}
-.flag.real{color:#065f46;border-color:#b7e3c6;background:#e8f7ee}
-input.prev, select.prev{border-color:#bfdbfe}
-input.real, select.real{border-color:#b7e3c6}
-
-/* Placeholder “0” qui disparaît au focus (numériques) */
-input[type="number"].auto-zero:focus{caret-color:auto}
 </style>
 </head>
 <body>
@@ -116,7 +113,7 @@ input[type="number"].auto-zero:focus{caret-color:auto}
           <table id="visitsTable">
             <thead>
               <tr>
-                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>APRS signé (prévu)</th>
+                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>APRS signé (prév.)</th>
                 <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th><th>Actions</th>
               </tr>
             </thead>
@@ -128,16 +125,23 @@ input[type="number"].auto-zero:focus{caret-color:auto}
       <div class="card">
         <h2>Informations visite</h2>
 
-        <!-- Ligne 1 : Immat + Type de check (2 colonnes) -->
-        <div class="grid cols-2">
+        <!-- Ligne 1 : Immat / Add Immat / Type -->
+        <div class="grid cols-3">
           <div>
             <label>Immatriculation</label>
             <input id="vImmat" list="immatList" placeholder="ex. F-HUVK">
             <datalist id="immatList"></datalist>
           </div>
+          <div class="row" style="align-items:end">
+            <div style="flex:1">
+              <label>Ajouter une immat</label>
+              <input id="vImmatAdd" placeholder="ex. F-HUVP">
+            </div>
+            <button id="btnAddImmat" class="btn">+ Ajouter</button>
+          </div>
           <div>
             <label>Type de check</label>
-            <select id="vCheck" class="prev">
+            <select id="vCheck">
               <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
               <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
@@ -145,71 +149,62 @@ input[type="number"].auto-zero:focus{caret-color:auto}
           </div>
         </div>
 
-        <!-- Ajout immat (pleine largeur) -->
-        <div class="row" style="align-items:end;margin-top:8px">
-          <div style="flex:1">
-            <label>Ajouter une immat</label>
-            <input id="vImmatAdd" placeholder="ex. F-HUVP">
-          </div>
-          <button id="btnAddImmat" class="btn">+ Ajouter</button>
-        </div>
-
-        <!-- Ligne 2 : Arrivées (2 colonnes) -->
+        <!-- Ligne 2 : Arrivée prévue / Arrivée réelle -->
         <div class="grid cols-2" style="margin-top:8px">
           <div>
-            <label><span class="flag prev">Arrivée prévue</span></label>
-            <input id="vArrPrev" class="prev" type="datetime-local">
+            <label class="label-prev">Arrivée prévue</label>
+            <input id="vArrPrev" type="datetime-local">
           </div>
           <div>
-            <label><span class="flag real">Arrivée réelle</span></label>
-            <input id="vArrReal" class="real" type="datetime-local">
+            <label class="label-real">Arrivée réelle</label>
+            <input id="vArrReal" type="datetime-local">
           </div>
         </div>
 
-        <!-- Ligne 3 : APRS signé (2 colonnes) -->
+        <!-- Ligne 3 : APRS signé (prévu) / APRS signé (réel) -->
         <div class="grid cols-2" style="margin-top:8px">
           <div>
-            <label><span class="flag prev">APRS signé (prévu)</span></label>
-            <input id="vDepPrev" class="prev" type="datetime-local">
+            <label class="label-prev">APRS signé (prévu)</label>
+            <input id="vDepPrev" type="datetime-local">
           </div>
           <div>
-            <label><span class="flag real">APRS signé (réel)</span></label>
-            <input id="vDepReal" class="real" type="datetime-local">
+            <label class="label-real">APRS signé (réel)</label>
+            <input id="vDepReal" type="datetime-local">
           </div>
         </div>
 
-        <!-- Ligne 4 : HMO (2 colonnes alignées, plus de Δ ici) -->
+        <!-- Ligne 4 : HMO plan / HMO réel -->
         <div class="grid cols-2" style="margin-top:8px">
           <div>
-            <label><span class="flag prev">HMO prévue (h)</span></label>
-            <input id="vHmoPlan" class="prev auto-zero" type="number" min="0" step="0.5" value="0">
+            <label class="label-prev">HMO prévue (h)</label>
+            <input class="auto-zero" id="vHmoPlan" type="number" min="0" step="0.5" value="0">
           </div>
           <div>
-            <label><span class="flag real">HMO réelle (h)</span></label>
-            <input id="vHmoReal" class="real auto-zero" type="number" min="0" step="0.5" value="0">
+            <label class="label-real">HMO réelle (h)</label>
+            <input class="auto-zero" id="vHmoReal" type="number" min="0" step="0.5" value="0">
           </div>
         </div>
 
-        <!-- Ligne 5 : autres infos (2 colonnes) -->
-        <div class="grid cols-2" style="margin-top:8px">
+        <!-- Ligne 5 : Unassigned / reason / end lines -->
+        <div class="grid cols-3" style="margin-top:8px">
           <div>
             <label>Nb lignes désassignées</label>
-            <input id="vUnassigned" class="auto-zero" type="number" min="0" value="0">
+            <input class="auto-zero" id="vUnassigned" type="number" min="0" value="0">
+          </div>
+          <div>
+            <label>Raison(s) désassignation</label>
+            <input id="vUnassignedReason" placeholder="ex. pièce manquante, outillage…">
           </div>
           <div>
             <label>Nb lignes fin de chantier</label>
-            <input id="vEndLines" class="auto-zero" type="number" min="0" value="0">
+            <input class="auto-zero" id="vEndLines" type="number" min="0" value="0">
           </div>
-        </div>
-        <div style="margin-top:8px">
-          <label>Raison(s) désassignation</label>
-          <input id="vUnassignedReason" placeholder="ex. pièce manquante, outillage…">
         </div>
 
         <div class="row" style="margin-top:8px">
           <input id="xmlFile" type="file" accept=".xml">
-          <button id="btnImportXml" class="btn primary">Importer XML (auto)</button>
-          <span class="small" style="margin-left:auto">Auto-préremplit : immat / check / arrivée prévue / APRS signé (prévu) / HMO prévue (+ réelle si dispo).</span>
+          <button id="btnImportXml" class="btn primary">Importer XML (préremplit immat/check/arr/«APRS signé (prév.)»/HMO plan)</button>
+          <span class="small" style="margin-left:auto">Tu peux toujours corriger à la main après l’import.</span>
         </div>
       </div>
 
@@ -222,7 +217,8 @@ input[type="number"].auto-zero:focus{caret-color:auto}
           <table id="vacTable">
             <thead>
               <tr>
-                <th>Vacation</th>
+                <th>Type</th>
+                <th>Nom</th>
                 <th>CME dem.</th><th>EIR dem.</th><th>Leader dem.</th><th>Eff. dem. total</th>
                 <th>CME réel</th><th>EIR réel</th><th>Leader réel</th><th>Eff. réel total</th>
                 <th></th>
@@ -231,7 +227,7 @@ input[type="number"].auto-zero:focus{caret-color:auto}
             <tbody id="vacBody"></tbody>
             <tfoot>
               <tr>
-                <th>Total général</th>
+                <th colspan="2">Total général</th>
                 <th id="tCmeD">0</th><th id="tEirD">0</th><th id="tLeadD">0</th><th id="tDem">0</th>
                 <th id="tCmeR">0</th><th id="tEirR">0</th><th id="tLeadR">0</th><th id="tReal">0</th>
                 <th></th>
@@ -269,7 +265,7 @@ input[type="number"].auto-zero:focus{caret-color:auto}
       <h1>Problèmes (REX)</h1>
       <div class="card">
         <h2>Ajouter un problème</h2>
-        <div class="grid cols-2">
+        <div class="grid cols-3">
           <div>
             <label>Titre</label>
             <input id="pTitle">
@@ -284,16 +280,17 @@ input[type="number"].auto-zero:focus{caret-color:auto}
           </div>
           <div>
             <label>Impact (h)</label>
-            <input id="pImpact" class="auto-zero" type="number" min="0" step="0.5" value="0">
+            <input class="auto-zero" id="pImpact" type="number" min="0" step="0.5" value="0">
           </div>
           <div>
             <label>Acteur/Responsable</label>
             <input id="pActor" placeholder="ex. Cabine, STT, Query, Planif…">
           </div>
-          <div class="row" style="align-items:center">
-            <label class="small"><input id="pRecurring" type="checkbox"> Récurrent</label>
+          <div>
+            <label>Récurrent</label>
+            <input id="pRecurring" type="checkbox">
           </div>
-          <div style="grid-column:1/-1">
+          <div class="cols-3" style="grid-column:1/-1">
             <label>Description</label>
             <textarea id="pDesc" rows="3" placeholder="Contexte, symptômes, documents concernés…"></textarea>
           </div>
@@ -399,7 +396,7 @@ input[type="number"].auto-zero:focus{caret-color:auto}
 
 <script>
 /* ======================= stockage & base immats (LS) ====================== */
-const LS_KEY="rexA350_checkA_v4light";
+const LS_KEY="rexA350_checkA_v5";
 const BASE_IMMATS=[
   "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
   "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
@@ -446,21 +443,68 @@ $('#btnAddImmat').onclick=()=>{
   $('#vImmat').value=v; $('#vImmatAdd').value=''; refreshImmatList(); save();
 }
 
-/* ====== auto “0” qui disparaît : focus->vide si 0 / blur->0 si vide ====== */
-function bindAutoZero(container=document){
-  container.querySelectorAll('input[type="number"].auto-zero').forEach(inp=>{
-    inp.addEventListener('focus', ()=>{ if(inp.value==='0' || inp.value==='0.0') inp.value=''; });
-    inp.addEventListener('blur',  ()=>{ if(inp.value.trim()==='') inp.value='0'; });
+/* =================== inputs nombre: 0 disparaît / revient ================= */
+function bindAutoZero(root=document){
+  $$('.auto-zero', root).forEach(inp=>{
+    if(inp.dataset.bound) return;
+    inp.dataset.bound = '1';
+    inp.addEventListener('focus', ()=>{
+      if(inp.value === '0') inp.value = '';
+    });
+    inp.addEventListener('blur', ()=>{
+      if(inp.value.trim() === '') inp.value = '0';
+      recalcTotals();
+    });
   });
 }
-bindAutoZero();
+bindAutoZero(document);
 
 /* ============================ vacations (table) =========================== */
-const vacBody=$('#vacBody');
-function vacRow(name){
-  const tr=document.createElement('tr');
-  tr.innerHTML=`
-    <td><input class="vacName" value="${name}"></td>
+const SHIFT_ORDER = ['Matin','Soir','Nuit'];
+const vacBody = $('#vacBody');
+
+const nextShift = (s) => {
+  const i = SHIFT_ORDER.indexOf(s);
+  return SHIFT_ORDER[(i >= 0 ? i+1 : 0) % SHIFT_ORDER.length];
+};
+
+function renumberAndLabel(){
+  const rows = $$('#vacBody tr');
+  rows.forEach((tr,idx)=>{
+    const type = $('.vacType',tr).value;
+    $('.vacName',tr).value = `Vac ${idx+1} ${type}`;
+  });
+  recalcTotals();
+}
+
+function applyAutoFrom(startIdx){
+  const rows = $$('#vacBody tr');
+  if(startIdx < 0 || startIdx >= rows.length) return;
+  let t = $('.vacType', rows[startIdx]).value;
+  for(let j = startIdx+1; j < rows.length; j++){
+    t = nextShift(t);
+    $('.vacType', rows[j]).value = t;
+  }
+  renumberAndLabel();
+}
+
+function vacRow(forcedType=null){
+  const tr = document.createElement('tr');
+  // type pour la nouvelle ligne
+  let type = forcedType;
+  const rows = $$('#vacBody tr');
+  if(!type){
+    if(rows.length === 0) type = 'Matin';
+    else type = nextShift($('.vacType', rows[rows.length-1]).value);
+  }
+
+  tr.innerHTML = `
+    <td>
+      <select class="vacType">
+        <option>Matin</option><option>Soir</option><option>Nuit</option>
+      </select>
+    </td>
+    <td><input class="vacName" value="" readonly></td>
     <td><input class="cmeD auto-zero" type="number" min="0" value="0"></td>
     <td><input class="eirD auto-zero" type="number" min="0" value="0"></td>
     <td><input class="leadD auto-zero" type="number" min="0" value="0"></td>
@@ -469,20 +513,33 @@ function vacRow(name){
     <td><input class="eirR auto-zero" type="number" min="0" value="0"></td>
     <td><input class="leadR auto-zero" type="number" min="0" value="0"></td>
     <td class="realTot">0</td>
-    <td><button class="btn bad delVac">Retirer</button></td>`;
+    <td><button class="btn bad delVac">Retirer</button></td>
+  `;
   vacBody.appendChild(tr);
-  bindAutoZero(tr);
-}
-function seedVacs(){ vacBody.innerHTML=''; ['Matin','Soir','Nuit'].forEach(vacRow); recalcTotals(); }
-seedVacs();
 
-vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
-vacBody.addEventListener('click', e=>{
-  if(e.target.classList.contains('delVac')){
-    if(confirm('Retirer cette vacation ?')){ e.target.closest('tr').remove(); recalcTotals(); }
-  }
-});
-$('#btnAddVac').onclick=()=>vacRow('Vac.');
+  $('.vacType', tr).value = type;
+  bindAutoZero(tr);
+
+  tr.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
+  $('.vacType', tr).addEventListener('change', ()=>{
+    const idx = $$('#vacBody tr').indexOf(tr);
+    applyAutoFrom(idx);
+  });
+  $('.delVac', tr).addEventListener('click', ()=>{
+    if(confirm('Retirer cette vacation ?')){
+      tr.remove();
+      renumberAndLabel();
+    }
+  });
+
+  renumberAndLabel();
+}
+function seedVacs(){
+  vacBody.innerHTML='';
+  vacRow('Matin'); vacRow('Soir'); vacRow('Nuit');
+}
+seedVacs();
+$('#btnAddVac').onclick = ()=> vacRow();
 
 /* ========================== calculs (totaux & KPI) ======================== */
 function recalcTotals(){
@@ -507,42 +564,34 @@ function recalcTotals(){
 ;['vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).addEventListener('input', recalcTotals));
 
 /* =============================== Import XML =============================== */
-/* Remplit : immat, check, Arrivée prévue, APRS signé (prévu), HMO plan (+ HMO réel si dispo) */
 $('#btnImportXml').onclick=()=>{
   const f=$('#xmlFile').files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=()=>{
     try{
-      const raw=r.result;
-      const xml=new DOMParser().parseFromString(raw,'text/xml');
+      const xml=new DOMParser().parseFromString(r.result,'text/xml');
+      const tx=r.result;
 
-      // 1) Immat (ex. F-HUVK, FHTYA…)
-      const imm=raw.match(/\bF-?H[A-Z0-9]{3,5}\b/i);
-      if(imm) $('#vImmat').value = imm[0].toUpperCase().replace(/^F(H)/,'F-$1');
+      // immat: motif F-HTxx / F-HUVx…
+      const m = tx.match(/F-?H[A-Z0-9]{3}/i);
+      if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
-      // 2) Check A1..A12
-      const chk=raw.match(/\bA(1[0-2]|[1-9])\b/i);
-      if(chk) $('#vCheck').value = ('A'+chk[1]).toUpperCase();
+      // type de check A\d+
+      const chk = tx.match(/\bA(1[0-2]|[1-9])\b/i);
+      if(chk) $('#vCheck').value = chk[0].toUpperCase();
 
-      // 3) HMO plan/réel : cherche balises/attributs, sinon regex texte, sinon somme durations
-      const pickNumberFrom = (nodes)=> {
-        for(const n of nodes){
-          const v=parseFloat(n.textContent||n.getAttribute?.('value')||'');
-          if(!isNaN(v)) return v;
-        }
-        return NaN;
-      };
-      let hPlan = pickNumberFrom(xml.querySelectorAll('HMOPlan, HmoPlan, PlanHMO, HMO[plan]'));
-      let hReal = pickNumberFrom(xml.querySelectorAll('HMOReal, HmoReal, RealHMO, HMO[real]'));
+      // dates ISO : on prend les deux premières comme Arrivée prévue et APRS signé (prévu)
+      const isos = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/g) || [];
+      if(isos[0]) $('#vArrPrev').value = isos[0].replace(' ','T');
+      if(isos[1]) $('#vDepPrev').value = isos[1].replace(' ','T');
 
-      if(isNaN(hPlan)){
-        const m = raw.match(/HMO[^0-9]{0,10}([0-9]+(?:\.[0-9]+)?)/i);
-        if(m) hPlan = parseFloat(m[1]);
+      // HMO explicites ou somme durations
+      const pickNum = sel => {
+        const n=xml.querySelector(sel); if(!n) return NaN;
+        const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
       }
-      if(isNaN(hReal)){
-        const m = raw.match(/HMO[^0-9]{0,10}([0-9]+(?:\.[0-9]+)?)\s*(réel|real)/i);
-        if(m) hReal = parseFloat(m[1]);
-      }
+      let hPlan = pickNum('HMOPlan, HmoPlan, PlanHMO, hmoPlan');
+      let hReal = pickNum('HMOReal, HmoReal, RealHMO, hmoReal');
       if(isNaN(hPlan) || isNaN(hReal)){
         let sum=0;
         xml.querySelectorAll('[duration]').forEach(n=>{
@@ -551,43 +600,13 @@ $('#btnImportXml').onclick=()=>{
         if(isNaN(hPlan)) hPlan=sum||0;
         if(isNaN(hReal)) hReal=sum||0;
       }
-      if(!isNaN(hPlan)) $('#vHmoPlan').value = hPlan;
+      $('#vHmoPlan').value = isNaN(hPlan)? 0 : hPlan;
       if(!isNaN(hReal)) $('#vHmoReal').value = hReal;
 
-      // 4) Dates prévues : heuristiques sur balises
-      const getDateLike = (selectors)=> {
-        for(const sel of selectors){
-          const n = xml.querySelector(sel);
-          if(n){
-            const t=(n.textContent||n.getAttribute?.('value')||'').trim();
-            if(t){
-              const iso=t.replace(' ','T');
-              if(!isNaN(new Date(iso))) return iso;
-            }
-          }
-        }
-        return null;
-      };
-
-      const arrPrev = getDateLike(['ArrPrev','ArrivalPlanned','ArrivalPlan','PlannedArrival','arrival, planned','arrival[planned]']);
-      const depPrev = getDateLike(['DepPrev','APRSPlanned','SignOffPlanned','DeparturePlanned','PlannedDeparture','APRS[planned]']);
-
-      if(arrPrev) $('#vArrPrev').value = arrPrev;
-      if(depPrev) $('#vDepPrev').value = depPrev;
-
-      // 5) Fallback ultime : 1ère/2e timestamp ISO du fichier
-      if(!$('#vArrPrev').value || !$('#vDepPrev').value){
-        const isos = Array.from(raw.matchAll(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/g)).map(m=>m[0].replace(' ','T'));
-        if(isos[0] && !$('#vArrPrev').value) $('#vArrPrev').value = isos[0];
-        if(isos[1] && !$('#vDepPrev').value) $('#vDepPrev').value = isos[1];
-      }
-
+      bindAutoZero(document);
       recalcTotals();
-      alert('XML importé ✅ (immat/check/arrivée prévue/APRS prévu/HMO préremplis — éditables)');
-    }catch(e){
-      console.error(e);
-      alert('XML invalide');
-    }
+      alert('XML importé ✅ (immat/check/arr/«APRS signé (prév.)»/HMO plan remplis)');
+    }catch(e){ alert('XML invalide'); }
   };
   r.readAsText(f);
 };
@@ -597,8 +616,9 @@ let currentVisitId = null; // id de la visite chargée dans le formulaire
 
 function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
-    name:$(".vacName",tr).value.trim(),
-    cmeDem:num($('.cmeD',tr).value), eirDem:num($('.eirDem',tr)?.value)||num($('.eirD',tr).value), leadDem:num($('.leadD',tr).value),
+    type: $(".vacType",tr).value,
+    name: $(".vacName",tr).value.trim(),
+    cmeDem:num($('.cmeD',tr).value), eirDem:num($('.eirD',tr).value), leadDem:num($('.leadD',tr).value),
     cmeReal:num($('.cmeR',tr).value), eirReal:num($('.eirR',tr).value), leadReal:num($('.leadR',tr).value)
   }));
   return {
@@ -607,15 +627,15 @@ function collectVisitFromForm(){
     check: $('#vCheck').value,
     arrPrev: $('#vArrPrev').value || null,
     arrReal: $('#vArrReal').value || null,
-    depPrev: $('#vDepPrev').value || null,     // APRS signé (prévu)
-    depReal: $('#vDepReal').value || null,     // APRS signé (réel)
+    depPrev: $('#vDepPrev').value || null, // APRS signé (prévu)
+    depReal: $('#vDepReal').value || null, // APRS signé (réel)
     hmoPlan: num($('#vHmoPlan').value),
     hmoReal: num($('#vHmoReal').value),
     unassigned: num($('#vUnassigned').value),
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
     vacs,
-    problems: (getCurrentVisit()?.problems)||[], // conserve les liens si on modifie
+    problems: (getCurrentVisit()?.problems)||[], // conserve si modif
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
 }
@@ -638,12 +658,14 @@ function renderFormFromVisit(v){
   $('#vUnassignedReason').value = v?.unassignedReason||'';
   $('#vEndLines').value = v?.endLines??0;
   vacBody.innerHTML='';
-  (v?.vacs?.length?v.vacs:[{name:'Matin'},{name:'Soir'},{name:'Nuit'}]).forEach(x=>{
-    vacRow(x.name||''); 
+  (v?.vacs?.length?v.vacs:[{type:'Matin'},{type:'Soir'},{type:'Nuit'}]).forEach(x=>{
+    vacRow(x.type||'Matin'); 
     const tr=vacBody.lastElementChild;
     $('.cmeD',tr).value=x.cmeDem||0; $('.eirD',tr).value=x.eirDem||0; $('.leadD',tr).value=x.leadDem||0;
     $('.cmeR',tr).value=x.cmeReal||0; $('.eirR',tr).value=x.eirReal||0; $('.leadR',tr).value=x.leadReal||0;
   });
+  renumberAndLabel();
+  bindAutoZero(document);
   recalcTotals();
   renderVisitProblems(v||{problems:[]});
 }
@@ -659,12 +681,12 @@ $('#btnSaveVisit').onclick=()=>{
 
 $('#btnSaveAsNew').onclick=()=>{
   const prevId = currentVisitId;
-  currentVisitId = null;                 // force un nouvel ID
-  const v = collectVisitFromForm();      // copie avec nouvel ID
+  currentVisitId = null;                 
+  const v = collectVisitFromForm();      
   state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
   save(); renderVisitsList();
-  renderFormFromVisit(v);
+  renderFormFromVisit(v);                
   alert('Nouvelle visite enregistrée ✅');
 };
 
@@ -673,17 +695,17 @@ $('#btnClearVisit').onclick=()=>{
   currentVisitId=null;
   $('#vImmat').value=''; $('#vImmatAdd').value='';
   ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
-    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
-  seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
+    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines'||id==='vHmoPlan'||id==='vHmoReal')?'0':'');
+  seedVacs(); bindAutoZero(document); recalcTotals(); renderVisitProblems({problems:[]});
 };
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
   const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
     hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0,
-    vacs:[{name:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
-          {name:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
-          {name:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
+    vacs:[{type:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {type:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {type:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
     problems:[], createdAt:new Date().toISOString()
   };
   state.visits.push(v); save();
@@ -704,7 +726,7 @@ function renderVisitsList(){
       <td>${fmtDate(v.depPrev)}</td>
       <td>${v.hmoPlan||0}</td>
       <td>${v.hmoReal||0}</td>
-      <td>${dH>0?'+':''}${(dH||0)}</td>
+      <td>${dH>0?'+':''}${dH||0}</td>
       <td>
         <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
         <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
@@ -758,8 +780,8 @@ $('#btnAddProblem').onclick=()=>{
     immat:'', check:'', ts:new Date().toISOString()
   };
   state.problems.push(p); save();
-  $('#pTitle').value=''; $('#pImpact').value='0'; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
-  renderProblems(); bindAutoZero();
+  $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
+  renderProblems();
 };
 
 function filterProblemsList(list){
@@ -770,14 +792,14 @@ function filterProblemsList(list){
     const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
     const inRec=!rec || !!p.recurring;
     const inP = within(p.ts,s||null,e||null);
-    const inI = im? p.immat===im : true; // compat
-    const inC = ck? p.check===ck : true;  // compat
+    const inI = im? p.immat===im : true;
+    const inC = ck? p.check===ck : true;
     const inCat = cat? p.cat===cat : true;
     return inQ && inRec && inP && inI && inC && inCat;
   });
 }
 
-// Compte le nombre de fois où un problème est assigné à des visites
+// nb d'assignations d'un problème
 function countAssignments(pid, visitsSubset=null){
   const visits = Array.isArray(visitsSubset) ? visitsSubset : state.visits;
   let n = 0;
@@ -995,7 +1017,7 @@ function renderPerf(){
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
 
-  // Pareto / pie depuis problems filtrés
+  // Pareto / pie depuis problems filtrés (bibliothèque, pas par visite)
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
   const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
   const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
@@ -1014,7 +1036,7 @@ $('#btnPerfRefresh').onclick=renderPerf;
 
 /* ================================ init UI ================================= */
 function initialRender(){
-  refreshImmatList(); renderProblems(); renderVisitsList(); bindAutoZero();
+  refreshImmatList(); renderProblems(); renderVisitsList(); bindAutoZero(document);
 }
 initialRender();
 </script>
