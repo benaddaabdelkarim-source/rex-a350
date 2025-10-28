@@ -106,7 +106,7 @@ dialog .body{padding:12px 14px}
           <table id="visitsTable">
             <thead>
               <tr>
-                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>Dep. prév</th>
+                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>APRS signé (prévu)</th>
                 <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th><th>Actions</th>
               </tr>
             </thead>
@@ -150,11 +150,11 @@ dialog .body{padding:12px 14px}
             <input id="vArrReal" type="datetime-local">
           </div>
           <div>
-            <label>Départ prévu</label>
+            <label>APRS signé (prévu)</label>
             <input id="vDepPrev" type="datetime-local">
           </div>
           <div>
-            <label>Départ réel</label>
+            <label>APRS signé (réel)</label>
             <input id="vDepReal" type="datetime-local">
           </div>
         </div>
@@ -189,20 +189,10 @@ dialog .body{padding:12px 14px}
           </div>
         </div>
 
-        <!-- ✅ nouveau champ prélèvements -->
-        <div class="grid cols-3" style="margin-top:8px">
-          <div>
-            <label>Nb prélèvements</label>
-            <input id="vSamples" type="number" min="0" value="0">
-          </div>
-          <div></div>
-          <div></div>
-        </div>
-
         <div class="row" style="margin-top:8px">
           <input id="xmlFile" type="file" accept=".xml">
           <button id="btnImportXml" class="btn primary">Importer XML (HMO plan auto)</button>
-          <span class="small" style="margin-left:auto">L’XML peut préremplir immat/dates/HMO. Tu peux toujours modifier manuellement.</span>
+          <span class="small" style="margin-left:auto">L’XML peut préremplir immat/check/arrivée prévue/APRS signé (prévu)/HMO. Tu peux toujours modifier manuellement.</span>
         </div>
       </div>
 
@@ -345,8 +335,6 @@ dialog .body{padding:12px 14px}
           <div class="pill">Respect planning (dep. réel ≤ prévu) : <b id="kpiRespect">0%</b></div>
           <div class="pill">Δ HMO moyen : <b id="kpiHmo">0.0 h (0%)</b></div>
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
-          <!-- ✅ nouveau KPI -->
-          <div class="pill">Prélèvements moyens : <b id="kpiSamples">0.0</b></div>
         </div>
       </div>
       <div class="grid cols-2">
@@ -502,21 +490,27 @@ $('#btnImportXml').onclick=()=>{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
       const tx=r.result;
 
-      // immat: motif F-HTxx / F-HUVx…
+      // Immat (motif type F-HUVx / F-HTxx)
       const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
-      // dates (premier ISO)
-      const iso = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);
-      if(iso){ $('#vArrReal').value = iso[0].replace(' ','T'); }
+      // Type de check A1..A12
+      const mCheck = tx.match(/\bA(1[0-2]|[1-9])\b/i);
+      if(mCheck) $('#vCheck').value = ('A'+mCheck[1]).toUpperCase();
 
       // HMO explicites ou somme durations
-      const getNumNode = sel => {
-        const n=xml.querySelector(sel); if(!n) return NaN;
-        const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
+      const getNumNode = (alts)=> {
+        for(const sel of alts){
+          const n=xml.querySelector(sel);
+          if(n){
+            const v=parseFloat(n.textContent||n.getAttribute('value'));
+            if(!isNaN(v)) return v;
+          }
+        }
+        return NaN;
       }
-      let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO');
-      let hReal = getNumNode('HMOReal, HmoReal, RealHMO');
+      let hPlan = getNumNode(['HMOPlan','HmoPlan','PlanHMO','HMO[plan]']);
+      let hReal = getNumNode(['HMOReal','HmoReal','RealHMO','HMO[real]']);
       if(isNaN(hPlan) || isNaN(hReal)){
         let sum=0;
         xml.querySelectorAll('[duration]').forEach(n=>{
@@ -525,11 +519,36 @@ $('#btnImportXml').onclick=()=>{
         if(isNaN(hPlan)) hPlan=sum||0;
         if(isNaN(hReal)) hReal=sum||0;
       }
-      // ✅ Auto-remplissage HMO (modifiable ensuite)
       $('#vHmoPlan').value = isNaN(hPlan)? 0 : hPlan;
       $('#vHmoReal').value = isNaN(hReal)? 0 : hReal;
+
+      // Dates prévues (Arrivée prévue / APRS signé (prévu))
+      const getDateNode = (alts)=>{
+        for(const sel of alts){
+          const n = xml.querySelector(sel);
+          if(n){
+            const t = (n.textContent||n.getAttribute('value')||'').trim();
+            if(t){ const iso=t.replace(' ','T'); if(!isNaN(new Date(iso))) return iso; }
+          }
+        }
+        return null;
+      }
+      // Essais par balises "prévu"
+      const arrPrev = getDateNode(['ArrPrev','ArrivalPlanned','Arrival[planned]','ArrivalPlan','PlannedArrival']);
+      const depPrev = getDateNode(['DepPrev','APRSPlanned','SignOffPlanned','DeparturePlanned','PlannedDeparture','APRS[planned]']);
+
+      if(arrPrev) $('#vArrPrev').value = arrPrev;
+      if(depPrev) $('#vDepPrev').value = depPrev;
+
+      // Fallback : premières dates ISO trouvées dans le texte => arrPrev puis depPrev
+      if(!$('#vArrPrev').value || !$('#vDepPrev').value){
+        const isos = Array.from(tx.matchAll(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/g)).map(m=>m[0].replace(' ','T'));
+        if(isos[0] && !$('#vArrPrev').value) $('#vArrPrev').value = isos[0];
+        if(isos[1] && !$('#vDepPrev').value) $('#vDepPrev').value = isos[1];
+      }
+
       recalcTotals();
-      alert('XML importé ✅ (HMO plan/réel préremplis, éditables)');
+      alert('XML importé ✅ (immat/check/arrivée prévue/APRS signé (prévu)/HMO préremplis, éditables)');
     }catch(e){ alert('XML invalide'); }
   };
   r.readAsText(f);
@@ -550,14 +569,13 @@ function collectVisitFromForm(){
     check: $('#vCheck').value,
     arrPrev: $('#vArrPrev').value || null,
     arrReal: $('#vArrReal').value || null,
-    depPrev: $('#vDepPrev').value || null,
-    depReal: $('#vDepReal').value || null,
+    depPrev: $('#vDepPrev').value || null,     // APRS signé (prévu)
+    depReal: $('#vDepReal').value || null,     // APRS signé (réel)
     hmoPlan: num($('#vHmoPlan').value),
     hmoReal: num($('#vHmoReal').value),
     unassigned: num($('#vUnassigned').value),
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
-    samples: num($('#vSamples').value),             // ✅ on stocke les prélèvements
     vacs,
     problems: (getCurrentVisit()?.problems)||[], // conserve les liens si on modifie
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
@@ -581,7 +599,6 @@ function renderFormFromVisit(v){
   $('#vUnassigned').value = v?.unassigned??0;
   $('#vUnassignedReason').value = v?.unassignedReason||'';
   $('#vEndLines').value = v?.endLines??0;
-  $('#vSamples').value = v?.samples??0;            // ✅ remet la valeur en UI
   vacBody.innerHTML='';
   (v?.vacs?.length?v.vacs:[{name:'Matin'},{name:'Soir'},{name:'Nuit'}]).forEach(x=>{
     vacRow(x.name||''); 
@@ -620,15 +637,15 @@ $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
   $('#vImmat').value=''; $('#vImmatAdd').value='';
-  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines','vSamples']
-    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines'||id==='vSamples')?0:'');
+  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
+    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
 };
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
   const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
-    hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0, samples:0,   // ✅ défaut prélèvements
+    hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0,
     vacs:[{name:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
@@ -703,7 +720,7 @@ $('#btnAddProblem').onclick=()=>{
     id: uuid(),
     title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
     recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
-    // problème neutre tant qu'il n'est pas lié
+    // neutre tant qu'il n'est pas lié
     immat:'', check:'', ts:new Date().toISOString()
   };
   state.problems.push(p); save();
@@ -719,8 +736,8 @@ function filterProblemsList(list){
     const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
     const inRec=!rec || !!p.recurring;
     const inP = within(p.ts,s||null,e||null);
-    const inI = im? p.immat===im : true; // compat ascendante
-    const inC = ck? p.check===ck : true;  // compat ascendante
+    const inI = im? p.immat===im : true; // compat
+    const inC = ck? p.check===ck : true;  // compat
     const inCat = cat? p.cat===cat : true;
     return inQ && inRec && inP && inI && inC && inCat;
   });
@@ -934,7 +951,7 @@ function renderPerf(){
   const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
 
   // KPIs
-  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0, sumSamples=0;   // ✅ accumulateur prélèvements
+  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
@@ -942,15 +959,12 @@ function renderPerf(){
     const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
     const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
-    sumSamples += (v.samples||0);                            // ✅
   });
   $('#kpiRespect').textContent = (tot? Math.round(res*100/tot):0)+'%';
   const avgDH = visits.length? (sumDH/visits.length):0;
   const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
-  const avgSamples = visits.length? (sumSamples/visits.length):0;           // ✅ moyenne prélèvements
-  $('#kpiSamples').textContent = avgSamples.toFixed(1);                     // ✅ affiche
 
   // Pareto / pie depuis problems filtrés
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
