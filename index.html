@@ -8,16 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  /* Thème clair lisible */
-  --bg:#e9eef6;
-  --panel:#ffffff;
-  --muted:#eef3fb;
-  --text:#0b1220;
-  --accent:#2563eb;
-  --ok:#16a34a;
-  --bad:#dc2626;
-  --line:#d1d9e6;
-
+  --bg:#e9eef6; --panel:#ffffff; --muted:#eef3fb; --text:#0b1220;
+  --accent:#2563eb; --ok:#16a34a; --bad:#dc2626; --line:#d1d9e6;
   /* codes couleur titres prévus / réels */
   --prev:#0ea5e9;   /* bleu clair prévu */
   --real:#22c55e;   /* vert réel */
@@ -31,27 +23,17 @@ main{padding:16px}
 h1{margin:0 0 12px;font-size:20px}
 h2{margin:0 0 8px;font-size:16px}
 .menu h3{font-size:12px;letter-spacing:.08em;color:#334155;margin:0 0 10px;text-transform:uppercase}
-.menu button{
-  display:block;width:100%;text-align:left;
-  background:#f5f8ff;border:1px solid var(--line);color:var(--text);
-  padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer
-}
+.menu button{display:block;width:100%;text-align:left;background:#f5f8ff;border:1px solid var(--line);color:var(--text);padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer}
 .menu button.active{outline:2px solid var(--accent)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .grid{display:grid;gap:12px}
 .cols-2{grid-template-columns:1fr 1fr}
 .cols-3{grid-template-columns:repeat(3,1fr)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input,select,textarea{
-  width:100%;background:#fff;border:1px solid var(--line);color:var(--text);
-  border-radius:10px;padding:10px
-}
+input,select,textarea{width:100%;background:#fff;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px}
 input[type="number"]{text-align:right}
 input[type="number"]::placeholder, input[type="text"]::placeholder{opacity:.6}
-.btn{
-  border:1px solid var(--line);background:#f5f8ff;color:var(--text);
-  border-radius:10px;padding:8px 12px;cursor:pointer
-}
+.btn{border:1px solid var(--line);background:#f5f8ff;color:var(--text);border-radius:10px;padding:8px 12px;cursor:pointer}
 .btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46}
 .btn.bad{background:#fde8e8;border-color:#fecaca;color:#7f1d1d}
 .btn.fuse{background:#eefcef;border-color:#bbf7d0;color:#14532d;font-weight:600}
@@ -70,11 +52,9 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1}
 dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#fff;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.2)}
 dialog .head{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
 dialog .body{padding:12px 14px}
-
 /* Titres en couleur */
 label .lbl-prev{color:var(--prev);font-weight:600}
 label .lbl-real{color:var(--real);font-weight:600}
-
 /* Camembert responsive */
 .chart-wrap{height:320px; max-height:50vh;}
 .chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
@@ -150,7 +130,7 @@ label .lbl-real{color:var(--real);font-weight:600}
           </div>
         </div>
 
-        <!-- Aligné par paires : Arrivée prév / Arrivée réelle ; APRS signé prév / APRS signé réel -->
+        <!-- Aligné par paires (2 par ligne) -->
         <div class="grid cols-2" style="margin-top:8px">
           <div>
             <label><span class="lbl-prev">Arrivée (prévu)</span></label>
@@ -168,9 +148,6 @@ label .lbl-real{color:var(--real);font-weight:600}
             <label><span class="lbl-real">APRS signé (réel)</span></label>
             <input id="vDepReal" type="datetime-local">
           </div>
-        </div>
-
-        <div class="grid cols-3" style="margin-top:8px">
           <div>
             <label><span class="lbl-prev">HMO prévue (h)</span></label>
             <input id="vHmoPlan" type="number" min="0" step="0.5" value="0" placeholder="0">
@@ -178,10 +155,6 @@ label .lbl-real{color:var(--real);font-weight:600}
           <div>
             <label><span class="lbl-real">HMO réelle (h)</span></label>
             <input id="vHmoReal" type="number" min="0" step="0.5" value="0" placeholder="0">
-          </div>
-          <div>
-            <label>Δ HMO</label>
-            <div id="vHmoDelta" class="small" style="padding:10px;border:1px solid var(--line);border-radius:10px">0.0 h</div>
           </div>
         </div>
 
@@ -283,10 +256,7 @@ label .lbl-real{color:var(--real);font-weight:600}
       <div class="card">
         <h2>Ajouter un problème</h2>
         <div class="grid cols-3">
-          <div>
-            <label>Titre</label>
-            <input id="pTitle">
-          </div>
+          <div><label>Titre</label><input id="pTitle"></div>
           <div>
             <label>Catégorie</label>
             <select id="pCat">
@@ -295,18 +265,9 @@ label .lbl-real{color:var(--real);font-weight:600}
               <option>Effectifs/Planif</option><option>Documentation</option><option>Autre</option>
             </select>
           </div>
-          <div>
-            <label>Impact (h)</label>
-            <input id="pImpact" type="number" min="0" step="0.5" value="0" placeholder="0">
-          </div>
-          <div>
-            <label>Acteur/Responsable</label>
-            <input id="pActor" placeholder="ex. Cabine, STT, Query, Planif…">
-          </div>
-          <div>
-            <label>Récurrent</label>
-            <input id="pRecurring" type="checkbox">
-          </div>
+          <div><label>Impact (h)</label><input id="pImpact" type="number" min="0" step="0.5" value="0" placeholder="0"></div>
+          <div><label>Acteur/Responsable</label><input id="pActor" placeholder="ex. Cabine, STT, Query, Planif…"></div>
+          <div><label>Récurrent</label><input id="pRecurring" type="checkbox"></div>
           <div class="cols-3" style="grid-column:1/-1">
             <label>Description</label>
             <textarea id="pDesc" rows="3" placeholder="Contexte, symptômes, documents concernés…"></textarea>
@@ -387,7 +348,7 @@ label .lbl-real{color:var(--real);font-weight:600}
   </main>
 </div>
 
-<!-- Sélecteur de problèmes (assignation à une visite) -->
+<!-- Sélecteur de problèmes -->
 <dialog id="dlgPick">
   <div class="head">
     <div style="font-weight:600">Ajouter des problèmes à la visite</div>
@@ -415,14 +376,7 @@ label .lbl-real{color:var(--real);font-weight:600}
 <script>
 /* ======================= stockage & base immats (LS) ====================== */
 const LS_KEY="rexA350_checkA_v4light";
-const BASE_IMMATS=[
-  "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
-  "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
-  "F-HTYQ","F-HTYR","F-HTYS","F-HTYT","F-HUVA","F-HUVB","F-HUVC","F-HUVD",
-  "F-HUVE","F-HUVF","F-HUVG","F-HUVH","F-HUVI","F-HUVJ","F-HUVK","F-HUVL",
-  "F-HUVM","F-HUVN","F-HUVO","F-HUVP","F-HUVQ","F-HUVR","F-HUVS","F-HUVT",
-  "F-HUVU"
-];
+const BASE_IMMATS=["F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH","F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP","F-HTYQ","F-HTYR","F-HTYS","F-HTYT","F-HUVA","F-HUVB","F-HUVC","F-HUVD","F-HUVE","F-HUVF","F-HUVG","F-HUVH","F-HUVI","F-HUVJ","F-HUVK","F-HUVL","F-HUVM","F-HUVN","F-HUVO","F-HUVP","F-HUVQ","F-HUVR","F-HUVS","F-HUVT","F-HUVU"];
 function load(){ try{return JSON.parse(localStorage.getItem(LS_KEY))}catch{ return null } }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)) }
 let state = load() || { immat:[...BASE_IMMATS], visits:[], problems:[] };
@@ -449,7 +403,7 @@ $$('aside .menu button').forEach(btn=>{
   })
 })
 
-/* ========= placeholders : efface 0 à la saisie pour champ number/text ===== */
+/* ==== placeholders : efface 0 à la saisie pour champ number/text ========== */
 function attachZeroAutoClear(root=document){
   root.querySelectorAll('input[type="number"], input[type="text"]').forEach(inp=>{
     inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
@@ -480,11 +434,8 @@ function makeShiftSelect(value='matin'){
   const sel = document.createElement('select');
   sel.className = 'shift';
   ['matin','soir','nuit'].forEach(opt=>{
-    const o=document.createElement('option');
-    o.value=opt;
-    o.textContent=opt.charAt(0).toUpperCase()+opt.slice(1);
-    if(opt===value) o.selected=true;
-    sel.appendChild(o);
+    const o=document.createElement('option'); o.value=opt; o.textContent=opt.charAt(0).toUpperCase()+opt.slice(1);
+    if(opt===value) o.selected=true; sel.appendChild(o);
   });
   return sel;
 }
@@ -506,13 +457,10 @@ function vacRow(shift='matin'){
   vacBody.appendChild(tr);
 
   const titleCell = tr.querySelector('.vacTitle');
-  const wrap = document.createElement('div');
-  wrap.className = 'row';
+  const wrap = document.createElement('div'); wrap.className = 'row';
   const sel = makeShiftSelect(shift);
-  const nameSpan = document.createElement('span');
-  nameSpan.className = 'vacName';
-  wrap.appendChild(sel);
-  wrap.appendChild(nameSpan);
+  const nameSpan = document.createElement('span'); nameSpan.className = 'vacName';
+  wrap.appendChild(sel); wrap.appendChild(nameSpan);
   titleCell.appendChild(wrap);
 
   attachZeroAutoClear(tr);
@@ -527,13 +475,11 @@ function renumberVacNames(){
   });
 }
 function cascadeShiftsFrom(startIdx){
-  const rows = Array.from(vacBody.querySelectorAll('tr'));
-  if(rows.length===0) return;
+  const rows = Array.from(vacBody.querySelectorAll('tr')); if(rows.length===0) return;
   let curShift = rows[startIdx]?.querySelector('select.shift')?.value || 'matin';
   for(let i=startIdx+1; i<rows.length; i++){
     curShift = nextShift(curShift);
-    const sel = rows[i].querySelector('select.shift');
-    if(sel.value !== curShift) sel.value = curShift;
+    const sel = rows[i].querySelector('select.shift'); if(sel.value !== curShift) sel.value = curShift;
   }
   renumberVacNames();
 }
@@ -544,8 +490,7 @@ function seedVacs(){
   recalcTotals();
 }
 function nextVacShift(){
-  const rows = Array.from(vacBody.querySelectorAll('tr'));
-  if(rows.length===0) return 'matin';
+  const rows = Array.from(vacBody.querySelectorAll('tr')); if(rows.length===0) return 'matin';
   const lastShift = rows[rows.length-1].querySelector('select.shift').value || 'matin';
   return nextShift(lastShift);
 }
@@ -556,25 +501,19 @@ if(btnAddVac){
     recalcTotals();
   };
 }
-vacBody.addEventListener('input', e=>{
-  if(e.target.tagName==='INPUT') recalcTotals();
-});
+vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals(); });
 vacBody.addEventListener('change', e=>{
   if(e.target.classList.contains('shift')){
     const tr = e.target.closest('tr');
     const rowIdx = Array.from(vacBody.querySelectorAll('tr')).indexOf(tr);
-    renumberVacNames();
-    cascadeShiftsFrom(rowIdx);
-    recalcTotals();
+    renumberVacNames(); cascadeShiftsFrom(rowIdx); recalcTotals();
   }
 });
 vacBody.addEventListener('click', e=>{
   if(e.target.classList.contains('delVac')){
     if(confirm('Retirer cette vac ?')){
       e.target.closest('tr').remove();
-      if(vacBody.querySelectorAll('tr').length>0){
-        cascadeShiftsFrom(0);
-      }
+      if(vacBody.querySelectorAll('tr').length>0){ cascadeShiftsFrom(0); }
       recalcTotals();
     }
   }
@@ -595,11 +534,10 @@ function recalcTotals(){
   $('#tCmeD').textContent=tCmeD; $('#tEirD').textContent=tEirD; $('#tLeadD').textContent=tLeadD; $('#tDem').textContent=tDem;
   $('#tCmeR').textContent=tCmeR; $('#tEirR').textContent=tEirR; $('#tLeadR').textContent=tLeadR; $('#tReal').textContent=tReal;
 
-  const dEff=tReal - tDem;
-  $('#deltaEff').textContent=dEff;
+  const dEff=tReal - tDem; $('#deltaEff').textContent=dEff;
 
   const dHmo = num($('#vHmoReal').value) - num($('#vHmoPlan').value);
-  $('#vHmoDelta').textContent = dHmo.toFixed(1)+' h';
+  const deltaEl = $('#vHmoDelta'); if(deltaEl) deltaEl.textContent = dHmo.toFixed(1)+' h'; // (sécurité si l’élément n’existe plus)
   $('#deltaHmoBadge').textContent = dHmo.toFixed(1)+' h';
 
   // compteur prélèvements
@@ -618,15 +556,15 @@ $('#btnImportXml').onclick=()=>{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
       const tx=r.result;
 
-      // immat : F-HTxx / F-HUVx… (avec ou sans tiret)
+      // immat
       const m = tx.match(/\bF-?H[A-Z0-9]{3}\b/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
-      // type de check (A1..A12)
+      // check A1..A12
       const mc = tx.match(/\bA(1[0-2]|[1-9])\b/i);
-      if(mc){ $('#vCheck').value = mc[0].toUpperCase(); }
+      if(mc) $('#vCheck').value = mc[0].toUpperCase();
 
-      // dates prévues (heuristique : balises usuelles puis fallback ISO)
+      // dates prévues
       const getText = sel => {
         const n = xml.querySelector(sel);
         return n ? (n.textContent || n.getAttribute('value') || '') : '';
@@ -639,11 +577,10 @@ $('#btnImportXml').onclick=()=>{
       if(arrPrev) $('#vArrPrev').value = arrPrev.replace(' ','T');
       if(depPrev) $('#vDepPrev').value = depPrev.replace(' ','T');
 
-      // fallback si pas trouvées : on prend les 2 premières ISO comme arrPrev / depPrev
       if(!$('#vArrPrev').value && isoAll[0]) $('#vArrPrev').value = isoAll[0].replace(' ','T');
       if(!$('#vDepPrev').value && isoAll[1]) $('#vDepPrev').value = isoAll[1].replace(' ','T');
 
-      // HMO prévue / réelle (balises usuelles ou somme des durations)
+      // HMO plan / réel
       const getNumNode = sel => {
         const n=xml.querySelector(sel); if(!n) return NaN;
         const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
@@ -677,7 +614,6 @@ $('#btnAddSample').onclick=()=>{
   const v = getCurrentVisit() || collectVisitFromForm();
   if(!Array.isArray(v.samples)) v.samples = [];
   v.samples.push({ code, ts:new Date().toISOString() });
-  // persiste si la visite est déjà dans l’état
   const idx = state.visits.findIndex(x=>x.id===v.id);
   if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
   save();
@@ -708,7 +644,6 @@ samplesBody.addEventListener('click', e=>{
 
 /* ========================= Enregistrer / Brouillon ======================== */
 let currentVisitId = null;
-
 function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
     name:$(".vacName",tr).textContent.trim(),
@@ -716,7 +651,7 @@ function collectVisitFromForm(){
     cmeDem:num($('.cmeD',tr).value), eirDem:num($('.eirD',tr).value), leadDem:num($('.leadD',tr).value),
     cmeReal:num($('.cmeR',tr).value), eirReal:num($('.eirR',tr).value), leadReal:num($('.leadR',tr).value)
   }));
-  const base = {
+  return {
     id: currentVisitId || uuid(),
     immat: $('#vImmat').value.trim().toUpperCase(),
     check: $('#vCheck').value,
@@ -734,13 +669,8 @@ function collectVisitFromForm(){
     samples: (getCurrentVisit()?.samples)||[],
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
-  return base;
 }
-
-function getCurrentVisit(){
-  return state.visits.find(v=>v.id===currentVisitId) || null;
-}
-
+function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
   $('#vImmat').value = v?.immat||'';
@@ -755,7 +685,6 @@ function renderFormFromVisit(v){
   $('#vUnassignedReason').value = v?.unassignedReason||'';
   $('#vEndLines').value = v?.endLines??0;
 
-  // vacs
   vacBody.innerHTML='';
   (v?.vacs?.length?v.vacs:[{shift:'matin'},{shift:'soir'},{shift:'nuit'}]).forEach(x=>{
     vacRow(x.shift||'matin'); 
@@ -764,14 +693,10 @@ function renderFormFromVisit(v){
     $('.cmeR',tr).value=x.cmeReal||0; $('.eirR',tr).value=x.eirReal||0; $('.leadR',tr).value=x.leadReal||0;
   });
   renumberVacNames();
-
-  // prélèvements
   renderVisitSamples(v||{samples:[]});
-
   recalcTotals();
   renderVisitProblems(v||{problems:[]});
 }
-
 $('#btnSaveVisit').onclick=()=>{
   const v = collectVisitFromForm();
   const idx = state.visits.findIndex(x=>x.id===v.id);
@@ -780,7 +705,6 @@ $('#btnSaveVisit').onclick=()=>{
   save(); renderVisitsList();
   alert('Visite enregistrée ✅');
 };
-
 $('#btnSaveAsNew').onclick=()=>{
   const prevId = currentVisitId;
   currentVisitId = null;
@@ -791,7 +715,6 @@ $('#btnSaveAsNew').onclick=()=>{
   renderFormFromVisit(v);
   alert('Nouvelle visite enregistrée ✅');
 };
-
 $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
@@ -825,7 +748,6 @@ function renderVisitsList(){
   });
 }
 renderVisitsList();
-
 $('#visitsTable').addEventListener('click', (e)=>{
   const b=e.target.closest('button'); if(!b) return;
   const id=b.dataset.id; const act=b.dataset.act;
@@ -840,7 +762,7 @@ $('#visitsTable').addEventListener('click', (e)=>{
   }
 });
 
-/* ==================== Problèmes liés à une visite (table) ================= */
+/* ==================== Problèmes liés à une visite ========================= */
 function renderVisitProblems(v){
   const tb=$('#visitProblemsBody'); tb.innerHTML='';
   (v.problems||[]).forEach((p,i)=>{
@@ -872,7 +794,6 @@ $('#btnAddProblem').onclick=()=>{
   $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
   renderProblems();
 };
-
 function filterProblemsList(list){
   const q=$('#pbSearch').value.trim().toLowerCase();
   const rec=$('#pbRecOnly').checked;
@@ -887,20 +808,14 @@ function filterProblemsList(list){
     return inQ && inRec && inP && inI && inC && inCat;
   });
 }
-// nombre d'assignations d'un problème
 function countAssignments(pid, visitsSubset=null){
   const visits = Array.isArray(visitsSubset) ? visitsSubset : state.visits;
   let n = 0;
-  visits.forEach(v=>{
-    if(Array.isArray(v.problems)){
-      n += v.problems.filter(x=>x.pid === pid).length;
-    }
-  });
+  visits.forEach(v=>{ if(Array.isArray(v.problems)){ n += v.problems.filter(x=>x.pid === pid).length; } });
   return n;
 }
 function renderProblems(){
-  const tbody = document.getElementById('problemsBody');
-  tbody.innerHTML = '';
+  const tbody = document.getElementById('problemsBody'); tbody.innerHTML = '';
   const filtered = filterProblemsList(state.problems);
   const totalAssign = filtered.reduce((acc,p)=> acc + countAssignments(p.id), 0) || 1;
   filtered.forEach((p,i)=>{
@@ -908,29 +823,17 @@ function renderProblems(){
     const pct = Math.round(assigns * 100 / totalAssign);
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${i+1}</td>
-      <td>${p.title}</td>
-      <td>${p.cat}</td>
-      <td>${p.impact||0}</td>
-      <td>${p.recurring?'Oui':'Non'}</td>
-      <td>${assigns}</td>
-      <td>${pct}%</td>
-      <td>${new Date(p.ts).toLocaleString()}</td>
-      <td><button class="btn bad" data-del="${p.id}">Supprimer</button></td>
-    `;
+      <td>${i+1}</td><td>${p.title}</td><td>${p.cat}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td>
+      <td>${assigns}</td><td>${pct}%</td><td>${new Date(p.ts).toLocaleString()}</td>
+      <td><button class="btn bad" data-del="${p.id}">Supprimer</button></td>`;
     tbody.appendChild(tr);
   });
 }
 document.getElementById('problemsBody').addEventListener('click', (e)=>{
-  const id = e.target?.dataset?.del;
-  if(!id) return;
+  const id = e.target?.dataset?.del; if(!id) return;
   const cascade = confirm("Supprimer ce problème de la bibliothèque ?\n\nOK = supprime aussi ce problème de toutes les visites.");
   state.problems = state.problems.filter(p => p.id !== id);
-  if (cascade) {
-    state.visits.forEach(v=>{
-      if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id);
-    });
-  }
+  if (cascade) state.visits.forEach(v=>{ if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id); });
   save(); renderProblems();
   const v = state.visits.find(x => x.id === (currentVisitId||'')); if (v) renderVisitProblems(v);
   alert('Problème supprimé ✅' + (cascade ? ' (et retiré des visites)' : ''));
@@ -944,8 +847,7 @@ function openPickDialogFor(visitId){
   const v = state.visits.find(x=>x.id===visitId); if(!v) return;
   currentVisitId = visitId;
   $('#pickSearch').value=''; $('#pickRec').checked=false;
-  renderPickList();
-  dlgPick.showModal();
+  renderPickList(); dlgPick.showModal();
 }
 function renderPickList(){
   const tb=$('#pickBody'); tb.innerHTML='';
@@ -968,46 +870,33 @@ $('#pickAdd').onclick=()=>{
   const ids=$$('#pickBody input[type="checkbox"]:checked').map(x=>x.dataset.id);
   if(!ids.length) return alert('Sélectionne au moins un problème.');
   if(!confirm(`Ajouter ${ids.length} problème(s) à cette visite ?`)) return;
-  const toAdd = state.problems.filter(p=>ids.includes(p.id)).map(p=>({
-    pid:p.id, title:p.title, cat:p.cat, impact:p.impact, recurring:!!p.recurring
-  }));
+  const toAdd = state.problems.filter(p=>ids.includes(p.id)).map(p=>({ pid:p.id, title:p.title, cat:p.cat, impact:p.impact, recurring:!!p.recurring }));
   v.problems = (v.problems||[]).concat(toAdd);
   save(); renderVisitProblems(v); dlgPick.close();
 }
 
 /* ============================ Export / Import JSON ======================== */
-$('#exportJson').onclick=()=>{
-  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click();
-}
-
-/* Remplacement total */
+$('#exportJson').onclick=()=>{ const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click(); }
 $('#importJsonBtn').onclick=()=>$('#importJsonFile').click();
 $('#importJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
-  r.onload=()=>{
-    try{
+  r.onload=()=>{ try{
       const d=JSON.parse(r.result);
       if(d && d.visits && d.problems){
         if(!confirm('Remplacer entièrement les données locales par ce JSON ?')) return;
-        state=d; 
-        state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
+        state=d; state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
         save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
         alert('Import (remplacement) OK ✅');
       } else alert('JSON invalide');
-    }catch{ alert('Erreur JSON'); }
-  };
+    }catch{ alert('Erreur JSON'); } };
   r.readAsText(f);
 });
-
-/* Fusion intelligente */
 $('#mergeJsonBtn').onclick=()=>$('#mergeJsonFile').click();
 $('#mergeJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
-  r.onload=()=>{
-    try{
+  r.onload=()=>{ try{
       const incoming=JSON.parse(r.result);
       if(!(incoming && (incoming.visits||incoming.problems||incoming.immat))) return alert('JSON sans contenu utile');
       const before = JSON.stringify(state).length;
@@ -1046,13 +935,11 @@ $('#mergeJsonFile').addEventListener('change', e=>{
         const mapV = new Map(state.visits.map(v=>[v.id,v]));
         const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
         const seenKeys = new Set(state.visits.map(v=>keyOf(v)));
-
         incoming.visits.forEach(v=>{
           if(v && v.id && mapV.has(v.id)){
             const cur = mapV.get(v.id);
             const merged = {
-              ...cur,
-              ...v,
+              ...cur, ...v,
               vacs: Array.isArray(v.vacs) ? v.vacs : cur.vacs,
               problems: Array.isArray(v.problems) ? v.problems : cur.problems,
               samples: Array.isArray(v.samples) ? v.samples : (cur.samples||[])
@@ -1062,8 +949,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
             const k = keyOf(v||{});
             if(!seenKeys.has(k)){
               const nv = v && v.id ? v : {...v, id: uuid()};
-              mapV.set(nv.id, nv);
-              seenKeys.add(k);
+              mapV.set(nv.id, nv); seenKeys.add(k);
             }
           }
         });
@@ -1073,8 +959,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
       save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
       const after = JSON.stringify(state).length;
       alert('Fusion JSON terminée ✅\nDonnées cumulées et dédoublonnées.\n(+'+ (after-before) +' octets environ)');
-    }catch{ alert('Erreur JSON'); }
-  };
+    }catch{ alert('Erreur JSON'); } };
   r.readAsText(f);
 });
 
@@ -1084,7 +969,6 @@ function renderPerf(){
   const s=$('#pfStart').value, e=$('#pfEnd').value, im=($('#pfImmat').value||'').toUpperCase(), ck=$('#pfCheck').value;
   const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
 
-  // KPIs
   let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0, sumSamples=0;
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
@@ -1102,7 +986,6 @@ function renderPerf(){
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
   $('#kpiSamples').textContent = (visits.length? (sumSamples/visits.length).toFixed(1):'0.0');
 
-  // Pareto / pie depuis problems filtrés
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
   const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
   const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
@@ -1120,9 +1003,7 @@ function renderPerf(){
 $('#btnPerfRefresh').onclick=renderPerf;
 
 /* ================================ init UI ================================= */
-function initialRender(){
-  refreshImmatList(); renderProblems(); renderVisitsList();
-}
+function initialRender(){ refreshImmatList(); renderProblems(); renderVisitsList(); }
 initialRender();
 </script>
 </body>
