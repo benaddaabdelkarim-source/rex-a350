@@ -189,6 +189,16 @@ dialog .body{padding:12px 14px}
           </div>
         </div>
 
+        <!-- ✅ nouveau champ prélèvements -->
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label>Nb prélèvements</label>
+            <input id="vSamples" type="number" min="0" value="0">
+          </div>
+          <div></div>
+          <div></div>
+        </div>
+
         <div class="row" style="margin-top:8px">
           <input id="xmlFile" type="file" accept=".xml">
           <button id="btnImportXml" class="btn primary">Importer XML (HMO plan auto)</button>
@@ -335,6 +345,8 @@ dialog .body{padding:12px 14px}
           <div class="pill">Respect planning (dep. réel ≤ prévu) : <b id="kpiRespect">0%</b></div>
           <div class="pill">Δ HMO moyen : <b id="kpiHmo">0.0 h (0%)</b></div>
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
+          <!-- ✅ nouveau KPI -->
+          <div class="pill">Prélèvements moyens : <b id="kpiSamples">0.0</b></div>
         </div>
       </div>
       <div class="grid cols-2">
@@ -545,6 +557,7 @@ function collectVisitFromForm(){
     unassigned: num($('#vUnassigned').value),
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
+    samples: num($('#vSamples').value),             // ✅ on stocke les prélèvements
     vacs,
     problems: (getCurrentVisit()?.problems)||[], // conserve les liens si on modifie
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
@@ -568,6 +581,7 @@ function renderFormFromVisit(v){
   $('#vUnassigned').value = v?.unassigned??0;
   $('#vUnassignedReason').value = v?.unassignedReason||'';
   $('#vEndLines').value = v?.endLines??0;
+  $('#vSamples').value = v?.samples??0;            // ✅ remet la valeur en UI
   vacBody.innerHTML='';
   (v?.vacs?.length?v.vacs:[{name:'Matin'},{name:'Soir'},{name:'Nuit'}]).forEach(x=>{
     vacRow(x.name||''); 
@@ -606,15 +620,15 @@ $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
   $('#vImmat').value=''; $('#vImmatAdd').value='';
-  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
-    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
+  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines','vSamples']
+    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines'||id==='vSamples')?0:'');
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
 };
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
   const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
-    hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0,
+    hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0, samples:0,   // ✅ défaut prélèvements
     vacs:[{name:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
@@ -689,7 +703,7 @@ $('#btnAddProblem').onclick=()=>{
     id: uuid(),
     title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
     recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
-    // ✅ plus d'auto-immat/check : problème neutre tant qu'il n'est pas lié
+    // problème neutre tant qu'il n'est pas lié
     immat:'', check:'', ts:new Date().toISOString()
   };
   state.problems.push(p); save();
@@ -705,8 +719,8 @@ function filterProblemsList(list){
     const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
     const inRec=!rec || !!p.recurring;
     const inP = within(p.ts,s||null,e||null);
-    const inI = im? p.immat===im : true; // gardé pour compat ascendante
-    const inC = ck? p.check===ck : true;  // idem
+    const inI = im? p.immat===im : true; // compat ascendante
+    const inC = ck? p.check===ck : true;  // compat ascendante
     const inCat = cat? p.cat===cat : true;
     return inQ && inRec && inP && inI && inC && inCat;
   });
@@ -920,7 +934,7 @@ function renderPerf(){
   const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
 
   // KPIs
-  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
+  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0, sumSamples=0;   // ✅ accumulateur prélèvements
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
@@ -928,12 +942,15 @@ function renderPerf(){
     const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
     const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
+    sumSamples += (v.samples||0);                            // ✅
   });
   $('#kpiRespect').textContent = (tot? Math.round(res*100/tot):0)+'%';
   const avgDH = visits.length? (sumDH/visits.length):0;
   const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
+  const avgSamples = visits.length? (sumSamples/visits.length):0;           // ✅ moyenne prélèvements
+  $('#kpiSamples').textContent = avgSamples.toFixed(1);                     // ✅ affiche
 
   // Pareto / pie depuis problems filtrés
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
