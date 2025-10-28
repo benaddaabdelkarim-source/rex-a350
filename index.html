@@ -305,7 +305,12 @@ dialog .body{padding:12px 14px}
         </div>
         <div style="overflow:auto;margin-top:8px">
           <table>
-            <thead><tr><th>#</th><th>Problème</th><th>Cat.</th><th>Impact(h)</th><th>Réc.</th><th>Immat</th><th>Check</th><th>Enregistré</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>#</th><th>Problème</th><th>Cat.</th><th>Impact(h)</th><th>Réc.</th>
+                <th>Assignations</th><th>%</th><th>Enregistré</th><th></th>
+              </tr>
+            </thead>
             <tbody id="problemsBody"></tbody>
           </table>
         </div>
@@ -677,21 +682,21 @@ $('#visitProblemsBody').addEventListener('click',(e)=>{
   }
 });
 
-/* ============== Bibliothèque Problèmes (ajout & filtrage) ================= */
+/* ============== Bibliothèque Problèmes (ajout & comptage) ================ */
 $('#btnAddProblem').onclick=()=>{
   const title=$('#pTitle').value.trim(); if(!title) return alert('Titre manquant');
-  const last=state.visits[state.visits.length-1]||{};
   const p={
     id: uuid(),
     title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
     recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
-    immat:last.immat||'', check:last.check||'', ts:new Date().toISOString()
+    // ✅ plus d'auto-immat/check : problème neutre tant qu'il n'est pas lié
+    immat:'', check:'', ts:new Date().toISOString()
   };
-  // ➜ On enregistre uniquement en bibliothèque (pas d’assignation auto)
   state.problems.push(p); save();
   $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
   renderProblems();
 };
+
 function filterProblemsList(list){
   const q=$('#pbSearch').value.trim().toLowerCase();
   const rec=$('#pbRecOnly').checked;
@@ -700,16 +705,35 @@ function filterProblemsList(list){
     const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
     const inRec=!rec || !!p.recurring;
     const inP = within(p.ts,s||null,e||null);
-    const inI = im? p.immat===im : true;
-    const inC = ck? p.check===ck : true;
+    const inI = im? p.immat===im : true; // gardé pour compat ascendante
+    const inC = ck? p.check===ck : true;  // idem
     const inCat = cat? p.cat===cat : true;
     return inQ && inRec && inP && inI && inC && inCat;
   });
 }
+
+// Compte le nombre de fois où un problème est assigné à des visites
+function countAssignments(pid, visitsSubset=null){
+  const visits = Array.isArray(visitsSubset) ? visitsSubset : state.visits;
+  let n = 0;
+  visits.forEach(v=>{
+    if(Array.isArray(v.problems)){
+      n += v.problems.filter(x=>x.pid === pid).length;
+    }
+  });
+  return n;
+}
+
 function renderProblems(){
   const tbody = document.getElementById('problemsBody');
   tbody.innerHTML = '';
-  filterProblemsList(state.problems).forEach((p,i)=>{
+
+  const filtered = filterProblemsList(state.problems);
+  const totalAssign = filtered.reduce((acc,p)=> acc + countAssignments(p.id), 0) || 1;
+
+  filtered.forEach((p,i)=>{
+    const assigns = countAssignments(p.id);
+    const pct = Math.round(assigns * 100 / totalAssign);
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${i+1}</td>
@@ -717,14 +741,15 @@ function renderProblems(){
       <td>${p.cat}</td>
       <td>${p.impact||0}</td>
       <td>${p.recurring?'Oui':'Non'}</td>
-      <td>${p.immat||'—'}</td>
-      <td>${p.check||'—'}</td>
+      <td>${assigns}</td>
+      <td>${pct}%</td>
       <td>${new Date(p.ts).toLocaleString()}</td>
       <td><button class="btn bad" data-del="${p.id}">Supprimer</button></td>
     `;
     tbody.appendChild(tr);
   });
 }
+
 document.getElementById('problemsBody').addEventListener('click', (e)=>{
   const id = e.target?.dataset?.del;
   if(!id) return;
