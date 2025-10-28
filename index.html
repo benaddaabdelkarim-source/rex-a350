@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX A350 – Check A (fusion intelligente)</title>
+<title>REX A350 – Check A (tout-en-un)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
@@ -38,13 +38,15 @@ thead th{background:#0b1220;position:sticky;top:0}
 .kpi{display:flex;gap:10px;flex-wrap:wrap}
 .kpi .pill{padding:8px 10px;border-radius:999px;background:#0b1220;border:1px solid var(--line)}
 .hidden{display:none}
-.topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px;flex-wrap:wrap}
+.topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
 .tag{font-size:11px;opacity:.75;padding:2px 6px;border:1px solid var(--line);border-radius:999px}
 dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#0b1220;color:var(--text)}
 dialog .head{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
 dialog .body{padding:12px 14px}
-.chart-wrap{height:320px;max-height:50vh}
-.chart-wrap canvas{width:100%!important;height:100%!important;display:block}
+
+/* Fix hauteur camembert */
+.chart-wrap{height:320px; max-height:50vh;}
+.chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 </style>
 </head>
 <body>
@@ -62,17 +64,14 @@ dialog .body{padding:12px 14px}
     <div class="topbar">
       <button id="exportJson" class="btn">Exporter JSON</button>
       <input id="importJsonFile" type="file" accept="application/json" class="hidden">
-      <button id="importJsonBtn" class="btn">Importer JSON (remplace)</button>
-
-      <!-- Fusion intelligente multi-fichiers -->
-      <input id="mergeJsonFiles" type="file" accept="application/json" class="hidden" multiple>
-      <button id="mergeJsonBtn" class="btn ok">Fusionner JSON(s)</button>
+      <button id="importJsonBtn" class="btn">Importer JSON</button>
     </div>
 
     <!-- VISITE -->
     <section id="tab-visit">
       <h1>Visite (Check A)</h1>
 
+      <!-- Liste des visites -->
       <div class="card">
         <div class="row">
           <h2 style="margin:0">Liste des visites</h2>
@@ -82,8 +81,11 @@ dialog .body{padding:12px 14px}
           <table id="visitsTable">
             <thead>
               <tr>
-                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>Dep. prév</th>
-                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th><th>Actions</th>
+                <th>#</th><th>Immat</th><th>Check</th>
+                <th>Arr. prév</th><th>Dep. prév</th>
+                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th>
+                <th>Prélèv.</th><th>TRFX</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="visitsBody"></tbody>
@@ -150,6 +152,19 @@ dialog .body{padding:12px 14px}
           </div>
         </div>
 
+        <!-- ⚙️ Nouveau bloc prélèvements -->
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label>Nombre de prélèvements</label>
+            <input id="vSamples" type="number" min="0" step="1" value="0">
+          </div>
+          <div>
+            <label>TRFX prélèvement</label>
+            <input id="vTrfx" placeholder="ex. TRFX-1234">
+          </div>
+          <div></div>
+        </div>
+
         <div class="grid cols-3" style="margin-top:8px">
           <div>
             <label>Nb lignes désassignées</label>
@@ -168,7 +183,7 @@ dialog .body{padding:12px 14px}
         <div class="row" style="margin-top:8px">
           <input id="xmlFile" type="file" accept=".xml">
           <button id="btnImportXml" class="btn">Importer XML</button>
-          <span class="small" style="margin-left:auto;opacity:.7">L’XML pré-remplit immat/dates/HMO si disponible (modifiable à la main).</span>
+          <span class="small" style="margin-left:auto;opacity:.7">L’XML peut préremplir immat/dates/HMO si présent (prélèvements non importés).</span>
         </div>
       </div>
 
@@ -305,6 +320,9 @@ dialog .body{padding:12px 14px}
           <div class="pill">Respect planning (dep. réel ≤ prévu) : <b id="kpiRespect">0%</b></div>
           <div class="pill">Δ HMO moyen : <b id="kpiHmo">0.0 h (0%)</b></div>
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
+          <!-- ⚙️ Nouveaux KPI prélèvements -->
+          <div class="pill">Total prélèvements : <b id="kpiSamplesTot">0</b></div>
+          <div class="pill">Moy. prélèvements/visite : <b id="kpiSamplesAvg">0</b></div>
         </div>
       </div>
       <div class="grid cols-2">
@@ -353,8 +371,15 @@ dialog .body{padding:12px 14px}
 
 <script>
 /* ========================= stockage & base immats ========================= */
-const LS_KEY="rexA350_checkA_v3smart";
-const BASE_IMMATS=["F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH","F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP","F-HTYQ","F-HTYR","F-HTYS","F-HTYT","F-HUVA","F-HUVB","F-HUVC","F-HUVD","F-HUVE","F-HUVF","F-HUVG","F-HUVH","F-HUVI","F-HUVJ","F-HUVK","F-HUVL","F-HUVM","F-HUVN","F-HUVO","F-HUVP","F-HUVQ","F-HUVR","F-HUVS","F-HUVT","F-HUVU"];
+const LS_KEY="rexA350_checkA_v3fix";
+const BASE_IMMATS=[
+  "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
+  "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
+  "F-HTYQ","F-HTYR","F-HTYS","F-HTYT","F-HUVA","F-HUVB","F-HUVC","F-HUVD",
+  "F-HUVE","F-HUVF","F-HUVG","F-HUVH","F-HUVI","F-HUVJ","F-HUVK","F-HUVL",
+  "F-HUVM","F-HUVN","F-HUVO","F-HUVP","F-HUVQ","F-HUVR","F-HUVS","F-HUVT",
+  "F-HUVU"
+];
 function load(){ try{return JSON.parse(localStorage.getItem(LS_KEY))}catch{ return null } }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)) }
 let state = load() || { immat:[...BASE_IMMATS], visits:[], problems:[] };
@@ -368,11 +393,6 @@ const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n}
 const within=(d,a,b)=>{ if(!d) return false; const t=new Date(d).getTime(); const ta=a?new Date(a).getTime():-1e15; const tb=b?new Date(b).getTime()+86399999:1e15; return t>=ta&&t<=tb }
 function fmtDate(v){ if(!v) return "—"; const d=new Date(v); return isNaN(d)?"—":d.toLocaleString() }
 function uuid(){ return Math.random().toString(36).slice(2,10) }
-const stableStr = (o, omitKeys=[]) => {
-  const replacer=(k,v)=> omitKeys.includes(k) ? undefined : v;
-  return JSON.stringify(o, Object.keys(o).sort(), 0, replacer);
-};
-const norm = s => (s||"").toString().trim().toLowerCase().replace(/\s+/g,' ');
 
 /* ================================ onglets ================================= */
 $$('aside .menu button').forEach(btn=>{
@@ -382,7 +402,7 @@ $$('aside .menu button').forEach(btn=>{
     $('#tab-'+btn.dataset.tab).classList.remove('hidden');
     if(btn.dataset.tab==='perf') renderPerf();
     if(btn.dataset.tab==='problems') renderProblems();
-    if(btn.dataset.tab==='visit') renderVisitsList();
+    if(btn.dataset.tab==='visit') { renderVisitsList(); }
   })
 })
 
@@ -417,6 +437,7 @@ function vacRow(name){
 }
 function seedVacs(){ vacBody.innerHTML=''; ['Matin','Soir','Nuit'].forEach(vacRow); recalcTotals(); }
 seedVacs();
+
 vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
 vacBody.addEventListener('click', e=>{ if(e.target.classList.contains('delVac')){ if(confirm('Retirer cette vacation ?')){ e.target.closest('tr').remove(); recalcTotals(); } }});
 $('#btnAddVac').onclick=()=>vacRow('Vac.');
@@ -435,7 +456,9 @@ function recalcTotals(){
   $('#tCmeD').textContent=tCmeD; $('#tEirD').textContent=tEirD; $('#tLeadD').textContent=tLeadD; $('#tDem').textContent=tDem;
   $('#tCmeR').textContent=tCmeR; $('#tEirR').textContent=tEirR; $('#tLeadR').textContent=tLeadR; $('#tReal').textContent=tReal;
 
-  $('#deltaEff').textContent = (tReal - tDem);
+  const dEff=tReal - tDem;
+  $('#deltaEff').textContent=dEff;
+
   const dHmo = num($('#vHmoReal').value) - num($('#vHmoPlan').value);
   $('#vHmoDelta').textContent = dHmo.toFixed(1)+' h';
   $('#deltaHmoBadge').textContent = dHmo.toFixed(1)+' h';
@@ -450,22 +473,16 @@ $('#btnImportXml').onclick=()=>{
     try{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
       const tx=r.result;
-
-      // Immat (ex: F-HUVK, FHTYA)
-      const m = tx.match(/\bF-?H[A-Z0-9]{3}\b/i);
+      const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
-
-      // Dates (on remplit "arrivée réelle" si on voit un ISO)
       const iso = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);
       if(iso){ $('#vArrReal').value = iso[0].replace(' ','T'); }
-
-      // HMO explicites ou somme durations
       const getNumNode = sel => {
         const n=xml.querySelector(sel); if(!n) return NaN;
         const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
-      };
-      let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO, planHmo, PlannedHMO, plannedHmo');
-      let hReal = getNumNode('HMOReal, HmoReal, RealHMO, realHmo, ActualHMO, actualHmo');
+      }
+      let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO');
+      let hReal = getNumNode('HMOReal, HmoReal, RealHMO');
       if(isNaN(hPlan) || isNaN(hReal)){
         let sum=0;
         xml.querySelectorAll('[duration]').forEach(n=>{
@@ -474,11 +491,11 @@ $('#btnImportXml').onclick=()=>{
         if(isNaN(hPlan)) hPlan=sum||0;
         if(isNaN(hReal)) hReal=sum||0;
       }
-      // Pré-remplissage (modifiable)
+      // Remplit seulement HMO + quelques champs (pas les prélèvements, à saisir manuellement)
       $('#vHmoPlan').value = isNaN(hPlan)? 0 : hPlan;
       $('#vHmoReal').value = isNaN(hReal)? 0 : hReal;
       recalcTotals();
-      alert('XML importé ✅ (modifiable manuellement)');
+      alert('XML importé ✅');
     }catch(e){ alert('XML invalide'); }
   };
   r.readAsText(f);
@@ -486,6 +503,7 @@ $('#btnImportXml').onclick=()=>{
 
 /* ========================= Enregistrer / Brouillon ======================== */
 let currentVisitId = null;
+
 function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
     name:$(".vacName",tr).value.trim(),
@@ -502,6 +520,8 @@ function collectVisitFromForm(){
     depReal: $('#vDepReal').value || null,
     hmoPlan: num($('#vHmoPlan').value),
     hmoReal: num($('#vHmoReal').value),
+    samples: num($('#vSamples').value),          // 🔹 nouveau
+    trfx: $('#vTrfx').value.trim(),              // 🔹 nouveau
     unassigned: num($('#vUnassigned').value),
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
@@ -510,7 +530,11 @@ function collectVisitFromForm(){
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
 }
-function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
+
+function getCurrentVisit(){
+  return state.visits.find(v=>v.id===currentVisitId) || null;
+}
+
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
   $('#vImmat').value = v?.immat||'';
@@ -521,12 +545,14 @@ function renderFormFromVisit(v){
   $('#vDepReal').value = v?.depReal||'';
   $('#vHmoPlan').value = v?.hmoPlan??0;
   $('#vHmoReal').value = v?.hmoReal??0;
+  $('#vSamples').value = v?.samples??0;   // 🔹 nouveau
+  $('#vTrfx').value = v?.trfx||'';        // 🔹 nouveau
   $('#vUnassigned').value = v?.unassigned??0;
   $('#vUnassignedReason').value = v?.unassignedReason||'';
   $('#vEndLines').value = v?.endLines??0;
   vacBody.innerHTML='';
   (v?.vacs?.length?v.vacs:[{name:'Matin'},{name:'Soir'},{name:'Nuit'}]).forEach(x=>{
-    vacRow(x.name||'');
+    vacRow(x.name||''); 
     const tr=vacBody.lastElementChild;
     $('.cmeD',tr).value=x.cmeDem||0; $('.eirD',tr).value=x.eirDem||0; $('.leadD',tr).value=x.leadDem||0;
     $('.cmeR',tr).value=x.cmeReal||0; $('.eirR',tr).value=x.eirReal||0; $('.leadR',tr).value=x.leadReal||0;
@@ -534,6 +560,7 @@ function renderFormFromVisit(v){
   recalcTotals();
   renderVisitProblems(v||{problems:[]});
 }
+
 $('#btnSaveVisit').onclick=()=>{
   const v = collectVisitFromForm();
   const idx = state.visits.findIndex(x=>x.id===v.id);
@@ -541,19 +568,21 @@ $('#btnSaveVisit').onclick=()=>{
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
   save(); renderVisitsList();
   alert('Visite enregistrée ✅');
-};
+}
+
 $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
   $('#vImmat').value=''; $('#vImmatAdd').value='';
-  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
-    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
+  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines','vSamples','vTrfx']
+    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines'||id==='vSamples')?0:'');
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
-};
+}
+
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
   const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
-    hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0,
+    hmoPlan:0, hmoReal:0, samples:0, trfx:'', unassigned:0, unassignedReason:'', endLines:0,
     vacs:[{name:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
@@ -561,7 +590,7 @@ $('#btnNewVisit').onclick=()=>{
   };
   state.visits.push(v); save();
   renderVisitsList(); renderFormFromVisit(v);
-};
+}
 
 /* ============================ Liste des visites =========================== */
 function renderVisitsList(){
@@ -578,6 +607,8 @@ function renderVisitsList(){
       <td>${v.hmoPlan||0}</td>
       <td>${v.hmoReal||0}</td>
       <td>${dH>0?'+':''}${dH||0}</td>
+      <td>${v.samples??0}</td>
+      <td>${v.trfx||'—'}</td>
       <td>
         <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
         <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
@@ -587,6 +618,7 @@ function renderVisitsList(){
   });
 }
 renderVisitsList();
+
 $('#visitsTable').addEventListener('click', (e)=>{
   const b=e.target.closest('button'); if(!b) return;
   const id=b.dataset.id; const act=b.dataset.act;
@@ -633,7 +665,7 @@ $('#btnAddProblem').onclick=()=>{
   state.problems.push(p); save();
   $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
   renderProblems();
-};
+}
 function filterProblemsList(list){
   const q=$('#pbSearch').value.trim().toLowerCase();
   const rec=$('#pbRecOnly').checked;
@@ -670,13 +702,12 @@ function renderProblems(){
 document.getElementById('problemsBody').addEventListener('click', (e)=>{
   const id = e.target?.dataset?.del;
   if(!id) return;
+
   const cascade = confirm("Supprimer ce problème de la bibliothèque ?\n\nOK = supprime aussi ce problème de toutes les visites.");
   state.problems = state.problems.filter(p => p.id !== id);
   if (cascade) {
     state.visits.forEach(v=>{
-      if (Array.isArray(v.problems)) {
-        v.problems = v.problems.filter(x => x.pid !== id);
-      }
+      if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id);
     });
   }
   save();
@@ -729,7 +760,7 @@ $('#pickAdd').onclick=()=>{
 $('#exportJson').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click();
-};
+}
 $('#importJsonBtn').onclick=()=>$('#importJsonFile').click();
 $('#importJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -738,187 +769,23 @@ $('#importJsonFile').addEventListener('change', e=>{
     try{
       const d=JSON.parse(r.result);
       if(d && d.visits && d.problems){
-        state=d; 
-        state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
+        // fusion simple & robuste
+        const byId = new Map((state.visits||[]).map(v=>[v.id,v]));
+        (d.visits||[]).forEach(v=> byId.set(v.id, {...byId.get(v.id), ...v}));
+        state.visits = Array.from(byId.values());
+
+        const pbId = new Map((state.problems||[]).map(p=>[p.id,p]));
+        (d.problems||[]).forEach(p=> pbId.set(p.id, {...pbId.get(p.id), ...p}));
+        state.problems = Array.from(pbId.values());
+
+        state.immat = Array.from(new Set([...(state.immat||[]), ...(d.immat||[]), ...BASE_IMMATS])).sort();
         save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
-        alert('Import OK ✅ (remplacement complet)');
+        alert('Import OK ✅ (fusion intelligente)');
       } else alert('JSON invalide');
     }catch{ alert('Erreur JSON'); }
   };
   r.readAsText(f);
 });
-
-/* ============== Fusion intelligente de plusieurs JSON ===================== */
-$('#mergeJsonBtn').onclick=()=>$('#mergeJsonFiles').click();
-$('#mergeJsonFiles').addEventListener('change', async (e)=>{
-  const files = Array.from(e.target.files||[]);
-  if(!files.length) return;
-
-  const readFile = (file)=> new Promise((res,rej)=>{
-    const r=new FileReader();
-    r.onload=()=>{ try{ res(JSON.parse(r.result)) }catch{ rej(new Error('JSON invalide: '+file.name)) } };
-    r.onerror=()=>rej(new Error('Lecture échouée: '+file.name));
-    r.readAsText(file);
-  });
-
-  // Index existants
-  const visitById   = new Map(state.visits.map(v=>[v.id, v]));
-  const visitsKeyed = new Map(); // clé opé -> id
-  state.visits.forEach(v=>{
-    const k = visitKey(v);
-    if(k) visitsKeyed.set(k, v.id);
-  });
-
-  const probById    = new Map(state.problems.map(p=>[p.id, p]));
-  const probBySmart = new Map(); // clé sémantique -> id
-  state.problems.forEach(p=>{
-    probBySmart.set(problemKey(p), p.id);
-  });
-
-  const immatSet    = new Set(state.immat);
-
-  let addV=0, skipV=0, addP=0, skipP=0, addI=0, mergedP=0;
-
-  try{
-    const payloads = await Promise.all(files.map(readFile));
-    for(const d of payloads){
-      if(!d || !Array.isArray(d.visits) || !Array.isArray(d.problems)) continue;
-
-      // immats
-      (d.immat||[]).forEach(i=>{ if(i && !immatSet.has(i)) { immatSet.add(i); addI++; }});
-
-      // problèmes - fusion intelligente
-      for(const inp of d.problems){
-        const p = {...inp};
-        const key = problemKey(p);
-        if(probBySmart.has(key)){
-          // fusionner
-          const id = probBySmart.get(key);
-          const base = probById.get(id);
-          const merged = mergeProblem(base, p);
-          probById.set(id, merged);
-          mergedP++;
-        }else{
-          // ajouter
-          if(!p.id) p.id = uuid();
-          probBySmart.set(key, p.id);
-          probById.set(p.id, sanitizeProblem(p));
-          addP++;
-        }
-      }
-
-      // visites - dédoublonnage par clé opé + comparaison contenu
-      for(const vin of d.visits){
-        const v = sanitizeVisit(vin);
-        if(!v.id) v.id = uuid();
-        const k = visitKey(v);
-        if(k && visitsKeyed.has(k)){
-          const id0 = visitsKeyed.get(k);
-          const v0  = visitById.get(id0);
-          // comparaison hors id/createdAt
-          if(stableStr(stripVisitForCmp(v0)) === stableStr(stripVisitForCmp(v))){
-            skipV++; // identique => ignorer
-          }else{
-            // contenu différent => garder aussi (nouvel id)
-            v.id = uuid();
-            visitById.set(v.id, v);
-            addV++;
-          }
-        }else{
-          visitById.set(v.id, v);
-          if(k) visitsKeyed.set(k, v.id);
-          addV++;
-        }
-      }
-    }
-
-    state.visits   = Array.from(visitById.values());
-    state.problems = Array.from(probById.values());
-    state.immat    = Array.from(immatSet).sort();
-    save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
-
-    alert(
-`Fusion intelligente terminée ✅
-- Visites ajoutées : ${addV} (ignorées : ${skipV})
-- Problèmes ajoutés : ${addP} (fusionnés : ${mergedP}, ignorés : ${skipP})
-- Immat ajoutées : ${addI}`
-    );
-  }catch(err){
-    alert('Erreur fusion: '+err.message);
-  }finally{
-    e.target.value=''; // reset input
-  }
-});
-
-// Helpers fusion intelligente
-function sanitizeProblem(p){
-  return {
-    id: p.id||uuid(),
-    title: p.title||'',
-    cat: p.cat||'Autre',
-    impact: num(p.impact),
-    actor: p.actor||'',
-    recurring: !!p.recurring,
-    desc: p.desc||'',
-    immat: (p.immat||'').toUpperCase(),
-    check: p.check||'',
-    ts: p.ts || new Date().toISOString()
-  };
-}
-function problemKey(p){
-  return [norm(p.title), p.cat||'', String(num(p.impact)), norm(p.actor)].join('|');
-}
-function mergeProblem(a,b){
-  const out = sanitizeProblem(a);
-  const bb  = sanitizeProblem(b);
-  out.recurring = !!(a.recurring || b.recurring);
-  // garder la description la plus longue
-  out.desc = (bb.desc||'').length > (out.desc||'').length ? bb.desc : out.desc;
-  // garder la date la plus ancienne
-  out.ts = (new Date(bb.ts) < new Date(out.ts)) ? bb.ts : out.ts;
-  // compléter immat/check si manquants
-  if(!out.immat && bb.immat) out.immat = bb.immat;
-  if(!out.check && bb.check) out.check = bb.check;
-  return out;
-}
-
-function sanitizeVisit(v){
-  return {
-    id: v.id||uuid(),
-    immat: (v.immat||'').toUpperCase(),
-    check: v.check||'A1',
-    arrPrev: v.arrPrev||null,
-    arrReal: v.arrReal||null,
-    depPrev: v.depPrev||null,
-    depReal: v.depReal||null,
-    hmoPlan: num(v.hmoPlan),
-    hmoReal: num(v.hmoReal),
-    unassigned: num(v.unassigned),
-    unassignedReason: v.unassignedReason||'',
-    endLines: num(v.endLines),
-    vacs: Array.isArray(v.vacs)? v.vacs.map(x=>({
-      name: x.name||'',
-      cmeDem:num(x.cmeDem), eirDem:num(x.eirDem), leadDem:num(x.leadDem),
-      cmeReal:num(x.cmeReal), eirReal:num(x.eirReal), leadReal:num(x.leadReal)
-    })) : [],
-    problems: Array.isArray(v.problems)? v.problems.map(p=>({
-      pid:p.pid||p.id||uuid(), title:p.title||'', cat:p.cat||'Autre',
-      impact:num(p.impact), recurring:!!p.recurring
-    })) : [],
-    createdAt: v.createdAt || new Date().toISOString()
-  };
-}
-function dayISO(dt){ if(!dt) return ''; const d=new Date(dt); if(isNaN(d)) return ''; return d.toISOString().slice(0,10); }
-function visitKey(v){
-  if(!v) return '';
-  return [v.immat||'', v.check||'', dayISO(v.arrPrev), dayISO(v.depPrev), String(num(v.hmoPlan))].join('|');
-}
-function stripVisitForCmp(v){
-  // version “contenu” pour comparer
-  const c = {...v};
-  delete c.id; delete c.createdAt;
-  return c;
-}
 
 /* ================================ Performance ============================= */
 let pie=null;
@@ -926,21 +793,27 @@ function renderPerf(){
   const s=$('#pfStart').value, e=$('#pfEnd').value, im=($('#pfImmat').value||'').toUpperCase(), ck=$('#pfCheck').value;
   const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
 
+  // KPIs
   let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
+  let sumSamples=0;
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
     sumDH += dH; sumHD += (v.hmoPlan||0);
-    const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
-    const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
+    const dem = (v.vacs||[]).reduce((a,x)=>a+x.cmeDem+x.eirDem+x.leadDem,0);
+    const rea = (v.vacs||[]).reduce((a,x)=>a+x.cmeReal+x.eirReal+x.leadReal,0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
+    sumSamples += (v.samples||0);
   });
   $('#kpiRespect').textContent = (tot? Math.round(res*100/tot):0)+'%';
   const avgDH = visits.length? (sumDH/visits.length):0;
   const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
+  $('#kpiSamplesTot').textContent = sumSamples;
+  $('#kpiSamplesAvg').textContent = visits.length? Math.round(sumSamples/visits.length) : 0;
 
+  // Pareto / pie depuis problems filtrés
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
   const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
   const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
