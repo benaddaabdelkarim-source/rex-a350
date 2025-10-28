@@ -228,6 +228,7 @@ dialog .body{padding:12px 14px}
         </div>
         <div class="row" style="margin-top:10px">
           <button id="btnSaveVisit" class="btn ok">💾 Enregistrer</button>
+          <button id="btnSaveAsNew" class="btn primary">🆕 Enregistrer (nouvelle)</button>
           <button id="btnClearVisit" class="btn bad">🧹 Effacer le formulaire</button>
         </div>
       </div>
@@ -281,7 +282,7 @@ dialog .body{padding:12px 14px}
             <textarea id="pDesc" rows="3" placeholder="Contexte, symptômes, documents concernés…"></textarea>
           </div>
         </div>
-        <button id="btnAddProblem" class="btn ok">+ Enregistrer le problème</button>
+        <button id="btnAddProblem" class="btn ok">+ Enregistrer en bibliothèque (non assigné)</button>
       </div>
 
       <div class="card">
@@ -507,7 +508,7 @@ $('#btnImportXml').onclick=()=>{
         if(isNaN(hPlan)) hPlan=sum||0;
         if(isNaN(hReal)) hReal=sum||0;
       }
-      // ✅ Auto-remplissage HMO prévue (modifiable manuellement après)
+      // ✅ Auto-remplissage HMO (modifiable ensuite)
       $('#vHmoPlan').value = isNaN(hPlan)? 0 : hPlan;
       $('#vHmoReal').value = isNaN(hReal)? 0 : hReal;
       recalcTotals();
@@ -540,7 +541,7 @@ function collectVisitFromForm(){
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
     vacs,
-    problems: (getCurrentVisit()?.problems)||[], // conserve les liens
+    problems: (getCurrentVisit()?.problems)||[], // conserve les liens si on modifie
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
 }
@@ -574,13 +575,27 @@ function renderFormFromVisit(v){
 }
 
 $('#btnSaveVisit').onclick=()=>{
+  // sauvegarde / modification de la visite ouverte
   const v = collectVisitFromForm();
   const idx = state.visits.findIndex(x=>x.id===v.id);
   if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
   save(); renderVisitsList();
   alert('Visite enregistrée ✅');
-}
+};
+
+$('#btnSaveAsNew').onclick=()=>{
+  // ✅ création d'une nouvelle visite (accumulation)
+  const prevId = currentVisitId;
+  currentVisitId = null;                 // force un nouvel ID
+  const v = collectVisitFromForm();      // crée la copie avec nouvel ID
+  state.visits.push(v);
+  if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
+  save(); renderVisitsList();
+  renderFormFromVisit(v);                // on charge la nouvelle
+  alert('Nouvelle visite enregistrée ✅');
+  // Si tu veux revenir à l’ancienne après, remets: currentVisitId = prevId;
+};
 
 $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
@@ -589,7 +604,7 @@ $('#btnClearVisit').onclick=()=>{
   ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
     .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
-}
+};
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
@@ -602,7 +617,7 @@ $('#btnNewVisit').onclick=()=>{
   };
   state.visits.push(v); save();
   renderVisitsList(); renderFormFromVisit(v);
-}
+};
 
 /* ============================ Liste des visites =========================== */
 function renderVisitsList(){
@@ -672,10 +687,11 @@ $('#btnAddProblem').onclick=()=>{
     recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
     immat:last.immat||'', check:last.check||'', ts:new Date().toISOString()
   };
+  // ➜ On enregistre uniquement en bibliothèque (pas d’assignation auto)
   state.problems.push(p); save();
   $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
   renderProblems();
-}
+};
 function filterProblemsList(list){
   const q=$('#pbSearch').value.trim().toLowerCase();
   const rec=$('#pbRecOnly').checked;
