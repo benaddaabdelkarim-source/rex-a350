@@ -9,15 +9,18 @@
 <style>
 :root{
   /* Thème clair lisible */
-  --bg:#e9eef6;           /* fond de page gris bleuté doux */
-  --panel:#ffffff;        /* cartes/panneaux blancs */
-  --muted:#eef3fb;        /* fonds secondaires */
-  --text:#0b1220;         /* texte principal sombre */
-  --accent:#2563eb;       /* bleu prévu */
-  --real:#0f766e;         /* vert réel (teal foncé) */
-  --ok:#16a34a;           /* vert ok */
-  --bad:#dc2626;          /* rouge */
-  --line:#d1d9e6;         /* bordures */
+  --bg:#e9eef6;
+  --panel:#ffffff;
+  --muted:#eef3fb;
+  --text:#0b1220;
+  --accent:#2563eb;
+  --ok:#16a34a;
+  --bad:#dc2626;
+  --line:#d1d9e6;
+
+  /* codes couleur titres prévus / réels */
+  --prev:#0ea5e9;   /* bleu clair prévu */
+  --real:#22c55e;   /* vert réel */
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -37,15 +40,14 @@ h2{margin:0 0 8px;font-size:16px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .grid{display:grid;gap:12px}
 .cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 input,select,textarea{
   width:100%;background:#fff;border:1px solid var(--line);color:var(--text);
   border-radius:10px;padding:10px
 }
 input[type="number"]{text-align:right}
-input::placeholder, textarea::placeholder{color:#94a3b8}
-input.clean-zeros::-webkit-outer-spin-button,
-input.clean-zeros::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+input[type="number"]::placeholder, input[type="text"]::placeholder{opacity:.6}
 .btn{
   border:1px solid var(--line);background:#f5f8ff;color:var(--text);
   border-radius:10px;padding:8px 12px;cursor:pointer
@@ -65,20 +67,13 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1}
 .hidden{display:none}
 .topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
 .tag{font-size:11px;opacity:.9;padding:2px 6px;border:1px solid var(--line);border-radius:999px;background:#fff}
-
-/* labels colorés */
-label.lbl-prev{font-weight:600;color:var(--accent)}
-label.lbl-real{font-weight:600;color:var(--real)}
-label.lbl-neutral{font-weight:600;color:#0b1220}
-
-/* TRFX chips */
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#eef3fb;border:1px solid var(--line)}
-.chip button{border:none;background:transparent;color:#7f1d1d;cursor:pointer}
-
 dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#fff;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.2)}
 dialog .head{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
 dialog .body{padding:12px 14px}
+
+/* Titres en couleur */
+label .lbl-prev{color:var(--prev);font-weight:600}
+label .lbl-real{color:var(--real);font-weight:600}
 
 /* Camembert responsive */
 .chart-wrap{height:320px; max-height:50vh;}
@@ -132,107 +127,102 @@ dialog .body{padding:12px 14px}
       <div class="card">
         <h2>Informations visite</h2>
 
-        <!-- Ligne 1 : Arrivée prévue / Arrivée réelle -->
-        <div class="grid cols-2" style="margin-top:8px">
+        <div class="grid cols-3">
           <div>
-            <label class="lbl-prev">Arrivée prévue</label>
-            <input id="vArrPrev" type="datetime-local">
+            <label>Immatriculation</label>
+            <input id="vImmat" list="immatList" placeholder="ex. F-HUVK">
+            <datalist id="immatList"></datalist>
           </div>
-          <div>
-            <label class="lbl-real">Arrivée réelle</label>
-            <input id="vArrReal" type="datetime-local">
-          </div>
-        </div>
-
-        <!-- Ligne 2 : APRS signé (prévu) / APRS signé (réel) -->
-        <div class="grid cols-2" style="margin-top:8px">
-          <div>
-            <label class="lbl-prev">APRS signé (prévu)</label>
-            <input id="vAprsPrev" type="datetime-local">
-          </div>
-          <div>
-            <label class="lbl-real">APRS signé (réel)</label>
-            <input id="vAprsReal" type="datetime-local">
-          </div>
-        </div>
-
-        <!-- Ligne 3 : HMO prévue / HMO réelle -->
-        <div class="grid cols-2" style="margin-top:8px">
-          <div>
-            <label class="lbl-prev">HMO prévue (h)</label>
-            <input id="vHmoPlan" class="clean-zeros" type="number" min="0" step="0.5" placeholder="0">
-          </div>
-          <div>
-            <label class="lbl-real">HMO réelle (h)</label>
-            <input id="vHmoReal" class="clean-zeros" type="number" min="0" step="0.5" placeholder="0">
-          </div>
-        </div>
-
-        <!-- Ligne 4 : Nb prélèvements / TRFX prélèvements (ajout un par un) -->
-        <div class="grid cols-2" style="margin-top:8px">
-          <div>
-            <label class="lbl-neutral">Nb prélèvements</label>
-            <input id="vSamples" class="clean-zeros" type="number" min="0" step="1" placeholder="0">
-          </div>
-          <div>
-            <label class="lbl-neutral">TRFX prélèvements (ajout un par un)</label>
-            <div class="row" style="gap:8px">
-              <input id="vTrfxInput" placeholder="ex. TRFX-12345">
-              <button id="btnAddTrfx" class="btn">+ Ajouter TRFX</button>
-            </div>
-            <div id="trfxChips" class="chips" style="margin-top:8px"></div>
-          </div>
-        </div>
-
-        <!-- Ligne 5 : Nb lignes désassignées / Raison -->
-        <div class="grid cols-2" style="margin-top:8px">
-          <div>
-            <label class="lbl-neutral">Nb lignes désassignées</label>
-            <input id="vUnassigned" class="clean-zeros" type="number" min="0" step="1" placeholder="0">
-          </div>
-          <div>
-            <label class="lbl-neutral">Raison(s) désassignation</label>
-            <input id="vUnassignedReason" placeholder="ex. pièce manquante, outillage…">
-          </div>
-        </div>
-
-        <!-- Ligne 6 : Nb lignes fin de chantier + Immat / Check -->
-        <div class="grid cols-2" style="margin-top:8px">
-          <div>
-            <label class="lbl-neutral">Nb lignes fin de chantier</label>
-            <input id="vEndLines" class="clean-zeros" type="number" min="0" step="1" placeholder="0">
-          </div>
-          <div class="grid cols-2">
-            <div>
-              <label class="lbl-neutral">Immatriculation</label>
-              <input id="vImmat" list="immatList" placeholder="ex. F-HUVK">
-              <datalist id="immatList"></datalist>
-            </div>
-            <div>
-              <label class="lbl-neutral">Type de check</label>
-              <select id="vCheck">
-                <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
-                <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
-                <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Ajout immat + Import XML -->
-        <div class="grid cols-2" style="margin-top:8px">
           <div class="row" style="align-items:end">
             <div style="flex:1">
-              <label class="lbl-neutral">Ajouter une immat</label>
+              <label>Ajouter une immat</label>
               <input id="vImmatAdd" placeholder="ex. F-HUVP">
             </div>
             <button id="btnAddImmat" class="btn">+ Ajouter</button>
           </div>
-          <div class="row" style="align-items:end">
-            <input id="xmlFile" type="file" accept=".xml">
-            <button id="btnImportXml" class="btn primary">Importer XML (auto-préremplir)</button>
-            <span class="small" style="margin-left:auto">Immat/Check/Arr. prév./APRS prév./HMO prév. auto — modifiable ensuite.</span>
+          <div>
+            <label>Type de check</label>
+            <select id="vCheck">
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
+              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
+            </select>
           </div>
+        </div>
+
+        <!-- Aligné par paires : Arrivée prév / Arrivée réelle ; APRS signé prév / APRS signé réel -->
+        <div class="grid cols-2" style="margin-top:8px">
+          <div>
+            <label><span class="lbl-prev">Arrivée (prévu)</span></label>
+            <input id="vArrPrev" type="datetime-local">
+          </div>
+          <div>
+            <label><span class="lbl-real">Arrivée (réel)</span></label>
+            <input id="vArrReal" type="datetime-local">
+          </div>
+          <div>
+            <label><span class="lbl-prev">APRS signé (prévu)</span></label>
+            <input id="vDepPrev" type="datetime-local">
+          </div>
+          <div>
+            <label><span class="lbl-real">APRS signé (réel)</span></label>
+            <input id="vDepReal" type="datetime-local">
+          </div>
+        </div>
+
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label><span class="lbl-prev">HMO prévue (h)</span></label>
+            <input id="vHmoPlan" type="number" min="0" step="0.5" value="0" placeholder="0">
+          </div>
+          <div>
+            <label><span class="lbl-real">HMO réelle (h)</span></label>
+            <input id="vHmoReal" type="number" min="0" step="0.5" value="0" placeholder="0">
+          </div>
+          <div>
+            <label>Δ HMO</label>
+            <div id="vHmoDelta" class="small" style="padding:10px;border:1px solid var(--line);border-radius:10px">0.0 h</div>
+          </div>
+        </div>
+
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label>Nb lignes désassignées</label>
+            <input id="vUnassigned" type="number" min="0" value="0" placeholder="0">
+          </div>
+          <div>
+            <label>Raison(s) désassignation</label>
+            <input id="vUnassignedReason" placeholder="ex. pièce manquante, outillage…">
+          </div>
+          <div>
+            <label>Nb lignes fin de chantier</label>
+            <input id="vEndLines" type="number" min="0" value="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <input id="xmlFile" type="file" accept=".xml">
+          <button id="btnImportXml" class="btn primary">Importer XML (auto-remplissage)</button>
+          <span class="small" style="margin-left:auto">L’XML peut préremplir immat / check / dates prévues / HMO prévue & réelle. Modifiables ensuite.</span>
+        </div>
+      </div>
+
+      <!-- Prélèvements (TRFX) -->
+      <div class="card">
+        <h2>Prélèvements (TRFX)</h2>
+        <div class="row">
+          <div style="flex:1">
+            <label>TRFX prélèvement (saisie 1 par 1)</label>
+            <input id="vSampleInput" placeholder="ex. TRFX-123456">
+          </div>
+          <button id="btnAddSample" class="btn ok">+ Ajouter</button>
+          <div class="pill small">Nb prélèvements : <b id="vSamplesCount">0</b></div>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table>
+            <thead><tr><th>#</th><th>TRFX</th><th>Ajouté le</th><th></th></tr></thead>
+            <tbody id="samplesBody"></tbody>
+          </table>
         </div>
       </div>
 
@@ -292,13 +282,13 @@ dialog .body{padding:12px 14px}
       <h1>Problèmes (REX)</h1>
       <div class="card">
         <h2>Ajouter un problème</h2>
-        <div class="grid cols-2">
+        <div class="grid cols-3">
           <div>
-            <label class="lbl-neutral">Titre</label>
+            <label>Titre</label>
             <input id="pTitle">
           </div>
           <div>
-            <label class="lbl-neutral">Catégorie</label>
+            <label>Catégorie</label>
             <select id="pCat">
               <option>Cabine</option><option>Sous-traitance</option>
               <option>Query/Prépa</option><option>Pièces/Log</option>
@@ -306,19 +296,19 @@ dialog .body{padding:12px 14px}
             </select>
           </div>
           <div>
-            <label class="lbl-neutral">Impact (h)</label>
-            <input id="pImpact" class="clean-zeros" type="number" min="0" step="0.5" placeholder="0">
+            <label>Impact (h)</label>
+            <input id="pImpact" type="number" min="0" step="0.5" value="0" placeholder="0">
           </div>
           <div>
-            <label class="lbl-neutral">Acteur/Responsable</label>
+            <label>Acteur/Responsable</label>
             <input id="pActor" placeholder="ex. Cabine, STT, Query, Planif…">
           </div>
-          <div class="row" style="align-items:center">
-            <label class="lbl-neutral" style="margin:0">Récurrent</label>
+          <div>
+            <label>Récurrent</label>
             <input id="pRecurring" type="checkbox">
           </div>
-          <div style="grid-column:1/-1">
-            <label class="lbl-neutral">Description</label>
+          <div class="cols-3" style="grid-column:1/-1">
+            <label>Description</label>
             <textarea id="pDesc" rows="3" placeholder="Contexte, symptômes, documents concernés…"></textarea>
           </div>
         </div>
@@ -372,10 +362,10 @@ dialog .body{padding:12px 14px}
           <button id="btnPerfRefresh" class="btn">Actualiser</button>
         </div>
         <div class="kpi" style="margin-top:8px">
-          <div class="pill">Respect planning (APRS réel ≤ APRS prévu) : <b id="kpiRespect">0%</b></div>
+          <div class="pill">Respect planning (dep. réel ≤ prévu) : <b id="kpiRespect">0%</b></div>
           <div class="pill">Δ HMO moyen : <b id="kpiHmo">0.0 h (0%)</b></div>
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
-          <div class="pill">Moy. prélèvements : <b id="kpiSamples">0</b></div>
+          <div class="pill">Prélèvements moyen/visite : <b id="kpiSamples">0.0</b></div>
         </div>
       </div>
       <div class="grid cols-2">
@@ -424,7 +414,7 @@ dialog .body{padding:12px 14px}
 
 <script>
 /* ======================= stockage & base immats (LS) ====================== */
-const LS_KEY="rexA350_checkA_v5_color_pairs_trfx";
+const LS_KEY="rexA350_checkA_v4light";
 const BASE_IMMATS=[
   "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
   "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
@@ -459,6 +449,15 @@ $$('aside .menu button').forEach(btn=>{
   })
 })
 
+/* ========= placeholders : efface 0 à la saisie pour champ number/text ===== */
+function attachZeroAutoClear(root=document){
+  root.querySelectorAll('input[type="number"], input[type="text"]').forEach(inp=>{
+    inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
+    inp.addEventListener('blur',  ()=>{ if(inp.value==='') inp.value = inp.type==='number' ? '0' : ''; });
+  });
+}
+attachZeroAutoClear(document);
+
 /* ============================= immats (datalist) ========================== */
 function refreshImmatList(){
   const dl=$('#immatList'); dl.innerHTML='';
@@ -471,87 +470,41 @@ $('#btnAddImmat').onclick=()=>{
   $('#vImmat').value=v; $('#vImmatAdd').value=''; refreshImmatList(); save();
 }
 
-/* ========================= Entrées sans “0 collant” ======================= */
-function setupCleanZeros(){
-  $$('.clean-zeros').forEach(inp=>{
-    inp.value=''; // vide par défaut
-    inp.addEventListener('focus', ()=>{ if(inp.value==='0') inp.value=''; });
-    inp.addEventListener('blur', ()=>{ if(inp.value==='') inp.value=''; }); // reste vide
-    inp.addEventListener('input', ()=>{ /* calc à la volée */ recalcTotals(); });
-  });
-}
-setupCleanZeros();
-
-/* ============================ TRFX chips (par item) ======================= */
-function renderTrfxChips(list){
-  const wrap = $('#trfxChips'); wrap.innerHTML='';
-  (list||[]).forEach((code,idx)=>{
-    const d=document.createElement('div'); d.className='chip';
-    d.innerHTML = `<span>${code}</span><button title="Retirer" data-i="${idx}">✕</button>`;
-    wrap.appendChild(d);
-  });
-}
-$('#btnAddTrfx').onclick=()=>{
-  const v=getCurrentVisit() || collectVisitFromForm(); // si rien chargé, on prend le formulaire en cours
-  const code = $('#vTrfxInput').value.trim(); if(!code) return;
-  v.trfx = Array.isArray(v.trfx)? v.trfx : [];
-  v.trfx.push(code);
-  $('#vTrfxInput').value='';
-  // pousser dans state si la visite existe déjà
-  if(v.id && state.visits.find(x=>x.id===v.id)){
-    const i = state.visits.findIndex(x=>x.id===v.id); state.visits[i]=v; save();
-  }
-  renderTrfxChips(v.trfx);
-};
-$('#trfxChips').addEventListener('click',(e)=>{
-  const i=e.target?.dataset?.i; if(i==null) return;
-  const v=getCurrentVisit() || collectVisitFromForm();
-  if(Array.isArray(v.trfx)){ v.trfx.splice(Number(i),1); }
-  if(v.id){
-    const idx=state.visits.findIndex(x=>x.id===v.id); if(idx>=0){ state.visits[idx]=v; save(); }
-  }
-  renderTrfxChips(v.trfx||[]);
-});
-
-<!-- ============================ vacs (table effectifs) ====================== -->
-<script>
+/* ============================ vacs (table effectifs) ====================== */
 const vacBody = document.getElementById('vacBody');
+const btnAddVac = document.getElementById('btnAddVac');
 
 const SHIFT_CYCLE = ['matin','soir','nuit'];
-const nextShift = s => SHIFT_CYCLE[(SHIFT_CYCLE.indexOf(s)+1)%SHIFT_CYCLE.length];
-
+const nextShift = s => SHIFT_CYCLE[(SHIFT_CYCLE.indexOf(s)+1) % SHIFT_CYCLE.length];
 function makeShiftSelect(value='matin'){
   const sel = document.createElement('select');
   sel.className = 'shift';
   ['matin','soir','nuit'].forEach(opt=>{
     const o=document.createElement('option');
-    o.value=opt; o.textContent=opt.charAt(0).toUpperCase()+opt.slice(1);
+    o.value=opt;
+    o.textContent=opt.charAt(0).toUpperCase()+opt.slice(1);
     if(opt===value) o.selected=true;
     sel.appendChild(o);
   });
   return sel;
 }
-
-function formatVacName(idx, shift){
-  return `Vac ${idx+1} ${shift}`;
-}
+function formatVacName(idx, shift){ return `Vac ${idx+1} ${shift}`; }
 
 function vacRow(shift='matin'){
   const tr=document.createElement('tr');
   tr.innerHTML=`
     <td class="vacTitle"></td>
-    <td><input class="cmeD clean-zeros" type="number" min="0" placeholder="0"></td>
-    <td><input class="eirD clean-zeros" type="number" min="0" placeholder="0"></td>
-    <td><input class="leadD clean-zeros" type="number" min="0" placeholder="0"></td>
+    <td><input class="cmeD" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="eirD" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="leadD" type="number" min="0" value="0" placeholder="0"></td>
     <td class="demTot">0</td>
-    <td><input class="cmeR clean-zeros" type="number" min="0" placeholder="0"></td>
-    <td><input class="eirR clean-zeros" type="number" min="0" placeholder="0"></td>
-    <td><input class="leadR clean-zeros" type="number" min="0" placeholder="0"></td>
+    <td><input class="cmeR" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="eirR" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="leadR" type="number" min="0" value="0" placeholder="0"></td>
     <td class="realTot">0</td>
     <td><button class="btn bad delVac">Retirer</button></td>`;
   vacBody.appendChild(tr);
 
-  // insérer sélecteur shift au début dans la cellule titre
   const titleCell = tr.querySelector('.vacTitle');
   const wrap = document.createElement('div');
   wrap.className = 'row';
@@ -562,80 +515,63 @@ function vacRow(shift='matin'){
   wrap.appendChild(nameSpan);
   titleCell.appendChild(wrap);
 
-  setupCleanZeros();
+  attachZeroAutoClear(tr);
   return tr;
 }
-
-/* Renumérote toutes les lignes et met à jour le libellé “Vac N {shift}” */
 function renumberVacNames(){
   const rows = Array.from(vacBody.querySelectorAll('tr'));
-  rows.forEach((tr,idx)=>{
+  rows.forEach((tr, idx)=>{
     const sel = tr.querySelector('select.shift');
     const shift = sel?.value || 'matin';
     tr.querySelector('.vacName').textContent = formatVacName(idx, shift);
   });
 }
-
-/* À partir d’un index donné, impose la succession des shifts en cycle */
 function cascadeShiftsFrom(startIdx){
   const rows = Array.from(vacBody.querySelectorAll('tr'));
   if(rows.length===0) return;
-  // point de départ = shift de startIdx (ou matin si absent)
   let curShift = rows[startIdx]?.querySelector('select.shift')?.value || 'matin';
-  // Les suivants suivent le cycle
   for(let i=startIdx+1; i<rows.length; i++){
     curShift = nextShift(curShift);
     const sel = rows[i].querySelector('select.shift');
-    if(sel.value !== curShift){
-      sel.value = curShift;
-    }
+    if(sel.value !== curShift) sel.value = curShift;
   }
   renumberVacNames();
 }
-
-/* Graine initiale : Matin / Soir / Nuit */
 function seedVacs(){
   vacBody.innerHTML='';
   ['matin','soir','nuit'].forEach(s=>vacRow(s));
   renumberVacNames();
   recalcTotals();
 }
-
-/* Nom/shift de la prochaine vac à l’ajout : on prend le shift suivant du dernier */
 function nextVacShift(){
   const rows = Array.from(vacBody.querySelectorAll('tr'));
   if(rows.length===0) return 'matin';
   const lastShift = rows[rows.length-1].querySelector('select.shift').value || 'matin';
   return nextShift(lastShift);
 }
-
-document.getElementById('btnAddVac').onclick=()=>{
-  vacRow(nextVacShift());
-  renumberVacNames();
-  recalcTotals();
-};
-
-/* Écouteurs */
+if(btnAddVac){
+  btnAddVac.onclick = ()=>{
+    vacRow(nextVacShift());
+    renumberVacNames();
+    recalcTotals();
+  };
+}
 vacBody.addEventListener('input', e=>{
   if(e.target.tagName==='INPUT') recalcTotals();
 });
-
 vacBody.addEventListener('change', e=>{
-  // changement du type de vac (matin/soir/nuit)
   if(e.target.classList.contains('shift')){
     const tr = e.target.closest('tr');
     const rowIdx = Array.from(vacBody.querySelectorAll('tr')).indexOf(tr);
-    // renomme cette ligne et cascade sur les suivantes
     renumberVacNames();
     cascadeShiftsFrom(rowIdx);
+    recalcTotals();
   }
 });
-
 vacBody.addEventListener('click', e=>{
   if(e.target.classList.contains('delVac')){
     if(confirm('Retirer cette vac ?')){
       e.target.closest('tr').remove();
-      // après suppression, on recalcule la cascade en partant de la première
       if(vacBody.querySelectorAll('tr').length>0){
         cascadeShiftsFrom(0);
       }
@@ -643,10 +579,7 @@ vacBody.addEventListener('click', e=>{
     }
   }
 });
-
-/* Init */
 seedVacs();
-</script>
 
 /* ========================== calculs (totaux & KPI) ======================== */
 function recalcTotals(){
@@ -666,11 +599,15 @@ function recalcTotals(){
   $('#deltaEff').textContent=dEff;
 
   const dHmo = num($('#vHmoReal').value) - num($('#vHmoPlan').value);
+  $('#vHmoDelta').textContent = dHmo.toFixed(1)+' h';
   $('#deltaHmoBadge').textContent = dHmo.toFixed(1)+' h';
+
+  // compteur prélèvements
+  const v = getCurrentVisit();
+  const n = v?.samples?.length || 0;
+  $('#vSamplesCount').textContent = n;
 }
-;['vHmoPlan','vHmoReal','vSamples','vUnassigned','vEndLines'].forEach(id=> {
-  const el=$('#'+id); if(el) el.addEventListener('input', recalcTotals);
-});
+;['vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).addEventListener('input', recalcTotals));
 
 /* =============================== Import XML =============================== */
 $('#btnImportXml').onclick=()=>{
@@ -681,72 +618,128 @@ $('#btnImportXml').onclick=()=>{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
       const tx=r.result;
 
-      // immat: motif F-HTxx / F-HUVx…
-      const m = tx.match(/F-?H[A-Z0-9]{3,4}/i);
+      // immat : F-HTxx / F-HUVx… (avec ou sans tiret)
+      const m = tx.match(/\bF-?H[A-Z0-9]{3}\b/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
-      // check type A1..A12
+      // type de check (A1..A12)
       const mc = tx.match(/\bA(1[0-2]|[1-9])\b/i);
-      if(mc) $('#vCheck').value = mc[0].toUpperCase();
+      if(mc){ $('#vCheck').value = mc[0].toUpperCase(); }
 
-      // dates ISO : premier pour Arrivée prévue, deuxième pour APRS signé (prévu) si dispo
-      const isos = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/g) || [];
-      if(isos[0]) $('#vArrPrev').value = isos[0].replace(' ','T');
-      if(isos[1]) $('#vAprsPrev').value = isos[1].replace(' ','T');
+      // dates prévues (heuristique : balises usuelles puis fallback ISO)
+      const getText = sel => {
+        const n = xml.querySelector(sel);
+        return n ? (n.textContent || n.getAttribute('value') || '') : '';
+      };
+      const isoAll = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/g) || [];
 
-      // HMO prévue explicite ou somme durations
+      const arrPrev = getText('ArrivalPlanned, ArriveePrevue, ArrPrev, arrivalPlanned');
+      const depPrev = getText('DeparturePlanned, DepartPrevu, DepPrev, departurePlanned, APRSPlanned, AprsPlanned');
+
+      if(arrPrev) $('#vArrPrev').value = arrPrev.replace(' ','T');
+      if(depPrev) $('#vDepPrev').value = depPrev.replace(' ','T');
+
+      // fallback si pas trouvées : on prend les 2 premières ISO comme arrPrev / depPrev
+      if(!$('#vArrPrev').value && isoAll[0]) $('#vArrPrev').value = isoAll[0].replace(' ','T');
+      if(!$('#vDepPrev').value && isoAll[1]) $('#vDepPrev').value = isoAll[1].replace(' ','T');
+
+      // HMO prévue / réelle (balises usuelles ou somme des durations)
       const getNumNode = sel => {
         const n=xml.querySelector(sel); if(!n) return NaN;
         const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
       }
-      let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO, HMO_Plan');
-      if(isNaN(hPlan)){
+      let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO, HMO_Prevu, HMO_Plan');
+      let hReal = getNumNode('HMOReal, HmoReal, RealHMO, HMO_Reel');
+
+      if(isNaN(hPlan) || isNaN(hReal)){
         let sum=0;
-        xml.querySelectorAll('[duration]').forEach(n=>{
-          const v=parseFloat(n.getAttribute('duration')); if(!isNaN(v)) sum+=v;
+        xml.querySelectorAll('[duration],[duree]').forEach(n=>{
+          const v=parseFloat(n.getAttribute('duration')||n.getAttribute('duree')); if(!isNaN(v)) sum+=v;
         });
-        hPlan=sum||0;
+        if(isNaN(hPlan)) hPlan=sum||0;
+        if(isNaN(hReal)) hReal=sum||0;
       }
-      $('#vHmoPlan').value = isNaN(hPlan)? '' : String(hPlan);
+      if(!isNaN(hPlan)) $('#vHmoPlan').value = hPlan;
+      if(!isNaN(hReal)) $('#vHmoReal').value = hReal;
+
       recalcTotals();
-      alert('XML importé ✅ (Immat, Check, Arr. prév., APRS prév., HMO prév. auto)');
+      alert('XML importé ✅ (immat / check / dates prévues / HMO pré-remplis)');
     }catch(e){ alert('XML invalide'); }
   };
   r.readAsText(f);
 };
 
+/* =================== Prélèvements (TRFX) par visite ======================= */
+const samplesBody = $('#samplesBody');
+$('#btnAddSample').onclick=()=>{
+  const code = ($('#vSampleInput').value||'').trim();
+  if(!code) return alert('Saisis un code TRFX.');
+  const v = getCurrentVisit() || collectVisitFromForm();
+  if(!Array.isArray(v.samples)) v.samples = [];
+  v.samples.push({ code, ts:new Date().toISOString() });
+  // persiste si la visite est déjà dans l’état
+  const idx = state.visits.findIndex(x=>x.id===v.id);
+  if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
+  save();
+  $('#vSampleInput').value='';
+  renderVisitSamples(v);
+  recalcTotals();
+};
+function renderVisitSamples(v){
+  samplesBody.innerHTML='';
+  (v.samples||[]).forEach((s,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${s.code}</td><td>${fmtDate(s.ts)}</td><td><button class="btn bad" data-i="${i}">Supprimer</button></td>`;
+    samplesBody.appendChild(tr);
+  });
+  $('#vSamplesCount').textContent = (v.samples||[]).length;
+}
+samplesBody.addEventListener('click', e=>{
+  const i = e.target?.dataset?.i;
+  if(i===undefined) return;
+  const v = getCurrentVisit(); if(!v) return;
+  if(confirm('Supprimer ce prélèvement ?')){
+    v.samples.splice(Number(i),1);
+    save();
+    renderVisitSamples(v);
+    recalcTotals();
+  }
+});
+
 /* ========================= Enregistrer / Brouillon ======================== */
-let currentVisitId = null; // id de la visite chargée dans le formulaire
+let currentVisitId = null;
 
 function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
-    name:$(".vacName",tr).value.trim(),
+    name:$(".vacName",tr).textContent.trim(),
+    shift: tr.querySelector('select.shift')?.value || 'matin',
     cmeDem:num($('.cmeD',tr).value), eirDem:num($('.eirD',tr).value), leadDem:num($('.leadD',tr).value),
     cmeReal:num($('.cmeR',tr).value), eirReal:num($('.eirR',tr).value), leadReal:num($('.leadR',tr).value)
   }));
-  const cur = getCurrentVisit();
-  const trfxList = cur?.trfx || []; // déjà ajoutés via chips
-  return {
+  const base = {
     id: currentVisitId || uuid(),
     immat: $('#vImmat').value.trim().toUpperCase(),
     check: $('#vCheck').value,
     arrPrev: $('#vArrPrev').value || null,
     arrReal: $('#vArrReal').value || null,
-    aprsPrev: $('#vAprsPrev').value || null,
-    aprsReal: $('#vAprsReal').value || null,
+    depPrev: $('#vDepPrev').value || null,
+    depReal: $('#vDepReal').value || null,
     hmoPlan: num($('#vHmoPlan').value),
     hmoReal: num($('#vHmoReal').value),
-    samples: num($('#vSamples').value),
-    trfx: trfxList,
     unassigned: num($('#vUnassigned').value),
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
     vacs,
-    problems: (cur?.problems)||[], // conserve liens si modif
-    createdAt: cur?.createdAt || new Date().toISOString()
+    problems: (getCurrentVisit()?.problems)||[],
+    samples: (getCurrentVisit()?.samples)||[],
+    createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
+  return base;
 }
-function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
+
+function getCurrentVisit(){
+  return state.visits.find(v=>v.id===currentVisitId) || null;
+}
 
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
@@ -754,25 +747,29 @@ function renderFormFromVisit(v){
   $('#vCheck').value = v?.check||'A1';
   $('#vArrPrev').value = v?.arrPrev||'';
   $('#vArrReal').value = v?.arrReal||'';
-  $('#vAprsPrev').value = v?.aprsPrev||'';
-  $('#vAprsReal').value = v?.aprsReal||'';
-  $('#vHmoPlan').value = v?.hmoPlan? String(v.hmoPlan):'';
-  $('#vHmoReal').value = v?.hmoReal? String(v.hmoReal):'';
-  $('#vSamples').value = v?.samples? String(v.samples):'';
-  $('#vUnassigned').value = v?.unassigned? String(v.unassigned):'';
+  $('#vDepPrev').value = v?.depPrev||'';
+  $('#vDepReal').value = v?.depReal||'';
+  $('#vHmoPlan').value = v?.hmoPlan??0;
+  $('#vHmoReal').value = v?.hmoReal??0;
+  $('#vUnassigned').value = v?.unassigned??0;
   $('#vUnassignedReason').value = v?.unassignedReason||'';
-  $('#vEndLines').value = v?.endLines? String(v.endLines):'';
+  $('#vEndLines').value = v?.endLines??0;
+
+  // vacs
   vacBody.innerHTML='';
-  (v?.vacs?.length?v.vacs:[{name:'Vac 1 matin'},{name:'Vac 2 soir'},{name:'Vac 3 nuit'}]).forEach(x=>{
-    vacRow(x.name||''); 
+  (v?.vacs?.length?v.vacs:[{shift:'matin'},{shift:'soir'},{shift:'nuit'}]).forEach(x=>{
+    vacRow(x.shift||'matin'); 
     const tr=vacBody.lastElementChild;
-    $('.cmeD',tr).value=x.cmeDem||''; $('.eirD',tr).value=x.eirDem||''; $('.leadD',tr).value=x.leadDem||'';
-    $('.cmeR',tr).value=x.cmeReal||''; $('.eirR',tr).value=x.eirReal||''; $('.leadR',tr).value=x.leadReal||'';
+    $('.cmeD',tr).value=x.cmeDem||0; $('.eirD',tr).value=x.eirDem||0; $('.leadD',tr).value=x.leadDem||0;
+    $('.cmeR',tr).value=x.cmeReal||0; $('.eirR',tr).value=x.eirReal||0; $('.leadR',tr).value=x.leadReal||0;
   });
-  setupCleanZeros();
+  renumberVacNames();
+
+  // prélèvements
+  renderVisitSamples(v||{samples:[]});
+
   recalcTotals();
   renderVisitProblems(v||{problems:[]});
-  renderTrfxChips(v?.trfx||[]);
 }
 
 $('#btnSaveVisit').onclick=()=>{
@@ -783,36 +780,25 @@ $('#btnSaveVisit').onclick=()=>{
   save(); renderVisitsList();
   alert('Visite enregistrée ✅');
 };
+
 $('#btnSaveAsNew').onclick=()=>{
-  const prev = getCurrentVisit();
-  currentVisitId = null; // force nouvel ID
+  const prevId = currentVisitId;
+  currentVisitId = null;
   const v = collectVisitFromForm();
   state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
-  save(); renderVisitsList(); renderFormFromVisit(v);
+  save(); renderVisitsList();
+  renderFormFromVisit(v);
   alert('Nouvelle visite enregistrée ✅');
 };
+
 $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
-  ['vImmat','vImmatAdd','vArrPrev','vArrReal','vAprsPrev','vAprsReal','vHmoPlan','vHmoReal','vSamples','vUnassigned','vUnassignedReason','vEndLines','vTrfxInput']
-    .forEach(id=> $('#'+id).value = '');
-  renderTrfxChips([]);
-  seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
-};
-$('#btnNewVisit').onclick=()=>{
-  if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
-  const v={ id:uuid(), immat:'', check:'A1',
-    arrPrev:null, arrReal:null, aprsPrev:null, aprsReal:null,
-    hmoPlan:0, hmoReal:0, samples:0, trfx:[],
-    unassigned:0, unassignedReason:'', endLines:0,
-    vacs:[{name:'Vac 1 matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
-          {name:'Vac 2 soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
-          {name:'Vac 3 nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
-    problems:[], createdAt:new Date().toISOString()
-  };
-  state.visits.push(v); save();
-  renderVisitsList(); renderFormFromVisit(v);
+  $('#vImmat').value=''; $('#vImmatAdd').value='';
+  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
+    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
+  seedVacs(); recalcTotals(); renderVisitProblems({problems:[]}); renderVisitSamples({samples:[]});
 };
 
 /* ============================ Liste des visites =========================== */
@@ -826,10 +812,10 @@ function renderVisitsList(){
       <td>${v.immat||'—'}</td>
       <td>${v.check||'A?'}</td>
       <td>${fmtDate(v.arrPrev)}</td>
-      <td>${fmtDate(v.aprsPrev)}</td>
+      <td>${fmtDate(v.depPrev)}</td>
       <td>${v.hmoPlan||0}</td>
       <td>${v.hmoReal||0}</td>
-      <td>${dH>0?'+':''}${(v.hmoReal!=null&&v.hmoPlan!=null)?dH:0}</td>
+      <td>${dH>0?'+':''}${dH||0}</td>
       <td>
         <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
         <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
@@ -839,6 +825,7 @@ function renderVisitsList(){
   });
 }
 renderVisitsList();
+
 $('#visitsTable').addEventListener('click', (e)=>{
   const b=e.target.closest('button'); if(!b) return;
   const id=b.dataset.id; const act=b.dataset.act;
@@ -882,9 +869,10 @@ $('#btnAddProblem').onclick=()=>{
     immat:'', check:'', ts:new Date().toISOString()
   };
   state.problems.push(p); save();
-  $('#pTitle').value=''; $('#pImpact').value=''; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
+  $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
   renderProblems();
 };
+
 function filterProblemsList(list){
   const q=$('#pbSearch').value.trim().toLowerCase();
   const rec=$('#pbRecOnly').checked;
@@ -893,12 +881,13 @@ function filterProblemsList(list){
     const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
     const inRec=!rec || !!p.recurring;
     const inP = within(p.ts,s||null,e||null);
-    const inI = im? p.immat===im : true; // compat
-    const inC = ck? p.check===ck : true;  // compat
+    const inI = im? p.immat===im : true;
+    const inC = ck? p.check===ck : true;
     const inCat = cat? p.cat===cat : true;
     return inQ && inRec && inP && inI && inC && inCat;
   });
 }
+// nombre d'assignations d'un problème
 function countAssignments(pid, visitsSubset=null){
   const visits = Array.isArray(visitsSubset) ? visitsSubset : state.visits;
   let n = 0;
@@ -991,6 +980,7 @@ $('#exportJson').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click();
 }
+
 /* Remplacement total */
 $('#importJsonBtn').onclick=()=>$('#importJsonFile').click();
 $('#importJsonFile').addEventListener('change', e=>{
@@ -1010,6 +1000,7 @@ $('#importJsonFile').addEventListener('change', e=>{
   };
   r.readAsText(f);
 });
+
 /* Fusion intelligente */
 $('#mergeJsonBtn').onclick=()=>$('#mergeJsonFile').click();
 $('#mergeJsonFile').addEventListener('change', e=>{
@@ -1021,10 +1012,8 @@ $('#mergeJsonFile').addEventListener('change', e=>{
       if(!(incoming && (incoming.visits||incoming.problems||incoming.immat))) return alert('JSON sans contenu utile');
       const before = JSON.stringify(state).length;
 
-      // union immats
       if(Array.isArray(incoming.immat)) state.immat = Array.from(new Set([...state.immat, ...incoming.immat])).sort();
 
-      // fusion problèmes (par id sinon ajout)
       if(Array.isArray(incoming.problems)){
         const byId = new Map(state.problems.map(p=>[p.id,p]));
         incoming.problems.forEach(p=>{
@@ -1053,10 +1042,9 @@ $('#mergeJsonFile').addEventListener('change', e=>{
         state.problems = Array.from(byId.values());
       }
 
-      // fusion visites (par id; sinon dédoublonnage heuristique)
       if(Array.isArray(incoming.visits)){
         const mapV = new Map(state.visits.map(v=>[v.id,v]));
-        const keyOf = v => [v.immat,v.check,v.arrPrev,v.aprsPrev,v.hmoPlan].join('|');
+        const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
         const seenKeys = new Set(state.visits.map(v=>keyOf(v)));
 
         incoming.visits.forEach(v=>{
@@ -1067,7 +1055,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
               ...v,
               vacs: Array.isArray(v.vacs) ? v.vacs : cur.vacs,
               problems: Array.isArray(v.problems) ? v.problems : cur.problems,
-              trfx: Array.isArray(v.trfx) ? v.trfx : cur.trfx
+              samples: Array.isArray(v.samples) ? v.samples : (cur.samples||[])
             };
             mapV.set(v.id, merged);
           } else {
@@ -1094,26 +1082,25 @@ $('#mergeJsonFile').addEventListener('change', e=>{
 let pie=null;
 function renderPerf(){
   const s=$('#pfStart').value, e=$('#pfEnd').value, im=($('#pfImmat').value||'').toUpperCase(), ck=$('#pfCheck').value;
-  const inRange = v => within(v.createdAt||v.arrPrev||v.arrReal||v.aprsPrev||v.aprsReal, s||null, e||null);
-  const visits=state.visits.filter(v=> inRange(v) && (im? v.immat===im:true) && (ck? v.check===ck:true));
+  const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
 
   // KPIs
-  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0, sumSamples=0, cntSamples=0;
+  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0, sumSamples=0;
   visits.forEach(v=>{
-    if(v.aprsPrev && v.aprsReal){ tot++; if(new Date(v.aprsReal)<=new Date(v.aprsPrev)) res++; }
+    if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
     sumDH += dH; sumHD += (v.hmoPlan||0);
     const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
     const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
-    if(typeof v.samples==='number'){ sumSamples += v.samples; cntSamples++; }
+    sumSamples += (v.samples?.length||0);
   });
   $('#kpiRespect').textContent = (tot? Math.round(res*100/tot):0)+'%';
   const avgDH = visits.length? (sumDH/visits.length):0;
   const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
-  $('#kpiSamples').textContent = (cntSamples? Math.round(sumSamples/cntSamples):0);
+  $('#kpiSamples').textContent = (visits.length? (sumSamples/visits.length).toFixed(1):'0.0');
 
   // Pareto / pie depuis problems filtrés
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
