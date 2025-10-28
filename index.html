@@ -3,48 +3,70 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX A350 – Check A (tout-en-un)</title>
+<title>REX A350 – Check A (clair + fusion JSON)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
-:root{--bg:#0f172a;--panel:#111827;--muted:#1f2937;--text:#e5e7eb;--accent:#60a5fa;--line:#27324a}
+:root{
+  /* Thème clair lisible */
+  --bg:#e9eef6;           /* fond de page gris bleuté doux */
+  --panel:#ffffff;        /* cartes/panneaux blancs */
+  --muted:#eef3fb;        /* fonds secondaires */
+  --text:#0b1220;         /* texte principal sombre */
+  --accent:#2563eb;       /* accent (bleu) */
+  --ok:#16a34a;           /* vert ok */
+  --bad:#dc2626;          /* rouge */
+  --line:#d1d9e6;         /* bordures */
+}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,Segoe UI,Roboto}
 .wrap{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-aside{background:var(--panel);border-right:1px solid var(--line);padding:16px 12px}
+aside{background:var(--muted);border-right:1px solid var(--line);padding:16px 12px}
 main{padding:16px}
 h1{margin:0 0 12px;font-size:20px}
 h2{margin:0 0 8px;font-size:16px}
-.menu h3{font-size:12px;letter-spacing:.08em;color:#93a3b8;margin:0 0 10px;text-transform:uppercase}
-.menu button{display:block;width:100%;text-align:left;background:#0b1220;border:1px solid var(--line);color:var(--text);padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer}
+.menu h3{font-size:12px;letter-spacing:.08em;color:#334155;margin:0 0 10px;text-transform:uppercase}
+.menu button{
+  display:block;width:100%;text-align:left;
+  background:#f5f8ff;border:1px solid var(--line);color:var(--text);
+  padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer
+}
 .menu button.active{outline:2px solid var(--accent)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .grid{display:grid;gap:12px}
 .cols-2{grid-template-columns:1fr 1fr}
 .cols-3{grid-template-columns:repeat(3,1fr)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input,select,textarea{width:100%;background:#0b1220;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px}
+input,select,textarea{
+  width:100%;background:#fff;border:1px solid var(--line);color:var(--text);
+  border-radius:10px;padding:10px
+}
 input[type="number"]{text-align:right}
-.btn{border:1px solid var(--line);background:#0b1220;color:var(--text);border-radius:10px;padding:8px 12px;cursor:pointer}
-.btn.ok{background:#0d2517;border-color:#154a2c;color:#bbf7d0}
-.btn.bad{background:#2a0e12;border-color:#5b111c;color:#fecaca}
+.btn{
+  border:1px solid var(--line);background:#f5f8ff;color:var(--text);
+  border-radius:10px;padding:8px 12px;cursor:pointer
+}
+.btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46}
+.btn.bad{background:#fde8e8;border-color:#fecaca;color:#7f1d1d}
+.btn.fuse{background:#eefcef;border-color:#bbf7d0;color:#14532d;font-weight:600}
+.btn.primary{background:#e7efff;border-color:#bfdbfe;color:#1e3a8a}
 .btn.ghost{background:transparent}
 table{width:100%;border-collapse:collapse}
 th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right}
 th:first-child,td:first-child{text-align:left}
-thead th{background:#0b1220;position:sticky;top:0}
-.small{font-size:12px;opacity:.8}
+thead th{background:#f7faff;position:sticky;top:0;z-index:1}
+.small{font-size:12px;opacity:.9;color:#334155}
 .kpi{display:flex;gap:10px;flex-wrap:wrap}
-.kpi .pill{padding:8px 10px;border-radius:999px;background:#0b1220;border:1px solid var(--line)}
+.kpi .pill{padding:8px 10px;border-radius:999px;background:#f5f8ff;border:1px solid var(--line)}
 .hidden{display:none}
 .topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
-.tag{font-size:11px;opacity:.75;padding:2px 6px;border:1px solid var(--line);border-radius:999px}
-dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#0b1220;color:var(--text)}
+.tag{font-size:11px;opacity:.9;padding:2px 6px;border:1px solid var(--line);border-radius:999px;background:#fff}
+dialog{border:none;border-radius:12px;max-width:800px;width:clamp(300px,90vw,800px);background:#fff;color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.2)}
 dialog .head{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
 dialog .body{padding:12px 14px}
 
-/* Fix hauteur camembert */
+/* Camembert responsive */
 .chart-wrap{height:320px; max-height:50vh;}
 .chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 </style>
@@ -64,7 +86,9 @@ dialog .body{padding:12px 14px}
     <div class="topbar">
       <button id="exportJson" class="btn">Exporter JSON</button>
       <input id="importJsonFile" type="file" accept="application/json" class="hidden">
-      <button id="importJsonBtn" class="btn">Importer JSON</button>
+      <button id="importJsonBtn" class="btn">Importer (remplacer)</button>
+      <input id="mergeJsonFile" type="file" accept="application/json" class="hidden">
+      <button id="mergeJsonBtn" class="btn fuse">Importer / Fusionner JSON</button>
     </div>
 
     <!-- VISITE -->
@@ -75,17 +99,15 @@ dialog .body{padding:12px 14px}
       <div class="card">
         <div class="row">
           <h2 style="margin:0">Liste des visites</h2>
+          <span class="small tag">Clique “Ouvrir” pour charger dans le formulaire</span>
           <button id="btnNewVisit" class="btn ok">+ Nouvelle visite</button>
         </div>
         <div style="overflow:auto;margin-top:8px">
           <table id="visitsTable">
             <thead>
               <tr>
-                <th>#</th><th>Immat</th><th>Check</th>
-                <th>Arr. prév</th><th>Dep. prév</th>
-                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th>
-                <th>Prélèv.</th><th>TRFX</th>
-                <th>Actions</th>
+                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>Dep. prév</th>
+                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th><th>Actions</th>
               </tr>
             </thead>
             <tbody id="visitsBody"></tbody>
@@ -152,19 +174,6 @@ dialog .body{padding:12px 14px}
           </div>
         </div>
 
-        <!-- ⚙️ Nouveau bloc prélèvements -->
-        <div class="grid cols-3" style="margin-top:8px">
-          <div>
-            <label>Nombre de prélèvements</label>
-            <input id="vSamples" type="number" min="0" step="1" value="0">
-          </div>
-          <div>
-            <label>TRFX prélèvement</label>
-            <input id="vTrfx" placeholder="ex. TRFX-1234">
-          </div>
-          <div></div>
-        </div>
-
         <div class="grid cols-3" style="margin-top:8px">
           <div>
             <label>Nb lignes désassignées</label>
@@ -182,8 +191,8 @@ dialog .body{padding:12px 14px}
 
         <div class="row" style="margin-top:8px">
           <input id="xmlFile" type="file" accept=".xml">
-          <button id="btnImportXml" class="btn">Importer XML</button>
-          <span class="small" style="margin-left:auto;opacity:.7">L’XML peut préremplir immat/dates/HMO si présent (prélèvements non importés).</span>
+          <button id="btnImportXml" class="btn primary">Importer XML (HMO plan auto)</button>
+          <span class="small" style="margin-left:auto">L’XML peut préremplir immat/dates/HMO. Tu peux toujours modifier manuellement.</span>
         </div>
       </div>
 
@@ -320,9 +329,6 @@ dialog .body{padding:12px 14px}
           <div class="pill">Respect planning (dep. réel ≤ prévu) : <b id="kpiRespect">0%</b></div>
           <div class="pill">Δ HMO moyen : <b id="kpiHmo">0.0 h (0%)</b></div>
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
-          <!-- ⚙️ Nouveaux KPI prélèvements -->
-          <div class="pill">Total prélèvements : <b id="kpiSamplesTot">0</b></div>
-          <div class="pill">Moy. prélèvements/visite : <b id="kpiSamplesAvg">0</b></div>
         </div>
       </div>
       <div class="grid cols-2">
@@ -364,14 +370,14 @@ dialog .body{padding:12px 14px}
     </div>
     <div class="row" style="margin-top:10px">
       <button id="pickAdd" class="btn ok">+ Ajouter à la visite</button>
-      <span class="small" style="margin-left:auto;opacity:.7">Les éléments cochés seront ajoutés avec confirmation.</span>
+      <span class="small" style="margin-left:auto;opacity:.9">Les éléments cochés seront ajoutés avec confirmation.</span>
     </div>
   </div>
 </dialog>
 
 <script>
-/* ========================= stockage & base immats ========================= */
-const LS_KEY="rexA350_checkA_v3fix";
+/* ======================= stockage & base immats (LS) ====================== */
+const LS_KEY="rexA350_checkA_v4light";
 const BASE_IMMATS=[
   "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
   "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
@@ -439,7 +445,11 @@ function seedVacs(){ vacBody.innerHTML=''; ['Matin','Soir','Nuit'].forEach(vacRo
 seedVacs();
 
 vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
-vacBody.addEventListener('click', e=>{ if(e.target.classList.contains('delVac')){ if(confirm('Retirer cette vacation ?')){ e.target.closest('tr').remove(); recalcTotals(); } }});
+vacBody.addEventListener('click', e=>{
+  if(e.target.classList.contains('delVac')){
+    if(confirm('Retirer cette vacation ?')){ e.target.closest('tr').remove(); recalcTotals(); }
+  }
+});
 $('#btnAddVac').onclick=()=>vacRow('Vac.');
 
 /* ========================== calculs (totaux & KPI) ======================== */
@@ -473,10 +483,16 @@ $('#btnImportXml').onclick=()=>{
     try{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
       const tx=r.result;
+
+      // immat: motif F-HTxx / F-HUVx…
       const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
+
+      // dates (premier ISO)
       const iso = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);
       if(iso){ $('#vArrReal').value = iso[0].replace(' ','T'); }
+
+      // HMO explicites ou somme durations
       const getNumNode = sel => {
         const n=xml.querySelector(sel); if(!n) return NaN;
         const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
@@ -491,18 +507,18 @@ $('#btnImportXml').onclick=()=>{
         if(isNaN(hPlan)) hPlan=sum||0;
         if(isNaN(hReal)) hReal=sum||0;
       }
-      // Remplit seulement HMO + quelques champs (pas les prélèvements, à saisir manuellement)
+      // ✅ Auto-remplissage HMO prévue (modifiable manuellement après)
       $('#vHmoPlan').value = isNaN(hPlan)? 0 : hPlan;
       $('#vHmoReal').value = isNaN(hReal)? 0 : hReal;
       recalcTotals();
-      alert('XML importé ✅');
+      alert('XML importé ✅ (HMO plan/réel préremplis, éditables)');
     }catch(e){ alert('XML invalide'); }
   };
   r.readAsText(f);
 };
 
 /* ========================= Enregistrer / Brouillon ======================== */
-let currentVisitId = null;
+let currentVisitId = null; // id de la visite chargée dans le formulaire
 
 function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
@@ -520,13 +536,11 @@ function collectVisitFromForm(){
     depReal: $('#vDepReal').value || null,
     hmoPlan: num($('#vHmoPlan').value),
     hmoReal: num($('#vHmoReal').value),
-    samples: num($('#vSamples').value),          // 🔹 nouveau
-    trfx: $('#vTrfx').value.trim(),              // 🔹 nouveau
     unassigned: num($('#vUnassigned').value),
     unassignedReason: $('#vUnassignedReason').value.trim(),
     endLines: num($('#vEndLines').value),
     vacs,
-    problems: (getCurrentVisit()?.problems)||[],
+    problems: (getCurrentVisit()?.problems)||[], // conserve les liens
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
 }
@@ -545,8 +559,6 @@ function renderFormFromVisit(v){
   $('#vDepReal').value = v?.depReal||'';
   $('#vHmoPlan').value = v?.hmoPlan??0;
   $('#vHmoReal').value = v?.hmoReal??0;
-  $('#vSamples').value = v?.samples??0;   // 🔹 nouveau
-  $('#vTrfx').value = v?.trfx||'';        // 🔹 nouveau
   $('#vUnassigned').value = v?.unassigned??0;
   $('#vUnassignedReason').value = v?.unassignedReason||'';
   $('#vEndLines').value = v?.endLines??0;
@@ -574,15 +586,15 @@ $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
   $('#vImmat').value=''; $('#vImmatAdd').value='';
-  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines','vSamples','vTrfx']
-    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines'||id==='vSamples')?0:'');
+  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal','vUnassigned','vUnassignedReason','vEndLines']
+    .forEach(id=> $('#'+id).value = (id==='vUnassigned'||id==='vEndLines')?0:'');
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
 }
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
   const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
-    hmoPlan:0, hmoReal:0, samples:0, trfx:'', unassigned:0, unassignedReason:'', endLines:0,
+    hmoPlan:0, hmoReal:0, unassigned:0, unassignedReason:'', endLines:0,
     vacs:[{name:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
           {name:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
@@ -607,8 +619,6 @@ function renderVisitsList(){
       <td>${v.hmoPlan||0}</td>
       <td>${v.hmoReal||0}</td>
       <td>${dH>0?'+':''}${dH||0}</td>
-      <td>${v.samples??0}</td>
-      <td>${v.trfx||'—'}</td>
       <td>
         <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
         <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
@@ -702,7 +712,6 @@ function renderProblems(){
 document.getElementById('problemsBody').addEventListener('click', (e)=>{
   const id = e.target?.dataset?.del;
   if(!id) return;
-
   const cascade = confirm("Supprimer ce problème de la bibliothèque ?\n\nOK = supprime aussi ce problème de toutes les visites.");
   state.problems = state.problems.filter(p => p.id !== id);
   if (cascade) {
@@ -710,10 +719,8 @@ document.getElementById('problemsBody').addEventListener('click', (e)=>{
       if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id);
     });
   }
-  save();
-  renderProblems();
-  const v = state.visits.find(x => x.id === (currentVisitId||''));
-  if (v) renderVisitProblems(v);
+  save(); renderProblems();
+  const v = state.visits.find(x => x.id === (currentVisitId||'')); if (v) renderVisitProblems(v);
   alert('Problème supprimé ✅' + (cascade ? ' (et retiré des visites)' : ''));
 });
 $('#btnFilterProblems').onclick=renderProblems;
@@ -761,6 +768,8 @@ $('#exportJson').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click();
 }
+
+/* Remplacement total */
 $('#importJsonBtn').onclick=()=>$('#importJsonFile').click();
 $('#importJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -769,19 +778,95 @@ $('#importJsonFile').addEventListener('change', e=>{
     try{
       const d=JSON.parse(r.result);
       if(d && d.visits && d.problems){
-        // fusion simple & robuste
-        const byId = new Map((state.visits||[]).map(v=>[v.id,v]));
-        (d.visits||[]).forEach(v=> byId.set(v.id, {...byId.get(v.id), ...v}));
-        state.visits = Array.from(byId.values());
-
-        const pbId = new Map((state.problems||[]).map(p=>[p.id,p]));
-        (d.problems||[]).forEach(p=> pbId.set(p.id, {...pbId.get(p.id), ...p}));
-        state.problems = Array.from(pbId.values());
-
-        state.immat = Array.from(new Set([...(state.immat||[]), ...(d.immat||[]), ...BASE_IMMATS])).sort();
+        if(!confirm('Remplacer entièrement les données locales par ce JSON ?')) return;
+        state=d; 
+        state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
         save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
-        alert('Import OK ✅ (fusion intelligente)');
+        alert('Import (remplacement) OK ✅');
       } else alert('JSON invalide');
+    }catch{ alert('Erreur JSON'); }
+  };
+  r.readAsText(f);
+});
+
+/* Fusion intelligente */
+$('#mergeJsonBtn').onclick=()=>$('#mergeJsonFile').click();
+$('#mergeJsonFile').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const incoming=JSON.parse(r.result);
+      if(!(incoming && (incoming.visits||incoming.problems||incoming.immat))) return alert('JSON sans contenu utile');
+      const before = JSON.stringify(state).length;
+
+      // union immats
+      if(Array.isArray(incoming.immat)) state.immat = Array.from(new Set([...state.immat, ...incoming.immat])).sort();
+
+      // fusion problèmes (par id sinon ajout)
+      if(Array.isArray(incoming.problems)){
+        const byId = new Map(state.problems.map(p=>[p.id,p]));
+        incoming.problems.forEach(p=>{
+          if(p && p.id){
+            if(!byId.has(p.id)) byId.set(p.id,p);
+            else {
+              // Merge soft: conserve ancien et complète les champs manquants
+              const cur = byId.get(p.id);
+              byId.set(p.id, {
+                ...cur,
+                title: p.title || cur.title,
+                cat: p.cat || cur.cat,
+                impact: (typeof p.impact==='number')? p.impact : cur.impact,
+                actor: p.actor || cur.actor,
+                recurring: (typeof p.recurring==='boolean')? p.recurring : cur.recurring,
+                desc: p.desc || cur.desc,
+                immat: p.immat || cur.immat,
+                check: p.check || cur.check,
+                ts: p.ts || cur.ts
+              });
+            }
+          }else{
+            // pas d'id -> on génère un id
+            const cp={...p, id: uuid(), ts: p?.ts || new Date().toISOString()};
+            byId.set(cp.id, cp);
+          }
+        });
+        state.problems = Array.from(byId.values());
+      }
+
+      // fusion visites (par id; sinon dédoublonnage heuristique)
+      if(Array.isArray(incoming.visits)){
+        const mapV = new Map(state.visits.map(v=>[v.id,v]));
+        const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
+        const seenKeys = new Set(state.visits.map(v=>keyOf(v)));
+
+        incoming.visits.forEach(v=>{
+          if(v && v.id && mapV.has(v.id)){
+            // Merge soft sur la même visite id
+            const cur = mapV.get(v.id);
+            const merged = {
+              ...cur,
+              ...v,
+              vacs: Array.isArray(v.vacs) ? v.vacs : cur.vacs,
+              problems: Array.isArray(v.problems) ? v.problems : cur.problems
+            };
+            mapV.set(v.id, merged);
+          } else {
+            // Pas le même id : on évite les doublons via clé heuristique
+            const k = keyOf(v||{});
+            if(!seenKeys.has(k)){
+              const nv = v && v.id ? v : {...v, id: uuid()};
+              mapV.set(nv.id, nv);
+              seenKeys.add(k);
+            }
+          }
+        });
+        state.visits = Array.from(mapV.values());
+      }
+
+      save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
+      const after = JSON.stringify(state).length;
+      alert('Fusion JSON terminée ✅\nDonnées cumulées et dédoublonnées.\n(+'+ (after-before) +' octets environ)');
     }catch{ alert('Erreur JSON'); }
   };
   r.readAsText(f);
@@ -795,23 +880,19 @@ function renderPerf(){
 
   // KPIs
   let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
-  let sumSamples=0;
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
     sumDH += dH; sumHD += (v.hmoPlan||0);
-    const dem = (v.vacs||[]).reduce((a,x)=>a+x.cmeDem+x.eirDem+x.leadDem,0);
-    const rea = (v.vacs||[]).reduce((a,x)=>a+x.cmeReal+x.eirReal+x.leadReal,0);
+    const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
+    const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
-    sumSamples += (v.samples||0);
   });
   $('#kpiRespect').textContent = (tot? Math.round(res*100/tot):0)+'%';
   const avgDH = visits.length? (sumDH/visits.length):0;
   const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
-  $('#kpiSamplesTot').textContent = sumSamples;
-  $('#kpiSamplesAvg').textContent = visits.length? Math.round(sumSamples/visits.length) : 0;
 
   // Pareto / pie depuis problems filtrés
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
@@ -831,7 +912,10 @@ function renderPerf(){
 $('#btnPerfRefresh').onclick=renderPerf;
 
 /* ================================ init UI ================================= */
-refreshImmatList(); renderProblems(); renderVisitsList();
+function initialRender(){
+  refreshImmatList(); renderProblems(); renderVisitsList();
+}
+initialRender();
 </script>
 </body>
 </html>
