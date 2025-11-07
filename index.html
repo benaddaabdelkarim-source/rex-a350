@@ -17,7 +17,6 @@
   --ok:#16a34a;           /* vert ok */
   --bad:#dc2626;          /* rouge */
   --line:#d1d9e6;         /* bordures */
-
   --prev:#1d4ed8;         /* bleu prévu */
   --real:#059669;         /* vert réel */
 }
@@ -32,7 +31,7 @@ h2{margin:0 0 8px;font-size:16px}
 .menu h3{font-size:12px;letter-spacing:.08em;color:#334155;margin:0 0 10px;text-transform:uppercase}
 .menu button{
   display:block;width:100%;text-align:left;
-  background:#f5f8ff;border:1px solid var(--line);color:var(--text);
+  background:#f5f8ff;border:1px solid var(--line);color:#0b1220;
   padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer
 }
 .menu button.active{outline:2px solid var(--accent)}
@@ -81,15 +80,11 @@ h2 .legend .pill{margin-left:6px}
 .chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 
 /* Filtres visites */
-.filters{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}
+.filters{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px}
 .filters .btn{grid-column:span 1}
 
 /* Champs désassignations (table) */
 .table-small input, .table-small select{padding:6px}
-
-/* Bandeau d’erreur runtime (debug) */
-#errbar{position:fixed;left:12px;right:12px;bottom:12px;background:#fee2e2;border:1px solid #fecaca;color:#7f1d1d;border-radius:10px;padding:8px 10px;font-size:12px;display:none}
-#errbar b{font-weight:600}
 </style>
 </head>
 <body>
@@ -158,6 +153,10 @@ h2 .legend .pill{margin-left:6px}
             <label>VAC ≥</label>
             <input id="fltVacMin" type="number" min="0" value="0">
           </div>
+          <div>
+            <label>Filtre TRFX</label>
+            <input id="fltTrfx" placeholder="Contient…">
+          </div>
           <div style="display:flex;align-items:flex-end">
             <button id="btnApplyVisitFilters" class="btn">Filtrer</button>
           </div>
@@ -170,7 +169,7 @@ h2 .legend .pill{margin-left:6px}
                 <th>#</th><th>Immat</th><th>Check</th>
                 <th>Arr. prév</th><th>APRS signé (prév.)</th>
                 <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th>
-                <th>P/F</th><th>BORO</th><th>VAC</th>
+                <th>P/F</th><th>BORO</th><th>VAC</th><th>TRFX visite</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -187,6 +186,14 @@ h2 .legend .pill{margin-left:6px}
             <span class="pill real">Réel</span>
           </span>
         </h2>
+
+        <!-- TRFX de visite (obligatoire) -->
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label>TRFX de la visite (obligatoire)</label>
+            <input id="vTrfxVisit" placeholder="ex. TRFX-0001-REX">
+          </div>
+        </div>
 
         <div class="grid cols-3">
           <div>
@@ -532,20 +539,7 @@ h2 .legend .pill{margin-left:6px}
   </div>
 </dialog>
 
-<div id="errbar"></div>
-
 <script>
-/* ========= File guard: si une exception apparaît, on l'affiche en bas ======== */
-(function(){
-  const bar = document.getElementById('errbar');
-  function showErr(msg, src, line, col){
-    bar.innerHTML = '<b>Erreur JavaScript :</b> ' + (msg||'') + (src? ('<br><span class="small">'+src+':'+line+':'+col+'</span>'):'');
-    bar.style.display='block';
-  }
-  window.addEventListener('error', (e)=>{ showErr(e.message, e.filename, e.lineno, e.colno); });
-  window.addEventListener('unhandledrejection', (e)=>{ showErr('Promise rejetée: '+(e.reason&&e.reason.message?e.reason.message:e.reason)); });
-})();
-
 /* ======================= stockage & base immats (LS) ====================== */
 const LS_KEY="rexA350_checkA_v4light";
 const BASE_IMMATS=[
@@ -575,12 +569,12 @@ const cycle = ["Matin","Soir","Nuit"];
 function attachZeroClearInputs(){
   $$('input[type="number"].clear0').forEach(inp=>{
     const clear = ()=>{ if(inp.value==="0"||inp.value==="0.0") inp.value=""; }
-    const restore = ()=>{ if((inp.value||"").trim()==="") inp.value="0"; }
+    const restore = ()=>{ if(inp.value.trim()==="") inp.value="0"; }
     inp.addEventListener('focus', clear);
     inp.addEventListener('blur', restore);
   });
 }
-function attachZeroClearDatetime(){ /* garde place pour future logique si besoin */ }
+function attachZeroClearDatetime(){ /* placeholder hook si besoin */ }
 
 /* ================================ onglets ================================= */
 $$('aside .menu button').forEach(btn=>{
@@ -596,8 +590,7 @@ $$('aside .menu button').forEach(btn=>{
 
 /* ============================= immats (datalist) ========================== */
 function refreshImmatList(){
-  const dl=$('#immatList'); if(!dl) return;
-  dl.innerHTML='';
+  const dl=$('#immatList'); dl.innerHTML='';
   state.immat.forEach(i=>{ const o=document.createElement('option'); o.value=i; dl.appendChild(o) })
 }
 refreshImmatList();
@@ -695,8 +688,7 @@ function addUnassignRow(val=0, reason="", skill=""){
 }
 function renumberUnassign(){ $$('#unassignBody tr').forEach((tr,i)=>$('.uaIndex',tr).textContent=i+1); }
 function recalcUnassign(){
-  let tot=0;
-  $$('#unassignBody .uaVal').forEach(inp=> tot += num(inp.value));
+  let tot=0; $$('#unassignBody .uaVal').forEach(inp=> tot += num(inp.value));
   $('#unassignTotal').textContent = tot;
 }
 $('#btnAddUnassign').onclick = ()=> addUnassignRow();
@@ -772,7 +764,7 @@ $('#btnImportXml').onclick=()=>{
       const xml=new DOMParser().parseFromString(r.result,'text/xml');
       const tx=r.result;
 
-      // immat: motif F-HTxx / F-HUVx…
+      // immat
       const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
@@ -868,11 +860,14 @@ function putVacToUI(vacs){
   }
 }
 
+function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
+
 function collectVisitFromForm(){
   return {
     id: currentVisitId || uuid(),
     immat: $('#vImmat').value.trim().toUpperCase(),
     check: $('#vCheck').value,
+    trfxVisit: ($('#vTrfxVisit').value || '').trim(),
     arrPrev: $('#vArrPrev').value || null,
     arrReal: $('#vArrReal').value || null,
     depPrev: $('#vDepPrev').value || null,
@@ -900,12 +895,11 @@ function collectVisitFromForm(){
   };
 }
 
-function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
-
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
   $('#vImmat').value = v?.immat||'';
   $('#vCheck').value = v?.check||'A1';
+  $('#vTrfxVisit').value = v?.trfxVisit || '';
   $('#vArrPrev').value = v?.arrPrev||'';
   $('#vArrReal').value = v?.arrReal||'';
   $('#vDepPrev').value = v?.depPrev||'';
@@ -925,7 +919,7 @@ function renderFormFromVisit(v){
   // Désassignations détaillées (skill inclus)
   putUnassignToUI(v?.unassignedDetail||[]);
 
-  // TRFX
+  // TRFX prélèvements
   renderTrfx(v?.prlvTrfx||[]);
 
   // VAC
@@ -938,6 +932,11 @@ function renderFormFromVisit(v){
 
 $('#btnSaveVisit').onclick=()=>{
   const v = collectVisitFromForm();
+  if (!v.trfxVisit){
+    alert('Le champ "TRFX de la visite" est obligatoire.');
+    $('#vTrfxVisit').focus();
+    return;
+  }
   const idx = state.visits.findIndex(x=>x.id===v.id);
   if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
@@ -949,6 +948,11 @@ $('#btnSaveAsNew').onclick=()=>{
   const prevId = currentVisitId;
   currentVisitId = null;
   const v = collectVisitFromForm();
+  if (!v.trfxVisit){
+    alert('Le champ "TRFX de la visite" est obligatoire.');
+    $('#vTrfxVisit').focus();
+    return;
+  }
   state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
   save(); renderVisitsList();
@@ -960,7 +964,7 @@ $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
   $('#vImmat').value=''; $('#vImmatAdd').value='';
-  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).value = '');
+  ['vTrfxVisit','vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).value = id==='vHmoPlan'||id==='vHmoReal' ? '0' : '');
   $('#vPF').checked=false; $('#vBORO').checked=false;
 
   // MXI
@@ -969,7 +973,7 @@ $('#btnClearVisit').onclick=()=>{
   // Désassign
   unassignBody.innerHTML=''; $('#unassignTotal').textContent='0';
 
-  // TRFX
+  // TRFX prélèvements
   renderTrfx([]);
 
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
@@ -977,7 +981,8 @@ $('#btnClearVisit').onclick=()=>{
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
-  const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
+  const v={ id:uuid(), immat:'', check:'A1', trfxVisit:'',
+    arrPrev:null, arrReal:null, depPrev:null, depReal:null,
     hmoPlan:0, hmoReal:0, pf:0, boro:0,
     mxi:{ start:{lines:0,weight:0,ttc:0,mxi:0,fdg:0} },
     unassignedDetail:[],
@@ -998,6 +1003,7 @@ function visitPassesFilters(v){
   const pf = $('#fltPF').value;     // "", "1", "0"
   const boro = $('#fltBORO').value; // "", "1", "0"
   const vacMin = num($('#fltVacMin').value);
+  const trfxK = ($('#fltTrfx').value||'').trim().toLowerCase();
 
   if(im && v.immat!==im) return false;
   if(ck && v.check!==ck) return false;
@@ -1005,6 +1011,7 @@ function visitPassesFilters(v){
   if(boro!=="" && String(v.boro||0)!==boro) return false;
   const nbVac = Array.isArray(v.vacs)? v.vacs.length : 0;
   if(vacMin>0 && nbVac<vacMin) return false;
+  if(trfxK && !(v.trfxVisit||'').toLowerCase().includes(trfxK)) return false;
 
   return true;
 }
@@ -1026,6 +1033,7 @@ function renderVisitsList(){
       <td>${v.pf? 'Oui':'Non'}</td>
       <td>${v.boro? 'Oui':'Non'}</td>
       <td>${Array.isArray(v.vacs)? v.vacs.length:0}</td>
+      <td>${v.trfxVisit||'—'}</td>
       <td>
         <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
         <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
@@ -1221,7 +1229,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
       // union immats
       if(Array.isArray(incoming.immat)) state.immat = Array.from(new Set([...state.immat, ...incoming.immat])).sort();
 
-      // fusion problèmes
+      // fusion problèmes (par id sinon ajout)
       if(Array.isArray(incoming.problems)){
         const byId = new Map(state.problems.map(p=>[p.id,p]));
         incoming.problems.forEach(p=>{
@@ -1250,7 +1258,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
         state.problems = Array.from(byId.values());
       }
 
-      // fusion visites
+      // fusion visites (par id; sinon dédoublonnage heuristique)
       if(Array.isArray(incoming.visits)){
         const mapV = new Map(state.visits.map(v=>[v.id,v]));
         const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
@@ -1266,7 +1274,8 @@ $('#mergeJsonFile').addEventListener('change', e=>{
               problems: Array.isArray(v.problems) ? v.problems : cur.problems,
               prlvTrfx: Array.isArray(v.prlvTrfx) ? v.prlvTrfx : (cur.prlvTrfx||[]),
               unassignedDetail: Array.isArray(v.unassignedDetail) ? v.unassignedDetail : (cur.unassignedDetail||[]),
-              mxi: v.mxi || cur.mxi
+              mxi: v.mxi || cur.mxi,
+              trfxVisit: v.trfxVisit || cur.trfxVisit || ""
             };
             mapV.set(v.id, merged);
           } else {
@@ -1332,7 +1341,6 @@ $('#btnPerfRefresh').onclick=renderPerf;
 function initialRender(){
   refreshImmatList(); renderProblems(); renderVisitsList();
   attachZeroClearInputs(); attachZeroClearDatetime();
-  console.log('REX A350 chargé ✅');
 }
 initialRender();
 </script>
