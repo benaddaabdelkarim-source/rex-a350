@@ -32,7 +32,7 @@ h2{margin:0 0 8px;font-size:16px}
 .menu h3{font-size:12px;letter-spacing:.08em;color:#334155;margin:0 0 10px;text-transform:uppercase}
 .menu button{
   display:block;width:100%;text-align:left;
-  background:#f5f8ff;border:1px solid var(--line);color:var(--text);
+  background:#f5f8ff;border:1px solid var(--line);color:#var(--text);
   padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer
 }
 .menu button.active{outline:2px solid var(--accent)}
@@ -42,14 +42,14 @@ h2{margin:0 0 8px;font-size:16px}
 .cols-3{grid-template-columns:repeat(3,1fr)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 input,select,textarea{
-  width:100%;background:#fff;border:1px solid var(--line);color:var(--text);
+  width:100%;background:#fff;border:1px solid var(--line);color:#0b1220;
   border-radius:10px;padding:10px
 }
 input[type="number"]{text-align:right}
 input.clear0::placeholder{color:#94a3b8}
 button, .btn{font:inherit}
 .btn{
-  border:1px solid var(--line);background:#f5f8ff;color:var(--text);
+  border:1px solid var(--line);background:#f5f8ff;color:#0b1220;
   border-radius:10px;padding:8px 12px;cursor:pointer
 }
 .btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46}
@@ -85,7 +85,7 @@ h2 .legend .pill{margin-left:6px}
 .filters .btn{grid-column:span 1}
 
 /* Champs désassignations (table) */
-.table-small input{padding:6px}
+.table-small input, .table-small select{padding:6px}
 </style>
 </head>
 <body>
@@ -284,7 +284,7 @@ h2 .legend .pill{margin-left:6px}
           </div>
         </div>
 
-        <!-- Désassignations : tableau détaillé -->
+        <!-- Désassignations : tableau détaillé (avec Skill) -->
         <div class="card" style="margin-top:8px">
           <h2>Désassignations (détail)</h2>
           <div style="overflow:auto;margin-top:6px">
@@ -293,6 +293,7 @@ h2 .legend .pill{margin-left:6px}
                 <tr>
                   <th>#</th>
                   <th>Nb lignes</th>
+                  <th>Skill</th>
                   <th>Raison</th>
                   <th></th>
                 </tr>
@@ -302,7 +303,7 @@ h2 .legend .pill{margin-left:6px}
                 <tr>
                   <th>Total</th>
                   <th id="unassignTotal">0</th>
-                  <th colspan="2"></th>
+                  <th colspan="3"></th>
                 </tr>
               </tfoot>
             </table>
@@ -563,9 +564,7 @@ function attachZeroClearInputs(){
   });
 }
 function attachZeroClearDatetime(){
-  $$('input[type="datetime-local"].clear0').forEach(inp=>{
-    // rien à faire ici, placeholder suffit
-  });
+  $$('input[type="datetime-local"].clear0').forEach(()=>{});
 }
 
 /* ================================ onglets ================================= */
@@ -659,11 +658,18 @@ $('#btnAddVac').onclick=()=>{ vacRow(); recalcTotals(); reindexVacNames(); };
 
 /* ===================== Désassignations : tableau détail =================== */
 const unassignBody = $('#unassignBody');
-function addUnassignRow(val=0, reason=""){
+function addUnassignRow(val=0, reason="", skill=""){
   const tr=document.createElement('tr');
   tr.innerHTML = `
     <td class="uaIndex"></td>
     <td><input type="number" min="0" value="${val}" class="uaVal clear0" placeholder="0"></td>
+    <td>
+      <select class="uaSkill">
+        <option value="" ${skill===""?"selected":""}>—</option>
+        <option value="SKILL CABB" ${skill==="SKILL CABB"?"selected":""}>SKILL CABB</option>
+        <option value="SKILL B1/B2" ${skill==="SKILL B1/B2"?"selected":""}>SKILL B1/B2</option>
+      </select>
+    </td>
     <td><input type="text" value="${reason}" class="uaReason" placeholder="ex. pièce manquante, outillage…"></td>
     <td><button class="btn bad uaDel">Supprimer</button></td>`;
   unassignBody.appendChild(tr);
@@ -757,7 +763,7 @@ $('#btnImportXml').onclick=()=>{
       // check type A\d+
       const cm = tx.match(/\bA(1[0-2]|[1-9])\b/); if(cm) $('#vCheck').value = cm[0];
 
-      // dates: chercher tags possibles ou 1er ISO
+      // dates
       const getIso = (labelList)=> {
         for(const lab of labelList){
           const n = xml.querySelector(lab);
@@ -780,7 +786,7 @@ $('#btnImportXml').onclick=()=>{
       if(arrReal) $('#vArrReal').value = arrReal;
       if(depReal) $('#vDepReal').value = depReal;
 
-      // HMO explicites ou somme durations
+      // HMO
       const getNumNode = sel => {
         const n=xml.querySelector(sel); if(!n) return NaN;
         const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
@@ -806,16 +812,18 @@ $('#btnImportXml').onclick=()=>{
 };
 
 /* ========================= Enregistrer / Brouillon ======================== */
-let currentVisitId = null; // id de la visite chargée dans le formulaire
+let currentVisitId = null;
 
 function collectUnassignFromUI(){
   return $$('#unassignBody tr').map(tr=>({
     n: num($('.uaVal',tr).value),
-    reason: $('.uaReason',tr).value.trim()
+    reason: $('.uaReason',tr).value.trim(),
+    skill: $('.uaSkill',tr).value || ""
   }));
 }
 function putUnassignToUI(list){
-  unassignBody.innerHTML=''; (list||[]).forEach(x=>addUnassignRow(x.n||0, x.reason||""));
+  unassignBody.innerHTML='';
+  (list||[]).forEach(x=>addUnassignRow(x.n||0, x.reason||"", x.skill||""));
   if(!(list||[]).length){ unassignBody.innerHTML=''; $('#unassignTotal').textContent='0'; }
 }
 
@@ -868,7 +876,7 @@ function collectVisitFromForm(){
       }
     },
 
-    unassignedDetail: collectUnassignFromUI(), // tableau {n,reason}
+    unassignedDetail: collectUnassignFromUI(),
     vacs: collectVacFromUI(),
     prlvTrfx: (getCurrentVisit()?.prlvTrfx)||[],
     problems: (getCurrentVisit()?.problems)||[],
@@ -876,9 +884,7 @@ function collectVisitFromForm(){
   };
 }
 
-function getCurrentVisit(){
-  return state.visits.find(v=>v.id===currentVisitId) || null;
-}
+function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
 
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
@@ -900,7 +906,7 @@ function renderFormFromVisit(v){
   $('#mxiMxi').value = v?.mxi?.start?.mxi ?? 0;
   $('#mxiFdg').value = v?.mxi?.start?.fdg ?? 0;
 
-  // Désassignations détaillées
+  // Désassignations détaillées (skill inclus)
   putUnassignToUI(v?.unassignedDetail||[]);
 
   // TRFX
@@ -1076,8 +1082,6 @@ function filterProblemsList(list){
     return inQ && inRec && inP && inI && inC && inCat;
   });
 }
-
-// Compte le nombre de fois où un problème est assigné à des visites
 function countAssignments(pid, visitsSubset=null){
   const visits = Array.isArray(visitsSubset) ? visitsSubset : state.visits;
   let n = 0;
@@ -1088,14 +1092,11 @@ function countAssignments(pid, visitsSubset=null){
   });
   return n;
 }
-
 function renderProblems(){
   const tbody = document.getElementById('problemsBody');
   tbody.innerHTML = '';
-
   const filtered = filterProblemsList(state.problems);
   const totalAssign = filtered.reduce((acc,p)=> acc + countAssignments(p.id), 0) || 1;
-
   filtered.forEach((p,i)=>{
     const assigns = countAssignments(p.id);
     const pct = Math.round(assigns * 100 / totalAssign);
@@ -1173,8 +1174,6 @@ $('#exportJson').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click();
 }
-
-/* Remplacement total */
 $('#importJsonBtn').onclick=()=>$('#importJsonFile').click();
 $('#importJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -1193,8 +1192,6 @@ $('#importJsonFile').addEventListener('change', e=>{
   };
   r.readAsText(f);
 });
-
-/* Fusion intelligente */
 $('#mergeJsonBtn').onclick=()=>$('#mergeJsonFile').click();
 $('#mergeJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -1208,7 +1205,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
       // union immats
       if(Array.isArray(incoming.immat)) state.immat = Array.from(new Set([...state.immat, ...incoming.immat])).sort();
 
-      // fusion problèmes (par id sinon ajout)
+      // fusion problèmes
       if(Array.isArray(incoming.problems)){
         const byId = new Map(state.problems.map(p=>[p.id,p]));
         incoming.problems.forEach(p=>{
@@ -1237,7 +1234,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
         state.problems = Array.from(byId.values());
       }
 
-      // fusion visites (par id; sinon dédoublonnage heuristique)
+      // fusion visites
       if(Array.isArray(incoming.visits)){
         const mapV = new Map(state.visits.map(v=>[v.id,v]));
         const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
@@ -1298,7 +1295,7 @@ function renderPerf(){
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
 
-  // Pareto / pie depuis problems filtrés
+  // Pareto / pie
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
   const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
   const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
