@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX A350 – Check A (clair + fusion JSON + TRFX visite)</title>
+<title>REX A350 – Check A (clair + fusion JSON)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
@@ -81,11 +81,15 @@ h2 .legend .pill{margin-left:6px}
 .chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 
 /* Filtres visites */
-.filters{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px}
+.filters{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}
 .filters .btn{grid-column:span 1}
 
 /* Champs désassignations (table) */
 .table-small input, .table-small select{padding:6px}
+
+/* Bandeau d’erreur runtime (debug) */
+#errbar{position:fixed;left:12px;right:12px;bottom:12px;background:#fee2e2;border:1px solid #fecaca;color:#7f1d1d;border-radius:10px;padding:8px 10px;font-size:12px;display:none}
+#errbar b{font-weight:600}
 </style>
 </head>
 <body>
@@ -120,7 +124,7 @@ h2 .legend .pill{margin-left:6px}
           <button id="btnNewVisit" class="btn ok">+ Nouvelle visite</button>
         </div>
 
-        <!-- Filtres visites (ajout filtre TRFX) -->
+        <!-- Filtres visites -->
         <div class="filters">
           <div>
             <label>Filtre Immat</label>
@@ -154,10 +158,6 @@ h2 .legend .pill{margin-left:6px}
             <label>VAC ≥</label>
             <input id="fltVacMin" type="number" min="0" value="0">
           </div>
-          <div>
-            <label>TRFX contient</label>
-            <input id="fltTrfx" placeholder="ex. TRFX-1234">
-          </div>
           <div style="display:flex;align-items:flex-end">
             <button id="btnApplyVisitFilters" class="btn">Filtrer</button>
           </div>
@@ -167,7 +167,7 @@ h2 .legend .pill{margin-left:6px}
           <table id="visitsTable">
             <thead>
               <tr>
-                <th>#</th><th>TRFX</th><th>Immat</th><th>Check</th>
+                <th>#</th><th>Immat</th><th>Check</th>
                 <th>Arr. prév</th><th>APRS signé (prév.)</th>
                 <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th>
                 <th>P/F</th><th>BORO</th><th>VAC</th>
@@ -188,16 +188,18 @@ h2 .legend .pill{margin-left:6px}
           </span>
         </h2>
 
-        <!-- Ligne TRFX de visite (OBLIGATOIRE) -->
-        <div class="grid cols-3" style="margin-bottom:4px">
-          <div>
-            <label>TRFX de la visite <span class="small" style="color:#b91c1c">(obligatoire)</span></label>
-            <input id="vVisitTrfx" placeholder="ex. TRFX-2025-00123">
-          </div>
+        <div class="grid cols-3">
           <div>
             <label>Immatriculation</label>
             <input id="vImmat" list="immatList" placeholder="ex. F-HUVK">
             <datalist id="immatList"></datalist>
+          </div>
+          <div class="row" style="align-items:end">
+            <div style="flex:1">
+              <label>Ajouter une immat</label>
+              <input id="vImmatAdd" placeholder="ex. F-HUVP">
+            </div>
+            <button id="btnAddImmat" class="btn">+ Ajouter</button>
           </div>
           <div>
             <label>Type de check</label>
@@ -530,7 +532,20 @@ h2 .legend .pill{margin-left:6px}
   </div>
 </dialog>
 
+<div id="errbar"></div>
+
 <script>
+/* ========= File guard: si une exception apparaît, on l'affiche en bas ======== */
+(function(){
+  const bar = document.getElementById('errbar');
+  function showErr(msg, src, line, col){
+    bar.innerHTML = '<b>Erreur JavaScript :</b> ' + (msg||'') + (src? ('<br><span class="small">'+src+':'+line+':'+col+'</span>'):'');
+    bar.style.display='block';
+  }
+  window.addEventListener('error', (e)=>{ showErr(e.message, e.filename, e.lineno, e.colno); });
+  window.addEventListener('unhandledrejection', (e)=>{ showErr('Promise rejetée: '+(e.reason&&e.reason.message?e.reason.message:e.reason)); });
+})();
+
 /* ======================= stockage & base immats (LS) ====================== */
 const LS_KEY="rexA350_checkA_v4light";
 const BASE_IMMATS=[
@@ -560,14 +575,12 @@ const cycle = ["Matin","Soir","Nuit"];
 function attachZeroClearInputs(){
   $$('input[type="number"].clear0').forEach(inp=>{
     const clear = ()=>{ if(inp.value==="0"||inp.value==="0.0") inp.value=""; }
-    const restore = ()=>{ if(inp.value.trim()==="") inp.value="0"; }
+    const restore = ()=>{ if((inp.value||"").trim()==="") inp.value="0"; }
     inp.addEventListener('focus', clear);
     inp.addEventListener('blur', restore);
   });
 }
-function attachZeroClearDatetime(){
-  $$('input[type="datetime-local"].clear0').forEach(()=>{});
-}
+function attachZeroClearDatetime(){ /* garde place pour future logique si besoin */ }
 
 /* ================================ onglets ================================= */
 $$('aside .menu button').forEach(btn=>{
@@ -583,7 +596,8 @@ $$('aside .menu button').forEach(btn=>{
 
 /* ============================= immats (datalist) ========================== */
 function refreshImmatList(){
-  const dl=$('#immatList'); dl.innerHTML='';
+  const dl=$('#immatList'); if(!dl) return;
+  dl.innerHTML='';
   state.immat.forEach(i=>{ const o=document.createElement('option'); o.value=i; dl.appendChild(o) })
 }
 refreshImmatList();
@@ -857,7 +871,6 @@ function putVacToUI(vacs){
 function collectVisitFromForm(){
   return {
     id: currentVisitId || uuid(),
-    visitTrfx: $('#vVisitTrfx').value.trim(),           // ✅ TRFX de visite (obligatoire)
     immat: $('#vImmat').value.trim().toUpperCase(),
     check: $('#vCheck').value,
     arrPrev: $('#vArrPrev').value || null,
@@ -891,7 +904,6 @@ function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) |
 
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
-  $('#vVisitTrfx').value = v?.visitTrfx||'';
   $('#vImmat').value = v?.immat||'';
   $('#vCheck').value = v?.check||'A1';
   $('#vArrPrev').value = v?.arrPrev||'';
@@ -913,7 +925,7 @@ function renderFormFromVisit(v){
   // Désassignations détaillées (skill inclus)
   putUnassignToUI(v?.unassignedDetail||[]);
 
-  // TRFX prélèvements (liste)
+  // TRFX
   renderTrfx(v?.prlvTrfx||[]);
 
   // VAC
@@ -924,19 +936,7 @@ function renderFormFromVisit(v){
   attachZeroClearInputs(); attachZeroClearDatetime();
 }
 
-// Vérification TRFX obligatoire
-function ensureVisitTrfx(){
-  const trfx = $('#vVisitTrfx').value.trim();
-  if(!trfx){
-    alert("TRFX de la visite est OBLIGATOIRE.\nMerci de le renseigner avant d'enregistrer.");
-    $('#vVisitTrfx').focus();
-    return false;
-  }
-  return true;
-}
-
 $('#btnSaveVisit').onclick=()=>{
-  if(!ensureVisitTrfx()) return;
   const v = collectVisitFromForm();
   const idx = state.visits.findIndex(x=>x.id===v.id);
   if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
@@ -946,7 +946,6 @@ $('#btnSaveVisit').onclick=()=>{
 };
 
 $('#btnSaveAsNew').onclick=()=>{
-  if(!ensureVisitTrfx()) return;
   const prevId = currentVisitId;
   currentVisitId = null;
   const v = collectVisitFromForm();
@@ -960,7 +959,6 @@ $('#btnSaveAsNew').onclick=()=>{
 $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
-  $('#vVisitTrfx').value='';
   $('#vImmat').value=''; $('#vImmatAdd').value='';
   ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).value = '');
   $('#vPF').checked=false; $('#vBORO').checked=false;
@@ -971,7 +969,7 @@ $('#btnClearVisit').onclick=()=>{
   // Désassign
   unassignBody.innerHTML=''; $('#unassignTotal').textContent='0';
 
-  // TRFX prélèvements
+  // TRFX
   renderTrfx([]);
 
   seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
@@ -979,7 +977,7 @@ $('#btnClearVisit').onclick=()=>{
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
-  const v={ id:uuid(), visitTrfx:'', immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
+  const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
     hmoPlan:0, hmoReal:0, pf:0, boro:0,
     mxi:{ start:{lines:0,weight:0,ttc:0,mxi:0,fdg:0} },
     unassignedDetail:[],
@@ -1000,7 +998,6 @@ function visitPassesFilters(v){
   const pf = $('#fltPF').value;     // "", "1", "0"
   const boro = $('#fltBORO').value; // "", "1", "0"
   const vacMin = num($('#fltVacMin').value);
-  const trfxPart = ($('#fltTrfx').value||'').trim().toLowerCase();
 
   if(im && v.immat!==im) return false;
   if(ck && v.check!==ck) return false;
@@ -1008,7 +1005,6 @@ function visitPassesFilters(v){
   if(boro!=="" && String(v.boro||0)!==boro) return false;
   const nbVac = Array.isArray(v.vacs)? v.vacs.length : 0;
   if(vacMin>0 && nbVac<vacMin) return false;
-  if(trfxPart && !(String(v.visitTrfx||'').toLowerCase().includes(trfxPart))) return false;
 
   return true;
 }
@@ -1020,7 +1016,6 @@ function renderVisitsList(){
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${state.visits.length-idx}</td>
-      <td>${v.visitTrfx||'—'}</td>
       <td>${v.immat||'—'}</td>
       <td>${v.check||'A?'}</td>
       <td>${fmtDate(v.arrPrev)}</td>
@@ -1213,7 +1208,7 @@ $('#importJsonFile').addEventListener('change', e=>{
   };
   r.readAsText(f);
 });
-$('#mergeJsonBtn').onclick()=>$('#mergeJsonFile').click();
+$('#mergeJsonBtn').onclick=()=>$('#mergeJsonFile').click();
 $('#mergeJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
@@ -1255,10 +1250,10 @@ $('#mergeJsonFile').addEventListener('change', e=>{
         state.problems = Array.from(byId.values());
       }
 
-      // fusion visites (préserve champs existants + nouveaux champs)
+      // fusion visites
       if(Array.isArray(incoming.visits)){
         const mapV = new Map(state.visits.map(v=>[v.id,v]));
-        const keyOf = v => [v.visitTrfx||'',v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|'); // clé un peu plus robuste
+        const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
         const seenKeys = new Set(state.visits.map(v=>keyOf(v)));
 
         incoming.visits.forEach(v=>{
@@ -1271,8 +1266,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
               problems: Array.isArray(v.problems) ? v.problems : cur.problems,
               prlvTrfx: Array.isArray(v.prlvTrfx) ? v.prlvTrfx : (cur.prlvTrfx||[]),
               unassignedDetail: Array.isArray(v.unassignedDetail) ? v.unassignedDetail : (cur.unassignedDetail||[]),
-              mxi: v.mxi || cur.mxi,
-              visitTrfx: v.visitTrfx || cur.visitTrfx || ""
+              mxi: v.mxi || cur.mxi
             };
             mapV.set(v.id, merged);
           } else {
@@ -1338,6 +1332,7 @@ $('#btnPerfRefresh').onclick=renderPerf;
 function initialRender(){
   refreshImmatList(); renderProblems(); renderVisitsList();
   attachZeroClearInputs(); attachZeroClearDatetime();
+  console.log('REX A350 chargé ✅');
 }
 initialRender();
 </script>
