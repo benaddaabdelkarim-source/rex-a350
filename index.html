@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX A350 – Check A</title>
+<title>REX A350 – Check A (clair + fusion JSON)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#e9eef6; --panel:#fff; --muted:#eef3fb; --text:#0b1220;
-  --accent:#2563eb; --ok:#16a34a; --bad:#dc2626; --line:#d1d9e6;
-  --prev:#e8f0ff; /* prévu (bleu clair) */
-  --real:#e7f9ee; /* réel (vert très clair) */
+  --bg:#e9eef6; --panel:#ffffff; --muted:#eef3fb; --text:#0b1220; --accent:#2563eb;
+  --ok:#16a34a; --bad:#dc2626; --line:#d1d9e6;
+  --plan:#e7efff;  /* prévu (bleu clair) */
+  --real:#e8f7ee;  /* réel  (vert clair) */
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -22,19 +22,25 @@ main{padding:16px}
 h1{margin:0 0 12px;font-size:20px}
 h2{margin:0 0 8px;font-size:16px}
 .menu h3{font-size:12px;letter-spacing:.08em;color:#334155;margin:0 0 10px;text-transform:uppercase}
-.menu button{display:block;width:100%;text-align:left;background:#f5f8ff;border:1px solid var(--line);color:var(--text);padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer}
+.menu button{
+  display:block;width:100%;text-align:left;background:#f5f8ff;border:1px solid var(--line);color:var(--text);
+  padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer
+}
 .menu button.active{outline:2px solid var(--accent)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .grid{display:grid;gap:12px}
 .cols-2{grid-template-columns:1fr 1fr}
 .cols-3{grid-template-columns:repeat(3,1fr)}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-input,select,textarea{width:100%;background:#fff;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px}
+input,select,textarea{
+  width:100%;background:#fff;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px
+}
 input[type="number"]{text-align:right}
-input::placeholder{color:#94a3b8}
-input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe}
-input:not([type="checkbox"]):not([type="file"]).empty{color:#94a3b8}
-.btn{border:1px solid var(--line);background:#f5f8ff;color:var(--text);border-radius:10px;padding:8px 12px;cursor:pointer}
+input[data-clearzero="1"]{appearance:textfield}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{display:none}
+.btn{
+  border:1px solid var(--line);background:#f5f8ff;color:var(--text);border-radius:10px;padding:8px 12px;cursor:pointer
+}
 .btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46}
 .btn.bad{background:#fde8e8;border-color:#fecaca;color:#7f1d1d}
 .btn.fuse{background:#eefcef;border-color:#bbf7d0;color:#14532d;font-weight:600}
@@ -51,17 +57,18 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1}
 .topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
 .tag{font-size:11px;opacity:.9;padding:2px 6px;border:1px solid var(--line);border-radius:999px;background:#fff}
 
-.group.prev label{font-weight:600;color:#1e3a8a}
-.group.prev input, .group.prev textarea, .group.prev select{background:var(--prev)}
-.group.real label{font-weight:600;color:#065f46}
-.group.real input, .group.real textarea, .group.real select{background:var(--real)}
+/* Étiquettes colorées prévu / réel */
+.label{display:inline-block;font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+.label.plan{background:var(--plan);color:#1e3a8a}
+.label.real{background:var(--real);color:#065f46}
 
-.badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px}
-input[type=number].tight{padding-right:6px}
-.w100{width:100%} .w70{width:70%} .w30{width:30%}
+/* Filtres visites */
+.filterbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.filterbar .chip{display:flex;gap:6px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px}
 
-.chart-wrap{height:320px;max-height:50vh}
-.chart-wrap canvas{width:100%!important;height:100%!important;display:block}
+/* Camembert responsive */
+.chart-wrap{height:320px; max-height:50vh;}
+.chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 </style>
 </head>
 <body>
@@ -88,26 +95,33 @@ input[type=number].tight{padding-right:6px}
     <section id="tab-visit">
       <h1>Visite (Check A)</h1>
 
-      <!-- Liste des visites + filtres -->
+      <!-- Liste + filtres -->
       <div class="card">
         <div class="row">
           <h2 style="margin:0">Liste des visites</h2>
           <span class="small tag">Clique “Ouvrir” pour charger dans le formulaire</span>
-          <span class="badge">Filtre</span>
-          <input id="fltSearchVisit" class="w30" placeholder="Recherche (immat / check / P/F&BORO)">
-          <select id="fltCheck" class="w30">
-            <option value="">Tous checks</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option>
-            <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
-            <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-          </select>
           <button id="btnNewVisit" class="btn ok">+ Nouvelle visite</button>
         </div>
+
+        <!-- Filtres visites -->
+        <div class="filterbar">
+          <div class="chip"><input id="fltPF" type="checkbox"> <label for="fltPF">P/F = Oui</label></div>
+          <div class="chip"><input id="fltBORO" type="checkbox"> <label for="fltBORO">BORO = Oui</label></div>
+          <div class="chip"><label>Immat</label><input id="fltImmat" placeholder="ex. F-HUVK" style="width:140px"></div>
+          <div class="chip"><label>Min. vac</label><input id="fltVacMin" type="number" min="0" value="0" style="width:90px"></div>
+          <button id="btnApplyVisitFilters" class="btn">Filtrer</button>
+          <button id="btnClearVisitFilters" class="btn">Réinit</button>
+        </div>
+
         <div style="overflow:auto;margin-top:8px">
           <table id="visitsTable">
             <thead>
               <tr>
-                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th><th>APRS signé (prév.)</th>
-                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th><th>P/F & BORO</th><th>Vac(s)</th><th>Actions</th>
+                <th>#</th><th>Immat</th><th>Check</th>
+                <th>Arr. prév</th><th>APRS signé (prév.)</th><th>APRS signé (réel)</th>
+                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th>
+                <th>P/F</th><th>BORO</th><th>Nb vac</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="visitsBody"></tbody>
@@ -118,25 +132,14 @@ input[type=number].tight{padding-right:6px}
       <div class="card">
         <h2>Informations visite</h2>
 
-        <!-- Ligne 1 -->
+        <!-- Ligne 1 (2/ligne) -->
         <div class="grid cols-2">
-          <div class="group">
+          <div>
             <label>Immatriculation</label>
             <input id="vImmat" list="immatList" placeholder="ex. F-HUVK">
             <datalist id="immatList"></datalist>
           </div>
-          <div class="row" style="align-items:end">
-            <div style="flex:1">
-              <label>Ajouter une immat</label>
-              <input id="vImmatAdd" placeholder="ex. F-HUVP">
-            </div>
-            <button id="btnAddImmat" class="btn">+ Ajouter</button>
-          </div>
-        </div>
-
-        <!-- Ligne 2 -->
-        <div class="grid cols-2" style="margin-top:8px">
-          <div class="group">
+          <div>
             <label>Type de check</label>
             <select id="vCheck">
               <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
@@ -144,137 +147,110 @@ input[type=number].tight{padding-right:6px}
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
             </select>
           </div>
-          <div class="group">
-            <label>P/F & BORO</label>
-            <input id="vPfBoro" placeholder="ex. 2 P/F + 1 BORO">
+        </div>
+
+        <!-- Ajout immat -->
+        <div class="grid cols-2" style="margin-top:8px">
+          <div class="row" style="align-items:end">
+            <div style="flex:1">
+              <label>Ajouter une immat</label>
+              <input id="vImmatAdd" placeholder="ex. F-HUVP">
+            </div>
+            <button id="btnAddImmat" class="btn">+ Ajouter</button>
+          </div>
+          <div class="row" style="align-items:center;gap:14px;margin-top:6px">
+            <span class="small">Options de visite :</span>
+            <label class="row small"><input id="vPF" type="checkbox"> Présence P/F</label>
+            <label class="row small"><input id="vBORO" type="checkbox"> Présence BORO</label>
           </div>
         </div>
 
-        <!-- Dates -->
+        <!-- Ligne 2 (2/ligne) -->
         <div class="grid cols-2" style="margin-top:8px">
-          <div class="group prev">
-            <label>Arrivée prévue</label>
+          <div>
+            <label>Arrivée prévue <span class="label plan">prévu</span></label>
             <input id="vArrPrev" type="datetime-local">
           </div>
-          <div class="group real">
-            <label>Arrivée réelle</label>
+          <div>
+            <label>APRS signé (prévu) <span class="label plan">prévu</span></label>
+            <input id="vDepPrev" type="datetime-local">
+          </div>
+        </div>
+
+        <!-- Ligne 3 (2/ligne) -->
+        <div class="grid cols-2" style="margin-top:8px">
+          <div>
+            <label>Arrivée réelle <span class="label real">réel</span></label>
             <input id="vArrReal" type="datetime-local">
           </div>
+          <div>
+            <label>APRS signé (réel) <span class="label real">réel</span></label>
+            <input id="vDepReal" type="datetime-local">
+          </div>
         </div>
 
+        <!-- Ligne 4 (2/ligne) -->
         <div class="grid cols-2" style="margin-top:8px">
-          <div class="group prev">
-            <label>APRS signé (prévu)</label>
-            <input id="vAprsPrev" type="datetime-local">
+          <div>
+            <label>HMO prévue (h) <span class="label plan">prévu</span></label>
+            <input id="vHmoPlan" type="number" min="0" step="0.5" value="0" data-clearzero="1">
           </div>
-          <div class="group real">
-            <label>APRS signé (réel)</label>
-            <input id="vAprsReal" type="datetime-local">
-          </div>
-        </div>
-
-        <!-- HMO -->
-        <div class="grid cols-2" style="margin-top:8px">
-          <div class="group prev">
-            <label>HMO prévue (h)</label>
-            <input id="vHmoPlan" type="number" min="0" step="0.5" value="0">
-          </div>
-          <div class="group real">
-            <label>HMO réelle (h)</label>
-            <input id="vHmoReal" type="number" min="0" step="0.5" value="0">
+          <div>
+            <label>HMO réelle (h) <span class="label real">réel</span></label>
+            <input id="vHmoReal" type="number" min="0" step="0.5" value="0" data-clearzero="1">
           </div>
         </div>
 
-        <!-- Désassignations par SKILL -->
-        <div class="card" style="border-style:dashed;margin-top:12px">
-          <h2 style="margin-bottom:6px">Nombres de lignes désassignées (par SKILL)</h2>
-          <div style="overflow:auto">
-            <table>
-              <thead>
-                <tr><th>SKILL</th><th>Nombres de lignes</th><th>Raison 1</th><th>Raison 2</th><th>Raison 3</th></tr>
-              </thead>
-              <tbody id="tbUnas">
-                <!-- généré -->
-              </tbody>
-            </table>
-          </div>
-          <div class="small" style="margin-top:6px">Les raisons alimenteront un pareto (comme pour la partie Problèmes).</div>
+        <!-- Bloc import XML -->
+        <div class="row" style="margin-top:8px">
+          <input id="xmlFile" type="file" accept=".xml">
+          <button id="btnImportXml" class="btn primary">Importer XML (auto-remplissage)</button>
+          <span class="small" style="margin-left:auto">L’XML remplit immat / check / dates prévues / HMO prévue (si présent).</span>
         </div>
-
-        <!-- Tableau Poids / MXI -->
-        <div class="card" style="border-style:dashed;margin-top:12px">
-          <h2 style="margin-bottom:6px">MXI / Poids avion (par jalon)</h2>
-          <div style="overflow:auto">
-            <table>
-              <thead>
-                <tr><th>Jalon</th><th>LIGNES MXI</th><th>POIDS MXI</th><th>POIDS TTC</th><th>MXI</th><th>FDG</th><th>TOT</th></tr>
-              </thead>
-              <tbody id="tbWeights"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Prélèvements TRFX -->
-        <div class="card" style="border-style:dashed;margin-top:12px">
-          <h2 style="margin-bottom:6px">Prélèvements – TRFX</h2>
-          <div class="row">
-            <input id="trfxInput" class="w70" placeholder="Saisir un n° TRFX puis +">
-            <button id="btnAddTrfx" class="btn ok">+ Ajouter TRFX</button>
-            <span class="badge">Total prélèvements : <b id="samplesCount">0</b></span>
-          </div>
-          <div style="max-height:160px;overflow:auto;margin-top:6px">
-            <table>
-              <thead><tr><th>#</th><th>TRFX</th><th></th></tr></thead>
-              <tbody id="trfxBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Vacations -->
-        <div class="card">
-          <div class="row">
-            <h2 style="margin:0">Effectifs par vacation</h2>
-            <button id="btnAddVac" class="btn">+ Ajouter une vac</button>
-          </div>
-          <div style="overflow:auto;margin-top:8px">
-            <table id="vacTable">
-              <thead>
-                <tr>
-                  <th>Type</th><th>Nom</th>
-                  <th>CME dem.</th><th>EIR dem.</th><th>Leader dem.</th><th>Eff. dem. total</th>
-                  <th>CME réel</th><th>EIR réel</th><th>Leader réel</th><th>Eff. réel total</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="vacBody"></tbody>
-              <tfoot>
-                <tr>
-                  <th colspan="2">Total général</th>
-                  <th id="tCmeD">0</th><th id="tEirD">0</th><th id="tLeadD">0</th><th id="tDem">0</th>
-                  <th id="tCmeR">0</th><th id="tEirR">0</th><th id="tLeadR">0</th><th id="tReal">0</th>
-                  <th></th>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          <div class="kpi" style="margin-top:8px">
-            <div class="pill">Δ Effectif : <b id="deltaEff">0</b></div>
-            <div class="pill">Δ HMO : <b id="deltaHmoBadge">0.0 h</b></div>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <input id="xmlFile" type="file" accept=".xml">
-            <button id="btnImportXml" class="btn primary">Importer XML (préremplir)</button>
-            <span class="small" style="margin-left:auto">L’XML peut préremplir immat / check / arrivée prévue / APRS (prév.) / HMO plan.</span>
-          </div>
-          <div class="row" style="margin-top:10px">
-            <button id="btnSaveVisit" class="btn ok">💾 Enregistrer</button>
-            <button id="btnSaveAsNew" class="btn primary">🆕 Enregistrer (nouvelle)</button>
-            <button id="btnClearVisit" class="btn bad">🧹 Effacer le formulaire</button>
-          </div>
-        </div>
-
       </div>
 
+      <!-- Effectifs (vac) -->
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Effectifs par vac</h2>
+          <button id="btnAddVac" class="btn">+ Ajouter une vac</button>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table id="vacTable">
+            <thead>
+              <tr>
+                <th>Vac</th>
+                <th>Type</th> <!-- Matin/Soir/Nuit -->
+                <th>CME dem.</th><th>EIR dem.</th><th>Leader dem.</th><th>Eff. dem. total</th>
+                <th>CME réel</th><th>EIR réel</th><th>Leader réel</th><th>Eff. réel total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="vacBody"></tbody>
+            <tfoot>
+              <tr>
+                <th>Total général</th>
+                <th></th>
+                <th id="tCmeD">0</th><th id="tEirD">0</th><th id="tLeadD">0</th><th id="tDem">0</th>
+                <th id="tCmeR">0</th><th id="tEirR">0</th><th id="tLeadR">0</th><th id="tReal">0</th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="kpi" style="margin-top:8px">
+          <div class="pill">Δ Effectif : <b id="deltaEff">0</b></div>
+          <div class="pill">Δ HMO : <b id="deltaHmoBadge">0.0 h</b></div>
+          <div class="pill">Nb de vac : <b id="nbVacBadge">0</b></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnSaveVisit" class="btn ok">💾 Enregistrer</button>
+          <button id="btnSaveAsNew" class="btn primary">🆕 Enregistrer (nouvelle)</button>
+          <button id="btnClearVisit" class="btn bad">🧹 Effacer le formulaire</button>
+        </div>
+      </div>
+
+      <!-- Problèmes liés à la visite -->
       <div class="card">
         <div class="row">
           <h2 style="margin:0">Problèmes liés à cette visite</h2>
@@ -295,20 +271,34 @@ input[type=number].tight{padding-right:6px}
       <div class="card">
         <h2>Ajouter un problème</h2>
         <div class="grid cols-3">
-          <div><label>Titre</label><input id="pTitle"></div>
+          <div>
+            <label>Titre</label>
+            <input id="pTitle">
+          </div>
           <div>
             <label>Catégorie</label>
             <select id="pCat">
               <option>Cabine</option><option>Sous-traitance</option>
               <option>Query/Prépa</option><option>Pièces/Log</option>
-              <option>Effectifs/Planif</option><option>Documentation</option>
-              <option>Moyen Industriel</option><option>Autre</option>
+              <option>Effectifs/Planif</option><option>Documentation</option><option>Moyen Industriel</option><option>Autre</option>
             </select>
           </div>
-          <div><label>Impact (h)</label><input id="pImpact" type="number" min="0" step="0.5" value="0"></div>
-          <div><label>Acteur/Responsable</label><input id="pActor" placeholder="ex. Cabine, STT, Query, Planif…"></div>
-          <div><label>Récurrent</label><input id="pRecurring" type="checkbox"></div>
-          <div class="cols-3" style="grid-column:1/-1"><label>Description</label><textarea id="pDesc" rows="3" placeholder="Contexte, symptômes, documents concernés…"></textarea></div>
+          <div>
+            <label>Impact (h)</label>
+            <input id="pImpact" type="number" min="0" step="0.5" value="0" data-clearzero="1">
+          </div>
+          <div>
+            <label>Acteur/Responsable</label>
+            <input id="pActor" placeholder="ex. Cabine, STT, Query, Planif…">
+          </div>
+          <div>
+            <label>Récurrent</label>
+            <input id="pRecurring" type="checkbox">
+          </div>
+          <div class="cols-3" style="grid-column:1/-1">
+            <label>Description</label>
+            <textarea id="pDesc" rows="3" placeholder="Contexte, symptômes, documents concernés…"></textarea>
+          </div>
         </div>
         <button id="btnAddProblem" class="btn ok">+ Enregistrer en bibliothèque (non assigné)</button>
       </div>
@@ -375,14 +365,16 @@ input[type=number].tight{padding-right:6px}
         </div>
         <div class="card">
           <h2>Répartition (camembert)</h2>
-          <div class="chart-wrap"><canvas id="pie"></canvas></div>
+          <div class="chart-wrap">
+            <canvas id="pie"></canvas>
+          </div>
         </div>
       </div>
     </section>
   </main>
 </div>
 
-<!-- Dialog d’assignation -->
+<!-- Sélecteur de problèmes -->
 <dialog id="dlgPick">
   <div class="head">
     <div style="font-weight:600">Ajouter des problèmes à la visite</div>
@@ -408,31 +400,31 @@ input[type=number].tight{padding-right:6px}
 </dialog>
 
 <script>
-/* ================== Données & base ================== */
-const LS_KEY="rexA350_checkA_v5"; // nouveau key (sans casser l'ancien si tu veux garder)
+/* ======================= stockage & base immats (LS) ====================== */
+const LS_KEY="rexA350_checkA_v4light";
 const BASE_IMMATS=[
   "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
   "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
   "F-HTYQ","F-HTYR","F-HTYS","F-HTYT","F-HUVA","F-HUVB","F-HUVC","F-HUVD",
   "F-HUVE","F-HUVF","F-HUVG","F-HUVH","F-HUVI","F-HUVJ","F-HUVK","F-HUVL",
-  "F-HUVM","F-HUVN","F-HUVO","F-HUVP","F-HUVQ","F-HUVR","F-HUVS","F-HUVT","F-HUVU"
+  "F-HUVM","F-HUVN","F-HUVO","F-HUVP","F-HUVQ","F-HUVR","F-HUVS","F-HUVT",
+  "F-HUVU"
 ];
 function load(){ try{return JSON.parse(localStorage.getItem(LS_KEY))}catch{ return null } }
 function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)) }
 let state = load() || { immat:[...BASE_IMMATS], visits:[], problems:[] };
-if(!Array.isArray(state.immat)||!state.immat.length) state.immat=[...BASE_IMMATS];
+if(!Array.isArray(state.immat) || !state.immat.length) state.immat=[...BASE_IMMATS];
 state.immat=Array.from(new Set([...state.immat,...BASE_IMMATS])).sort();
 
-/* ================== Utiles ================== */
+/* =============================== utilitaires ============================== */
 const $=(q,root=document)=>root.querySelector(q);
 const $$=(q,root=document)=>Array.from(root.querySelectorAll(q));
 const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n}
 const within=(d,a,b)=>{ if(!d) return false; const t=new Date(d).getTime(); const ta=a?new Date(a).getTime():-1e15; const tb=b?new Date(b).getTime()+86399999:1e15; return t>=ta&&t<=tb }
 function fmtDate(v){ if(!v) return "—"; const d=new Date(v); return isNaN(d)?"—":d.toLocaleString() }
 function uuid(){ return Math.random().toString(36).slice(2,10) }
-function setEmptyHint(inp){ if(!inp.value) inp.classList.add('empty'); else inp.classList.remove('empty'); }
 
-/* ================== Onglets ================== */
+/* ================================ onglets ================================= */
 $$('aside .menu button').forEach(btn=>{
   btn.addEventListener('click',()=>{
     $$('aside .menu button').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
@@ -440,11 +432,11 @@ $$('aside .menu button').forEach(btn=>{
     $('#tab-'+btn.dataset.tab).classList.remove('hidden');
     if(btn.dataset.tab==='perf') renderPerf();
     if(btn.dataset.tab==='problems') renderProblems();
-    if(btn.dataset.tab==='visit') renderVisitsList();
+    if(btn.dataset.tab==='visit') { renderVisitsList(); }
   })
 })
 
-/* ================== Immats ================== */
+/* ============================= immats (datalist) ========================== */
 function refreshImmatList(){
   const dl=$('#immatList'); dl.innerHTML='';
   state.immat.forEach(i=>{ const o=document.createElement('option'); o.value=i; dl.appendChild(o) })
@@ -456,52 +448,73 @@ $('#btnAddImmat').onclick=()=>{
   $('#vImmat').value=v; $('#vImmatAdd').value=''; refreshImmatList(); save();
 }
 
-/* ================== Vacations ================== */
+/* ============================ VAC (table + auto-noms) ===================== */
 const vacBody=$('#vacBody');
 const VAC_TYPES=['Matin','Soir','Nuit'];
-function vacRow(name,typeIdx=0){
+
+function nextVacLabel(){
+  // calcule "Vac 1", "Vac 2", ...
+  const count = $$('#vacBody tr').length + 1;
+  return 'Vac '+count;
+}
+function nextVacType(){
+  // alterne Matin -> Soir -> Nuit -> Matin ...
+  const count = $$('#vacBody tr').length;
+  return VAC_TYPES[count % VAC_TYPES.length];
+}
+function vacRow(name, type){
   const tr=document.createElement('tr');
+  const label=name || nextVacLabel();
+  const vtype=type || nextVacType();
   tr.innerHTML=`
+    <td><input class="vacName" value="${label}"></td>
     <td>
       <select class="vacType">
-        ${VAC_TYPES.map((t,i)=>`<option value="${t}" ${i===typeIdx?'selected':''}>${t}</option>`).join('')}
+        ${VAC_TYPES.map(t=>`<option ${t===vtype?'selected':''}>${t}</option>`).join('')}
       </select>
     </td>
-    <td><input class="vacName" value="${name}"></td>
-    <td><input class="cmeD tight" type="number" min="0" value="0"></td>
-    <td><input class="eirD tight" type="number" min="0" value="0"></td>
-    <td><input class="leadD tight" type="number" min="0" value="0"></td>
+    <td><input class="cmeD" type="number" min="0" value="0" data-clearzero="1"></td>
+    <td><input class="eirD" type="number" min="0" value="0" data-clearzero="1"></td>
+    <td><input class="leadD" type="number" min="0" value="0" data-clearzero="1"></td>
     <td class="demTot">0</td>
-    <td><input class="cmeR tight" type="number" min="0" value="0"></td>
-    <td><input class="eirR tight" type="number" min="0" value="0"></td>
-    <td><input class="leadR tight" type="number" min="0" value="0"></td>
+    <td><input class="cmeR" type="number" min="0" value="0" data-clearzero="1"></td>
+    <td><input class="eirR" type="number" min="0" value="0" data-clearzero="1"></td>
+    <td><input class="leadR" type="number" min="0" value="0" data-clearzero="1"></td>
     <td class="realTot">0</td>
     <td><button class="btn bad delVac">Retirer</button></td>`;
   vacBody.appendChild(tr);
-  autoNameVacations();
 }
-function seedVacs(){ vacBody.innerHTML=''; ['Vac 1 Matin','Vac 2 Soir','Vac 3 Nuit'].forEach((n,i)=>vacRow(n,i)); recalcTotals(); }
+function seedVacs(){
+  vacBody.innerHTML='';
+  ['Vac 1','Vac 2','Vac 3'].forEach((lbl,i)=>vacRow(lbl,VAC_TYPES[i%3]));
+  recalcTotals();
+}
 seedVacs();
 
-function autoNameVacations(){
-  const rows=$$('#vacBody tr');
-  rows.forEach((tr,idx)=>{
-    const type=$('.vacType',tr).value;
-    $('.vacName',tr).value=`Vac ${idx+1} ${type}`;
-  });
-}
-vacBody.addEventListener('change', e=>{
-  if(e.target.classList.contains('vacType')) autoNameVacations();
-});
 vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
+vacBody.addEventListener('change', e=>{
+  if(e.target.classList.contains('vacType')){ recalcTotals(); }
+});
 vacBody.addEventListener('click', e=>{
   if(e.target.classList.contains('delVac')){
-    if(confirm('Retirer cette vac ?')){ e.target.closest('tr').remove(); recalcTotals(); autoNameVacations(); }
+    if(confirm('Retirer cette vac ?')){ e.target.closest('tr').remove(); recalcTotals(); }
   }
 });
-$('#btnAddVac').onclick=()=>{ const nextIdx = $$('#vacBody tr').length % 3; vacRow('Vac',nextIdx); recalcTotals(); }
+$('#btnAddVac').onclick=()=>{ vacRow(); recalcTotals(); };
 
-/* Totaux */
+/* ===================== entrée num : effacer 0 au focus ==================== */
+document.addEventListener('focusin', (e)=>{
+  if(e.target.matches('input[type="number"][data-clearzero="1"]')){
+    if(e.target.value==='0' || e.target.value==='0.0') e.target.value='';
+  }
+});
+document.addEventListener('focusout', (e)=>{
+  if(e.target.matches('input[type="number"][data-clearzero="1"]')){
+    if(e.target.value==='') e.target.value='0';
+  }
+});
+
+/* ========================== calculs (totaux & KPI) ======================== */
 function recalcTotals(){
   let tCmeD=0,tEirD=0,tLeadD=0,tDem=0,tCmeR=0,tEirR=0,tLeadR=0,tReal=0;
   $$('#vacBody tr').forEach(tr=>{
@@ -514,198 +527,113 @@ function recalcTotals(){
   });
   $('#tCmeD').textContent=tCmeD; $('#tEirD').textContent=tEirD; $('#tLeadD').textContent=tLeadD; $('#tDem').textContent=tDem;
   $('#tCmeR').textContent=tCmeR; $('#tEirR').textContent=tEirR; $('#tLeadR').textContent=tLeadR; $('#tReal').textContent=tReal;
-  const dEff=tReal - tDem; $('#deltaEff').textContent=dEff;
+
+  const dEff=tReal - tDem;
+  $('#deltaEff').textContent=dEff;
+
   const dHmo = num($('#vHmoReal').value) - num($('#vHmoPlan').value);
   $('#deltaHmoBadge').textContent = dHmo.toFixed(1)+' h';
+
+  // nb vac
+  $('#nbVacBadge').textContent = $$('#vacBody tr').length;
 }
 ;['vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).addEventListener('input', recalcTotals));
 
-/* ================== Désassignations par SKILL ================== */
-const SKILLS=['Skill B1','SKILL B1B2','SKILL B2','SKILL CAB'];
-const tbUnas=$('#tbUnas');
-function renderUnasTable(data){
-  tbUnas.innerHTML='';
-  SKILLS.forEach(sk=>{
-    const row=(data&&data[sk])||{count:0,r1:'',r2:'',r3:''};
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${sk}</td>
-      <td><input class="unasCount" data-sk="${sk}" type="number" min="0" value="${row.count||0}"></td>
-      <td><input class="unasR1" data-sk="${sk}" value="${row.r1||''}"></td>
-      <td><input class="unasR2" data-sk="${sk}" value="${row.r2||''}"></td>
-      <td><input class="unasR3" data-sk="${sk}" value="${row.r3||''}"></td>`;
-    tbUnas.appendChild(tr);
-  });
-}
-renderUnasTable(null);
-function collectUnas(){
-  const out={};
-  $$('#tbUnas tr').forEach(tr=>{
-    const sk=tr.children[0].textContent;
-    out[sk]={count:num($('.unasCount',tr).value), r1:$('.unasR1',tr).value.trim(), r2:$('.unasR2',tr).value.trim(), r3:$('.unasR3',tr).value.trim()};
-  });
-  return out;
-}
-
-/* ================== MXI / Poids ================== */
-const tbWeights=$('#tbWeights');
-const JALONS=['S-3','S-2','S-1','START'];
-function renderWeightsTable(data){
-  tbWeights.innerHTML='';
-  JALONS.forEach(j=>{
-    const row=(data&&data[j])||{lignes:'',pmxi:'',pttc:'',mxi:0,fdg:0,tot:0};
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${j}</td>
-      <td><input class="wLignes" data-j="${j}" value="${row.lignes||''}"></td>
-      <td><input class="wPmxi" data-j="${j}" value="${row.pmxi||''}"></td>
-      <td><input class="wPttc" data-j="${j}" value="${row.pttc||''}"></td>
-      <td><input class="wMxi" data-j="${j}" type="number" value="${row.mxi||0}"></td>
-      <td><input class="wFdg" data-j="${j}" type="number" value="${row.fdg||0}"></td>
-      <td class="wTot">0</td>`;
-    tbWeights.appendChild(tr);
-  });
-  calcWeightsTots();
-}
-function collectWeights(){
-  const out={};
-  $$('#tbWeights tr').forEach(tr=>{
-    const j=tr.children[0].textContent;
-    out[j]={lignes:$('.wLignes',tr).value, pmxi:$('.wPmxi',tr).value, pttc:$('.wPttc',tr).value,
-            mxi:num($('.wMxi',tr).value), fdg:num($('.wFdg',tr).value), tot:num($('.wTot',tr).textContent)};
-  });
-  return out;
-}
-function calcWeightsTots(){
-  $$('#tbWeights tr').forEach(tr=>{
-    const mx=num($('.wMxi',tr).value), fd=num($('.wFdg',tr).value);
-    $('.wTot',tr).textContent = (mx+fd);
-  });
-}
-tbWeights.addEventListener('input', e=>{ if(e.target.classList) calcWeightsTots() });
-renderWeightsTable(null);
-
-/* ================== TRFX prélèvements ================== */
-const trfxBody=$('#trfxBody');
-const samplesCountEl=$('#samplesCount');
-function renderTrfx(list){
-  trfxBody.innerHTML='';
-  (list||[]).forEach((t,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${i+1}</td><td>${t}</td><td><button class="btn bad" data-i="${i}">Supprimer</button></td>`;
-    trfxBody.appendChild(tr);
-  });
-  samplesCountEl.textContent=(list||[]).length;
-}
-$('#btnAddTrfx').onclick=()=>{
-  const v=$('#trfxInput').value.trim(); if(!v) return;
-  const cv=getCurrentVisit(); if(!cv) { alert('Enregistre d’abord la visite (ou charge-en une).'); return; }
-  cv.trfx = cv.trfx||[];
-  cv.trfx.push(v); $('#trfxInput').value=''; save(); renderTrfx(cv.trfx);
-};
-trfxBody.addEventListener('click', e=>{
-  const i=e.target?.dataset?.i; if(i==null) return;
-  const v=getCurrentVisit(); if(!v) return;
-  v.trfx.splice(Number(i),1); save(); renderTrfx(v.trfx);
-});
-
-/* ================== Import XML ================== */
+/* =============================== Import XML =============================== */
 $('#btnImportXml').onclick=()=>{
   const f=$('#xmlFile').files[0]; if(!f) return;
   const r=new FileReader();
   r.onload=()=>{
     try{
-      const xmlTxt=r.result;
-      const xml=new DOMParser().parseFromString(xmlTxt,'text/xml');
+      const xml=new DOMParser().parseFromString(r.result,'text/xml');
+      const tx=r.result;
 
-      // immat: motif F-HT** / F-HUV*
-      const m = xmlTxt.match(/F-?H[A-Z0-9]{3}/i);
+      // immat
+      const m = tx.match(/\bF-?H[A-Z0-9]{3}\b/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
-      // check: A1..A12
-      const ck = xmlTxt.match(/\bA(1[0-2]|[1-9])\b/i);
-      if(ck) $('#vCheck').value = ck[0].toUpperCase();
+      // check A#
+      const mc = tx.match(/\bA(1[0-2]|[1-9])\b/i);
+      if(mc) $('#vCheck').value = mc[0].toUpperCase();
 
-      // dates (premier ISO) -> Arrivée prévue & APRS (prévu)
-      const iso = xmlTxt.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/g);
-      if(iso && iso.length){
-        $('#vArrPrev').value = iso[0].replace(' ','T');
-        if(iso[1]) $('#vAprsPrev').value = iso[1].replace(' ','T');
-      }
+      // dates prévues: on tente des balises fréquentes sinon 1er ISO
+      let arrPrev = xml.querySelector('ArrivalPlanned, ArriveePrevue, ArrPrev')?.textContent;
+      let depPrev = xml.querySelector('DeparturePlanned, DepartPrevu, DepPrev, APRSPrevu, APRSPrevue')?.textContent;
+      const iso = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/g) || [];
+      if(!arrPrev && iso[0]) arrPrev = iso[0].replace(' ','T');
+      if(!depPrev && iso[1]) depPrev = iso[1].replace(' ','T');
+      if(arrPrev) $('#vArrPrev').value = arrPrev.slice(0,16);
+      if(depPrev) $('#vDepPrev').value = depPrev.slice(0,16);
 
-      // HMO plan
-      const nNode=sel=>{const n=xml.querySelector(sel); if(!n) return NaN; const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;}
-      let hPlan = nNode('HMOPlan, HmoPlan, PlanHMO');
-      if(isNaN(hPlan)){
-        // somme des durations si dispo
-        let sum=0; xml.querySelectorAll('[duration]').forEach(n=>{const v=parseFloat(n.getAttribute('duration')); if(!isNaN(v)) sum+=v;});
-        if(sum>0) hPlan=sum;
+      // HMO prévue explicite
+      let hPlan = NaN;
+      const getNumNode = sel => {
+        const n=xml.querySelector(sel); if(!n) return NaN;
+        const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
       }
-      if(!isNaN(hPlan)) $('#vHmoPlan').value=hPlan;
+      hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO, HMOPrevue, HMOPrev');
+      if(!isNaN(hPlan)) $('#vHmoPlan').value = hPlan;
 
       recalcTotals();
-      alert('XML importé ✅ (sans bloquer en cas de champs manquants)');
-    }catch(e){ console.error(e); alert('XML invalide'); }
+      alert('XML importé ✅ (immat/check/dates prévues/HMO plan quand dispo)');
+    }catch(e){
+      console.error(e);
+      alert('XML invalide (import non bloquant).');
+    }
   };
   r.readAsText(f);
 };
 
-/* ================== Enregistrer / Charger ================== */
+/* ========================= Enregistrer / Brouillon ======================== */
 let currentVisitId = null;
-function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId)||null; }
 
 function collectVisitFromForm(){
   const vacs=$$('#vacBody tr').map(tr=>({
-    type: $('.vacType',tr).value,
     name:$(".vacName",tr).value.trim(),
+    type:$(".vacType",tr).value,
     cmeDem:num($('.cmeD',tr).value), eirDem:num($('.eirD',tr).value), leadDem:num($('.leadD',tr).value),
     cmeReal:num($('.cmeR',tr).value), eirReal:num($('.eirR',tr).value), leadReal:num($('.leadR',tr).value)
   }));
-  const cur=getCurrentVisit();
   return {
     id: currentVisitId || uuid(),
     immat: $('#vImmat').value.trim().toUpperCase(),
     check: $('#vCheck').value,
-    pfBoro: $('#vPfBoro').value.trim(),
     arrPrev: $('#vArrPrev').value || null,
     arrReal: $('#vArrReal').value || null,
-    aprsPrev: $('#vAprsPrev').value || null,
-    aprsReal: $('#vAprsReal').value || null,
+    depPrev: $('#vDepPrev').value || null,
+    depReal: $('#vDepReal').value || null,
     hmoPlan: num($('#vHmoPlan').value),
     hmoReal: num($('#vHmoReal').value),
-    unas: collectUnas(),              // nouveau bloc désassignations détaillées
-    weights: collectWeights(),        // tableau MXI/Poids
+    pf: $('#vPF').checked ? true : false,
+    boro: $('#vBORO').checked ? true : false,
     vacs,
-    trfx: cur?.trfx||[],              // conserver TRFX saisis
-    problems: cur?.problems||[],
-    createdAt: cur?.createdAt || new Date().toISOString()
+    problems: (getCurrentVisit()?.problems)||[],
+    createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
 }
+function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
 
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
-  $('#vImmat').value = v?.immat||''; $('#vCheck').value=v?.check||'A1';
-  $('#vPfBoro').value = v?.pfBoro||'';
-  $('#vArrPrev').value=v?.arrPrev||''; $('#vArrReal').value=v?.arrReal||'';
-  $('#vAprsPrev').value=v?.aprsPrev||''; $('#vAprsReal').value=v?.aprsReal||'';
-  $('#vHmoPlan').value=v?.hmoPlan??0; $('#vHmoReal').value=v?.hmoReal??0;
+  $('#vImmat').value = v?.immat||'';
+  $('#vCheck').value = v?.check||'A1';
+  $('#vArrPrev').value = v?.arrPrev||'';
+  $('#vArrReal').value = v?.arrReal||'';
+  $('#vDepPrev').value = v?.depPrev||'';
+  $('#vDepReal').value = v?.depReal||'';
+  $('#vHmoPlan').value = v?.hmoPlan??0;
+  $('#vHmoReal').value = v?.hmoReal??0;
+  $('#vPF').checked = !!v?.pf;
+  $('#vBORO').checked = !!v?.boro;
 
-  // désassign + poids
-  renderUnasTable(v?.unas||null);
-  renderWeightsTable(v?.weights||null);
-
-  // vacations
   vacBody.innerHTML='';
-  (v?.vacs?.length?v.vacs:[{type:'Matin',name:'Vac 1 Matin'},{type:'Soir',name:'Vac 2 Soir'},{type:'Nuit',name:'Vac 3 Nuit'}]).forEach(x=>{
-    vacRow(x.name,VAC_TYPES.indexOf(x.type)>=0?VAC_TYPES.indexOf(x.type):0);
+  (v?.vacs?.length?v.vacs:[{name:'Vac 1',type:'Matin'},{name:'Vac 2',type:'Soir'},{name:'Vac 3',type:'Nuit'}]).forEach(x=>{
+    vacRow(x.name||'', x.type||nextVacType());
     const tr=vacBody.lastElementChild;
     $('.cmeD',tr).value=x.cmeDem||0; $('.eirD',tr).value=x.eirDem||0; $('.leadD',tr).value=x.leadDem||0;
     $('.cmeR',tr).value=x.cmeReal||0; $('.eirR',tr).value=x.eirReal||0; $('.leadR',tr).value=x.leadReal||0;
   });
-  autoNameVacations(); recalcTotals();
-
-  // TRFX
-  renderTrfx(v?.trfx||[]);
-
-  // problèmes liés
+  recalcTotals();
   renderVisitProblems(v||{problems:[]});
 }
 
@@ -714,49 +642,85 @@ $('#btnSaveVisit').onclick=()=>{
   const idx = state.visits.findIndex(x=>x.id===v.id);
   if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
-  save(); renderVisitsList(); alert('Visite enregistrée ✅');
+  save(); renderVisitsList();
+  alert('Visite enregistrée ✅');
 };
 $('#btnSaveAsNew').onclick=()=>{
-  currentVisitId=null;
-  const v=collectVisitFromForm();
+  currentVisitId = null;
+  const v = collectVisitFromForm();
   state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
-  save(); renderVisitsList(); renderFormFromVisit(v); alert('Nouvelle visite enregistrée ✅');
+  save(); renderVisitsList(); renderFormFromVisit(v);
+  alert('Nouvelle visite enregistrée ✅');
 };
 $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
-  $('#vImmat').value=''; $('#vImmatAdd').value=''; $('#vPfBoro').value='';
-  ['vArrPrev','vArrReal','vAprsPrev','vAprsReal','vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).value = (id.includes('Hmo')?0:''));
-  renderUnasTable(null); renderWeightsTable(null);
-  seedVacs(); renderTrfx([]); renderVisitProblems({problems:[]}); recalcTotals();
+  $('#vImmat').value=''; $('#vImmatAdd').value='';
+  ['vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal']
+    .forEach(id=> $('#'+id).value = (id==='vHmoPlan'||id==='vHmoReal')?0:'');
+  $('#vPF').checked=false; $('#vBORO').checked=false;
+  seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
+};
+$('#btnNewVisit').onclick=()=>{
+  if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
+  const v={ id:uuid(), immat:'', check:'A1', arrPrev:null, arrReal:null, depPrev:null, depReal:null,
+    hmoPlan:0, hmoReal:0, pf:false, boro:false,
+    vacs:[{name:'Vac 1',type:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {name:'Vac 2',type:'Soir', cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {name:'Vac 3',type:'Nuit', cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
+    problems:[], createdAt:new Date().toISOString()
+  };
+  state.visits.push(v); save();
+  renderVisitsList(); renderFormFromVisit(v);
 };
 
-/* ================== Liste visites + filtre ================== */
+/* ============================ Liste des visites =========================== */
+let visitFilters = { pf:false, boro:false, immat:'', vacMin:0 };
+
+function applyVisitFilters(list){
+  return list.filter(v=>{
+    if(visitFilters.pf && !v.pf) return false;
+    if(visitFilters.boro && !v.boro) return false;
+    if(visitFilters.immat && (v.immat||'').toUpperCase()!==visitFilters.immat.toUpperCase()) return false;
+    const nv = Array.isArray(v.vacs)? v.vacs.length : 0;
+    if(nv < (Number(visitFilters.vacMin)||0)) return false;
+    return true;
+  });
+}
+$('#btnApplyVisitFilters').onclick=()=>{
+  visitFilters.pf = $('#fltPF').checked;
+  visitFilters.boro = $('#fltBORO').checked;
+  visitFilters.immat = $('#fltImmat').value.trim();
+  visitFilters.vacMin = num($('#fltVacMin').value);
+  renderVisitsList();
+};
+$('#btnClearVisitFilters').onclick=()=>{
+  $('#fltPF').checked=false; $('#fltBORO').checked=false; $('#fltImmat').value=''; $('#fltVacMin').value=0;
+  visitFilters={pf:false,boro:false,immat:'',vacMin:0}; renderVisitsList();
+};
+
 function renderVisitsList(){
   const tb=$('#visitsBody'); tb.innerHTML='';
-  const q=($('#fltSearchVisit').value||'').toLowerCase();
-  const fck=$('#fltCheck').value;
-  const data=state.visits.filter(v=>{
-    const str=(v.immat+' '+v.check+' '+(v.pfBoro||'')).toLowerCase();
-    const matchQ = !q || str.includes(q);
-    const matchC = !fck || v.check===fck;
-    return matchQ && matchC;
-  });
-  data.slice().reverse().forEach((v,idx)=>{
+  const ordered = state.visits.slice().reverse();
+  const data = applyVisitFilters(ordered);
+  data.forEach((v,idx)=>{
     const dH = (v.hmoReal||0)-(v.hmoPlan||0);
+    const nv = Array.isArray(v.vacs)? v.vacs.length : 0;
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${data.length-idx}</td>
       <td>${v.immat||'—'}</td>
       <td>${v.check||'A?'}</td>
       <td>${fmtDate(v.arrPrev)}</td>
-      <td>${fmtDate(v.aprsPrev)}</td>
+      <td>${fmtDate(v.depPrev)}</td>
+      <td>${fmtDate(v.depReal)}</td>
       <td>${v.hmoPlan||0}</td>
       <td>${v.hmoReal||0}</td>
-      <td>${dH>0?'+':''}${dH||0}</td>
-      <td>${v.pfBoro||'—'}</td>
-      <td>${(v.vacs||[]).length||0}</td>
+      <td>${dH>0?'+':''}${(dH||0)}</td>
+      <td>${v.pf?'Oui':'Non'}</td>
+      <td>${v.boro?'Oui':'Non'}</td>
+      <td>${nv}</td>
       <td>
         <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
         <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
@@ -765,8 +729,6 @@ function renderVisitsList(){
     tb.appendChild(tr);
   });
 }
-$('#fltSearchVisit').addEventListener('input',renderVisitsList);
-$('#fltCheck').addEventListener('change',renderVisitsList);
 renderVisitsList();
 
 $('#visitsTable').addEventListener('click', (e)=>{
@@ -783,7 +745,7 @@ $('#visitsTable').addEventListener('click', (e)=>{
   }
 });
 
-/* ================== Problèmes liés à la visite ================== */
+/* ==================== Problèmes liés à une visite (table) ================= */
 function renderVisitProblems(v){
   const tb=$('#visitProblemsBody'); tb.innerHTML='';
   (v.problems||[]).forEach((p,i)=>{
@@ -802,11 +764,15 @@ $('#visitProblemsBody').addEventListener('click',(e)=>{
   }
 });
 
-/* ================== Bibliothèque Problèmes ================== */
+/* ============== Bibliothèque Problèmes (ajout & comptage) ================ */
 $('#btnAddProblem').onclick=()=>{
   const title=$('#pTitle').value.trim(); if(!title) return alert('Titre manquant');
-  const p={ id: uuid(), title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
-    recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(), immat:'', check:'', ts:new Date().toISOString() };
+  const p={
+    id: uuid(),
+    title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
+    recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
+    immat:'', check:'', ts:new Date().toISOString()
+  };
   state.problems.push(p); save();
   $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
   renderProblems();
@@ -853,15 +819,21 @@ function renderProblems(){
       <td>${assigns}</td>
       <td>${pct}%</td>
       <td>${new Date(p.ts).toLocaleString()}</td>
-      <td><button class="btn bad" data-del="${p.id}">Supprimer</button></td>`;
+      <td><button class="btn bad" data-del="${p.id}">Supprimer</button></td>
+    `;
     tbody.appendChild(tr);
   });
 }
 document.getElementById('problemsBody').addEventListener('click', (e)=>{
-  const id = e.target?.dataset?.del; if(!id) return;
+  const id = e.target?.dataset?.del;
+  if(!id) return;
   const cascade = confirm("Supprimer ce problème de la bibliothèque ?\n\nOK = supprime aussi ce problème de toutes les visites.");
   state.problems = state.problems.filter(p => p.id !== id);
-  if (cascade) state.visits.forEach(v=>{ if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id); });
+  if (cascade) {
+    state.visits.forEach(v=>{
+      if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id);
+    });
+  }
   save(); renderProblems();
   const v = state.visits.find(x => x.id === (currentVisitId||'')); if (v) renderVisitProblems(v);
   alert('Problème supprimé ✅' + (cascade ? ' (et retiré des visites)' : ''));
@@ -869,7 +841,7 @@ document.getElementById('problemsBody').addEventListener('click', (e)=>{
 $('#btnFilterProblems').onclick=renderProblems;
 renderProblems();
 
-/* Dialog assignation */
+/* ================ Dialog: assigner problèmes à une visite ================= */
 const dlgPick = $('#dlgPick');
 function openPickDialogFor(visitId){
   const v = state.visits.find(x=>x.id===visitId); if(!v) return;
@@ -899,15 +871,20 @@ $('#pickAdd').onclick=()=>{
   const ids=$$('#pickBody input[type="checkbox"]:checked').map(x=>x.dataset.id);
   if(!ids.length) return alert('Sélectionne au moins un problème.');
   if(!confirm(`Ajouter ${ids.length} problème(s) à cette visite ?`)) return;
-  const toAdd = state.problems.filter(p=>ids.includes(p.id)).map(p=>({ pid:p.id, title:p.title, cat:p.cat, impact:p.impact, recurring:!!p.recurring }));
-  v.problems = (v.problems||[]).concat(toAdd); save(); renderVisitProblems(v); dlgPick.close();
+  const toAdd = state.problems.filter(p=>ids.includes(p.id)).map(p=>({
+    pid:p.id, title:p.title, cat:p.cat, impact:p.impact, recurring:!!p.recurring
+  }));
+  v.problems = (v.problems||[]).concat(toAdd);
+  save(); renderVisitProblems(v); dlgPick.close();
 }
 
-/* ================== Export / Import / Fusion JSON ================== */
+/* ============================ Export / Import JSON ======================== */
 $('#exportJson').onclick=()=>{
   const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click();
-};
+}
+
+/* Remplacement total */
 $('#importJsonBtn').onclick=()=>$('#importJsonFile').click();
 $('#importJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -926,6 +903,8 @@ $('#importJsonFile').addEventListener('change', e=>{
   };
   r.readAsText(f);
 });
+
+/* Fusion intelligente */
 $('#mergeJsonBtn').onclick=()=>$('#mergeJsonFile').click();
 $('#mergeJsonFile').addEventListener('change', e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -936,13 +915,30 @@ $('#mergeJsonFile').addEventListener('change', e=>{
       if(!(incoming && (incoming.visits||incoming.problems||incoming.immat))) return alert('JSON sans contenu utile');
       const before = JSON.stringify(state).length;
 
+      // union immats
       if(Array.isArray(incoming.immat)) state.immat = Array.from(new Set([...state.immat, ...incoming.immat])).sort();
 
+      // fusion problèmes
       if(Array.isArray(incoming.problems)){
         const byId = new Map(state.problems.map(p=>[p.id,p]));
         incoming.problems.forEach(p=>{
           if(p && p.id){
-            byId.set(p.id, {...byId.get(p.id), ...p});
+            if(!byId.has(p.id)) byId.set(p.id,p);
+            else {
+              const cur = byId.get(p.id);
+              byId.set(p.id, {
+                ...cur,
+                title: p.title || cur.title,
+                cat: p.cat || cur.cat,
+                impact: (typeof p.impact==='number')? p.impact : cur.impact,
+                actor: p.actor || cur.actor,
+                recurring: (typeof p.recurring==='boolean')? p.recurring : cur.recurring,
+                desc: p.desc || cur.desc,
+                immat: p.immat || cur.immat,
+                check: p.check || cur.check,
+                ts: p.ts || cur.ts
+              });
+            }
           }else{
             const cp={...p, id: uuid(), ts: p?.ts || new Date().toISOString()};
             byId.set(cp.id, cp);
@@ -951,22 +947,26 @@ $('#mergeJsonFile').addEventListener('change', e=>{
         state.problems = Array.from(byId.values());
       }
 
+      // fusion visites
       if(Array.isArray(incoming.visits)){
         const mapV = new Map(state.visits.map(v=>[v.id,v]));
-        const keyOf = v => [v.immat,v.check,v.arrPrev,v.aprsPrev,v.hmoPlan].join('|');
+        const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
         const seenKeys = new Set(state.visits.map(v=>keyOf(v)));
+
         incoming.visits.forEach(v=>{
           if(v && v.id && mapV.has(v.id)){
-            const cur=mapV.get(v.id);
-            mapV.set(v.id,{...cur,...v,
-              unas: v.unas||cur.unas, weights:v.weights||cur.weights,
-              vacs:Array.isArray(v.vacs)?v.vacs:cur.vacs,
-              trfx:Array.isArray(v.trfx)?v.trfx:cur.trfx,
-              problems:Array.isArray(v.problems)?v.problems:cur.problems
-            });
-          }else{
-            const k=keyOf(v||{}); if(!seenKeys.has(k)){
-              const nv=v&&v.id?v:{...v,id:uuid()}; mapV.set(nv.id,nv); seenKeys.add(k);
+            const cur = mapV.get(v.id);
+            const merged = { ...cur, ...v,
+              vacs: Array.isArray(v.vacs) ? v.vacs : cur.vacs,
+              problems: Array.isArray(v.problems) ? v.problems : cur.problems
+            };
+            mapV.set(v.id, merged);
+          } else {
+            const k = keyOf(v||{});
+            if(!seenKeys.has(k)){
+              const nv = v && v.id ? v : {...v, id: uuid()};
+              mapV.set(nv.id, nv);
+              seenKeys.add(k);
             }
           }
         });
@@ -975,22 +975,24 @@ $('#mergeJsonFile').addEventListener('change', e=>{
 
       save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
       const after = JSON.stringify(state).length;
-      alert('Fusion JSON terminée ✅ (+'+ (after-before) +' octets env.)');
+      alert('Fusion JSON terminée ✅\nDonnées cumulées et dédoublonnées.\n(+'+ (after-before) +' octets environ)');
     }catch{ alert('Erreur JSON'); }
   };
   r.readAsText(f);
 });
 
-/* ================== Performance ================== */
+/* ================================ Performance ============================= */
 let pie=null;
 function renderPerf(){
   const s=$('#pfStart').value, e=$('#pfEnd').value, im=($('#pfImmat').value||'').toUpperCase(), ck=$('#pfCheck').value;
-  const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.aprsPrev||v.aprsReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
+  const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
 
+  // KPIs
   let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
   visits.forEach(v=>{
-    if(v.aprsPrev && v.aprsReal){ tot++; if(new Date(v.aprsReal)<=new Date(v.aprsPrev)) res++; }
-    const dH = (v.hmoReal||0) - (v.hmoPlan||0); sumDH += dH; sumHD += (v.hmoPlan||0);
+    if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
+    const dH = (v.hmoReal||0) - (v.hmoPlan||0);
+    sumDH += dH; sumHD += (v.hmoPlan||0);
     const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
     const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
@@ -1001,6 +1003,7 @@ function renderPerf(){
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
 
+  // Pareto / pie
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
   const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
   const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
@@ -1017,15 +1020,11 @@ function renderPerf(){
 }
 $('#btnPerfRefresh').onclick=renderPerf;
 
-/* ================== Init ================== */
-function initialRender(){ refreshImmatList(); renderProblems(); renderVisitsList(); }
+/* ================================ init UI ================================= */
+function initialRender(){
+  refreshImmatList(); renderProblems(); renderVisitsList();
+}
 initialRender();
-
-/* placeholders dynamiques (0 disparaît quand on tape) */
-$$('input,textarea').forEach(i=>{
-  setEmptyHint(i); i.addEventListener('input',()=>setEmptyHint(i));
-});
-
 </script>
 </body>
 </html>
