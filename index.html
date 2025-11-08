@@ -6,6 +6,10 @@
 <title>REX A350 – Check A (clair + fusion JSON)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- PDF -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+
 <style>
 :root{
   /* Thème clair lisible */
@@ -295,15 +299,17 @@ h2 .legend .pill{margin-left:6px}
           </div>
         </div>
 
-        <!-- Désassignations : tableau détaillé (avec Skill) -->
+        <!-- Désassignations : tableau détaillé (avec Skill + HMO MTX) -->
         <div class="card" style="margin-top:8px">
           <h2>Désassignations (détail)</h2>
+          <div class="small">Première ligne : avant start du chantier (pré-remplie).</div>
           <div style="overflow:auto;margin-top:6px">
             <table class="table-small" id="unassignTable">
               <thead>
                 <tr>
                   <th>#</th>
                   <th>Nb lignes</th>
+                  <th>HMO MTX (h)</th>
                   <th>Skill</th>
                   <th>Raison</th>
                   <th></th>
@@ -314,6 +320,7 @@ h2 .legend .pill{margin-left:6px}
                 <tr>
                   <th>Total</th>
                   <th id="unassignTotal">0</th>
+                  <th id="unassignHmoTotal">0</th>
                   <th colspan="3"></th>
                 </tr>
               </tfoot>
@@ -385,6 +392,7 @@ h2 .legend .pill{margin-left:6px}
         <div class="row" style="margin-top:10px">
           <button id="btnSaveVisit" class="btn ok">💾 Enregistrer</button>
           <button id="btnSaveAsNew" class="btn primary">🆕 Enregistrer (nouvelle)</button>
+          <button id="btnExportPdf" class="btn primary">📄 Exporter PDF visite</button>
           <button id="btnClearVisit" class="btn bad">🧹 Effacer le formulaire</button>
         </div>
       </div>
@@ -667,11 +675,12 @@ $('#btnAddVac').onclick=()=>{ vacRow(); recalcTotals(); reindexVacNames(); };
 
 /* ===================== Désassignations : tableau détail =================== */
 const unassignBody = $('#unassignBody');
-function addUnassignRow(val=0, reason="", skill=""){
+function addUnassignRow(val=0, hmo=0, reason="", skill=""){
   const tr=document.createElement('tr');
   tr.innerHTML = `
     <td class="uaIndex"></td>
     <td><input type="number" min="0" value="${val}" class="uaVal clear0" placeholder="0"></td>
+    <td><input type="number" min="0" step="0.1" value="${hmo}" class="uaHmo clear0" placeholder="0"></td>
     <td>
       <select class="uaSkill">
         <option value="" ${skill===""?"selected":""}>—</option>
@@ -688,11 +697,18 @@ function addUnassignRow(val=0, reason="", skill=""){
 }
 function renumberUnassign(){ $$('#unassignBody tr').forEach((tr,i)=>$('.uaIndex',tr).textContent=i+1); }
 function recalcUnassign(){
-  let tot=0; $$('#unassignBody .uaVal').forEach(inp=> tot += num(inp.value));
+  let tot=0, totHmo=0;
+  $$('#unassignBody tr').forEach(tr=>{
+    tot += num($('.uaVal',tr).value);
+    totHmo += num($('.uaHmo',tr).value);
+  });
   $('#unassignTotal').textContent = tot;
+  $('#unassignHmoTotal').textContent = totHmo.toFixed(1);
 }
 $('#btnAddUnassign').onclick = ()=> addUnassignRow();
-unassignBody.addEventListener('input', e=>{ if(e.target.classList.contains('uaVal')) recalcUnassign(); });
+unassignBody.addEventListener('input', e=>{
+  if(e.target.classList.contains('uaVal') || e.target.classList.contains('uaHmo')) recalcUnassign();
+});
 unassignBody.addEventListener('click', e=>{
   if(e.target.classList.contains('uaDel')){
     e.target.closest('tr').remove(); renumberUnassign(); recalcUnassign();
@@ -825,14 +841,20 @@ let currentVisitId = null;
 function collectUnassignFromUI(){
   return $$('#unassignBody tr').map(tr=>({
     n: num($('.uaVal',tr).value),
+    hmo: num($('.uaHmo',tr).value),
     reason: $('.uaReason',tr).value.trim(),
     skill: $('.uaSkill',tr).value || ""
   }));
 }
 function putUnassignToUI(list){
   unassignBody.innerHTML='';
-  (list||[]).forEach(x=>addUnassignRow(x.n||0, x.reason||"", x.skill||""));
-  if(!(list||[]).length){ unassignBody.innerHTML=''; $('#unassignTotal').textContent='0'; }
+  if((list||[]).length){
+    (list||[]).forEach(x=>addUnassignRow(x.n||0, x.hmo||0, x.reason||"", x.skill||""));
+  }else{
+    // Ligne par défaut "Avant start du chantier"
+    addUnassignRow(0, 0, "Avant start du chantier", "");
+  }
+  recalcUnassign();
 }
 
 function collectVacFromUI(){
@@ -916,7 +938,7 @@ function renderFormFromVisit(v){
   $('#mxiMxi').value = v?.mxi?.start?.mxi ?? 0;
   $('#mxiFdg').value = v?.mxi?.start?.fdg ?? 0;
 
-  // Désassignations détaillées (skill inclus)
+  // Désassignations détaillées
   putUnassignToUI(v?.unassignedDetail||[]);
 
   // TRFX prélèvements
@@ -964,14 +986,15 @@ $('#btnClearVisit').onclick=()=>{
   if(!confirm('Effacer le formulaire en cours ?')) return;
   currentVisitId=null;
   $('#vImmat').value=''; $('#vImmatAdd').value='';
-  ['vTrfxVisit','vArrPrev','vArrReal','vDepPrev','vDepReal','vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).value = id==='vHmoPlan'||id==='vHmoReal' ? '0' : '');
+  ['vTrfxVisit','vArrPrev','vArrReal','vDepPrev','vDepReal'].forEach(id=> $('#'+id).value = '');
+  ['vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).value = '0');
   $('#vPF').checked=false; $('#vBORO').checked=false;
 
   // MXI
   ['mxiLines','mxiWeight','mxiTtc','mxiMxi','mxiFdg'].forEach(id=> $('#'+id).value='0');
 
   // Désassign
-  unassignBody.innerHTML=''; $('#unassignTotal').textContent='0';
+  putUnassignToUI([]);
 
   // TRFX prélèvements
   renderTrfx([]);
@@ -994,6 +1017,100 @@ $('#btnNewVisit').onclick=()=>{
   };
   state.visits.push(v); save();
   renderVisitsList(); renderFormFromVisit(v);
+};
+
+/* ============================ Export PDF (visite) ========================= */
+$('#btnExportPdf').onclick = ()=>{
+  const v = getCurrentVisit();
+  if(!v){
+    alert('Ouvre ou crée une visite avant d’exporter le PDF.');
+    return;
+  }
+  const jspdf = window.jspdf;
+  if(!jspdf || !jspdf.jsPDF){
+    alert('Bibliothèque PDF non chargée.');
+    return;
+  }
+  const doc = new jspdf.jsPDF();
+  if(typeof doc.autoTable !== 'function'){
+    alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
+    return;
+  }
+
+  let y = 10;
+  doc.setFontSize(14);
+  doc.text('REX A350 – Résumé visite', 10, y);
+  y += 8;
+  doc.setFontSize(11);
+  doc.text(`TRFX : ${v.trfxVisit || '-'}`, 10, y); y += 6;
+  doc.text(`Immat : ${v.immat || '-'}   Check : ${v.check || '-'}`, 10, y); y += 6;
+  doc.text(`Arrivée prév. : ${fmtDate(v.arrPrev)}   Arrivée réelle : ${fmtDate(v.arrReal)}`, 10, y); y += 6;
+  doc.text(`APRS prév. : ${fmtDate(v.depPrev)}   APRS réelle : ${fmtDate(v.depReal)}`, 10, y); y += 6;
+  doc.text(`HMO prév. : ${(v.hmoPlan||0)} h   HMO réelle : ${(v.hmoReal||0)} h`, 10, y); y += 8;
+  doc.text(`P/F : ${v.pf ? 'Oui' : 'Non'}   BORO : ${v.boro ? 'Oui' : 'Non'}`, 10, y); y += 6;
+
+  // VAC
+  doc.autoTable({
+    startY: y,
+    head: [['Vac','Type','CME dem','EIR dem','Lead dem','CME réel','EIR réel','Lead réel']],
+    body: (v.vacs||[]).map((vac,i)=>[
+      `Vac ${i+1}`, vac.type||'',
+      vac.cmeDem||0, vac.eirDem||0, vac.leadDem||0,
+      vac.cmeReal||0, vac.eirReal||0, vac.leadReal||0
+    ])
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Désassignations
+  doc.autoTable({
+    startY: y,
+    head: [['Nb lignes','HMO MTX (h)','Skill','Raison']],
+    body: (v.unassignedDetail||[]).map(u=>[
+      u.n||0,
+      u.hmo||0,
+      u.skill||'',
+      u.reason||''
+    ])
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // MXI START
+  doc.autoTable({
+    startY: y,
+    head: [['Jalon','Lignes MXI','Poids MXI','Poids TTC','MXI','FDG']],
+    body: [[
+      'START',
+      v.mxi?.start?.lines || 0,
+      v.mxi?.start?.weight || 0,
+      v.mxi?.start?.ttc || 0,
+      v.mxi?.start?.mxi || 0,
+      v.mxi?.start?.fdg || 0
+    ]]
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Prélèvements TRFX
+  doc.autoTable({
+    startY: y,
+    head: [['#','TRFX']],
+    body: (v.prlvTrfx||[]).map((t,i)=>[i+1, t])
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Problèmes
+  doc.autoTable({
+    startY: y,
+    head: [['Titre','Cat.','Impact(h)','Récurrent']],
+    body: (v.problems||[]).map(p=>[
+      p.title||'',
+      p.cat||'',
+      p.impact||0,
+      p.recurring ? 'Oui' : 'Non'
+    ])
+  });
+
+  const fileName = `REX_${(v.trfxVisit||v.immat||'visite').replace(/[^A-Za-z0-9_-]/g,'_')}.pdf`;
+  doc.save(fileName);
 };
 
 /* ============================ Liste des visites =========================== */
@@ -1341,6 +1458,10 @@ $('#btnPerfRefresh').onclick=renderPerf;
 function initialRender(){
   refreshImmatList(); renderProblems(); renderVisitsList();
   attachZeroClearInputs(); attachZeroClearDatetime();
+  // s'assurer qu'il y a au moins une ligne d'unassign par défaut si aucune visite chargée
+  if(!getCurrentVisit()){
+    putUnassignToUI([]);
+  }
 }
 initialRender();
 </script>
