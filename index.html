@@ -68,7 +68,36 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1}
 .kpi{display:flex;gap:10px;flex-wrap:wrap}
 .kpi .pill{padding:8px 10px;border-radius:999px;background:#f5f8ff;border:1px solid var(--line)}
 .hidden{display:none}
-.topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px}
+.topbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+
+/* Bandeau stats coloré à côté d'Exporter JSON */
+.topStats{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-left:8px;
+}
+.statChip{
+  min-width:90px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#2563eb,#4ade80);
+  color:#f9fafb;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.statLabel{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  opacity:.9;
+}
+.statValue{
+  font-size:14px;
+  font-weight:600;
+}
+
 .tag{font-size:11px;opacity:.9;padding:2px 6px;border:1px solid var(--line);border-radius:999px;background:#fff}
 label .pill{
   display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);
@@ -109,6 +138,18 @@ h2 .legend .pill{margin-left:6px}
       <button id="importJsonBtn" class="btn">Importer (remplacer)</button>
       <input id="mergeJsonFile" type="file" accept="application/json" class="hidden">
       <button id="mergeJsonBtn" class="btn fuse">Importer / Fusionner JSON</button>
+
+      <!-- Bandeau stats coloré -->
+      <div class="topStats">
+        <div class="statChip">
+          <span class="statLabel">Visites</span>
+          <span class="statValue" id="statVisits">0</span>
+        </div>
+        <div class="statChip">
+          <span class="statLabel">Problèmes</span>
+          <span class="statValue" id="statProblems">0</span>
+        </div>
+      </div>
     </div>
 
     <!-- VISITE -->
@@ -637,6 +678,14 @@ function fmtDate(v){ if(!v) return "—"; const d=new Date(v); return isNaN(d)?"
 function uuid(){ return Math.random().toString(36).slice(2,10) }
 const cycle = ["Matin","Soir","Nuit"];
 
+/* =================== stats topbar (visites / problèmes) =================== */
+function refreshTopStats(){
+  const sv = $('#statVisits');
+  const sp = $('#statProblems');
+  if(sv) sv.textContent = state.visits.length;
+  if(sp) sp.textContent = state.problems.length;
+}
+
 /* ========================== UX: cacher le 0 en saisie ===================== */
 function attachZeroClearInputs(){
   $$('input[type="number"].clear0').forEach(inp=>{
@@ -669,7 +718,7 @@ refreshImmatList();
 $('#btnAddImmat').onclick=()=>{
   const v=$('#vImmatAdd').value.trim().toUpperCase(); if(!v) return;
   if(!state.immat.includes(v)) state.immat.push(v);
-  $('#vImmat').value=v; $('#vImmatAdd').value=''; refreshImmatList(); save();
+  $('#vImmat').value=v; $('#vImmatAdd').value=''; refreshImmatList(); save(); refreshTopStats();
 }
 
 /* ============================ VAC (table + rotation) ====================== */
@@ -796,7 +845,7 @@ $('#btnAddTrfx').onclick=()=>{
   const cur = (getCurrentVisit()?.prlvTrfx)||[];
   cur.push(v);
   const vis = getCurrentVisit();
-  if(vis){ vis.prlvTrfx = cur; save(); }
+  if(vis){ vis.prlvTrfx = cur; save(); refreshTopStats(); }
   $('#trfxInput').value='';
   renderTrfx(cur);
 }
@@ -1026,7 +1075,7 @@ $('#btnSaveVisit').onclick=()=>{
   const idx = state.visits.findIndex(x=>x.id===v.id);
   if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
-  save(); renderVisitsList();
+  save(); renderVisitsList(); refreshTopStats();
   alert('Visite enregistrée ✅');
 };
 
@@ -1041,8 +1090,7 @@ $('#btnSaveAsNew').onclick=()=>{
   }
   state.visits.push(v);
   if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
-  save(); renderVisitsList();
-  renderFormFromVisit(v);
+  save(); renderVisitsList(); renderFormFromVisit(v); refreshTopStats();
   alert('Nouvelle visite enregistrée ✅');
 };
 
@@ -1079,7 +1127,7 @@ $('#btnNewVisit').onclick=()=>{
     prlvTrfx:[],
     problems:[], createdAt:new Date().toISOString()
   };
-  state.visits.push(v); save();
+  state.visits.push(v); save(); refreshTopStats();
   renderVisitsList(); renderFormFromVisit(v);
 };
 
@@ -1095,27 +1143,97 @@ $('#btnExportPdf').onclick = ()=>{
     alert('Bibliothèque PDF non chargée.');
     return;
   }
-  const doc = new jspdf.jsPDF();
+  const doc = new jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4'});
   if(typeof doc.autoTable !== 'function'){
     alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
     return;
   }
 
-  let y = 10;
-  doc.setFontSize(14);
-  doc.text('REX A350 – Résumé visite', 10, y);
-  y += 8;
-  doc.setFontSize(11);
-  doc.text(`TRFX : ${v.trfxVisit || '-'}`, 10, y); y += 6;
-  doc.text(`Immat : ${v.immat || '-'}   Check : ${v.check || '-'}`, 10, y); y += 6;
-  doc.text(`Arrivée prév. : ${fmtDate(v.arrPrev)}   Arrivée réelle : ${fmtDate(v.arrReal)}`, 10, y); y += 6;
-  doc.text(`APRS prév. : ${fmtDate(v.depPrev)}   APRS réelle : ${fmtDate(v.depReal)}`, 10, y); y += 6;
-  doc.text(`HMO prév. : ${(v.hmoPlan||0)} h   HMO réelle : ${(v.hmoReal||0)} h`, 10, y); y += 8;
-  doc.text(`P/F : ${v.pf ? 'Oui' : 'Non'}   BORO : ${v.boro ? 'Oui' : 'Non'}`, 10, y); y += 6;
+  // Quelques calculs pour les KPI visite
+  const vacs = v.vacs || [];
+  let vacDemTot=0, vacRealTot=0;
+  vacs.forEach(x=>{
+    const dem=(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0);
+    const rea=(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0);
+    vacDemTot+=dem; vacRealTot+=rea;
+  });
+  const deltaEffTot = vacRealTot - vacDemTot;
+  const unDet = v.unassignedDetail||[];
+  let unLines=0, unHmo=0;
+  unDet.forEach(u=>{unLines+=u.n||0; unHmo+=u.hmo||0});
+  const deltaHmo = (v.hmoReal||0)-(v.hmoPlan||0);
 
-  // VAC
+  let y = 12;
+  // Titre coloré
+  doc.setFontSize(16);
+  doc.setTextColor(37,99,235);
+  doc.text('REX A350 – Résumé de visite', 10, y);
+  y += 6;
+  doc.setFontSize(11);
+  doc.setTextColor(15,23,42);
+  doc.text(`TRFX : ${v.trfxVisit || '-'}`, 10, y);
+  y += 5;
+  doc.text(`Immat : ${v.immat || '-'}   •   Check : ${v.check || '-'}`, 10, y);
+  y += 5;
+  doc.text(`Arrivée prév. : ${fmtDate(v.arrPrev)}`, 10, y);
+  y += 5;
+  doc.text(`Arrivée réelle : ${fmtDate(v.arrReal)}`, 10, y);
+  y += 5;
+  doc.text(`APRS signé prév. : ${fmtDate(v.depPrev)}`, 10, y);
+  y += 5;
+  doc.text(`APRS signé réel : ${fmtDate(v.depReal)}`, 10, y);
+  y += 5;
+  doc.text(`HMO prév. : ${(v.hmoPlan||0)} h   •   HMO réelle : ${(v.hmoReal||0)} h`, 10, y);
+  y += 5;
+  doc.text(`P/F : ${v.pf ? 'Oui' : 'Non'}   •   BORO : ${v.boro ? 'Oui' : 'Non'}`, 10, y);
+  y += 6;
+
+  // Bloc KPI
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('KPI Visite', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
   doc.autoTable({
     startY: y,
+    theme: 'striped',
+    styles: {fontSize:9},
+    headStyles: {fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles: {fillColor:[239,246,255]},
+    head: [['Indicateur','Valeur']],
+    body: [
+      ['Δ HMO (réel - plan)', `${deltaHmo.toFixed(1)} h`],
+      ['Nb de VAC', vacs.length],
+      ['Effectif demandé total', vacDemTot],
+      ['Effectif réel total', vacRealTot],
+      ['Δ Effectif total (réel - dem.)', deltaEffTot],
+      ['Lignes désassignées', unLines],
+      ['HMO désassignée totale', `${unHmo.toFixed(1)} h`],
+      ['Prélèvements TRFX', (v.prlvTrfx||[]).length]
+    ]
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // VAC
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Effectifs par vac', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
     head: [['Vac','Type','CME dem','EIR dem','Lead dem','CME réel','EIR réel','Lead réel']],
     body: (v.vacs||[]).map((vac,i)=>[
       `Vac ${i+1}`, vac.type||'',
@@ -1126,8 +1244,21 @@ $('#btnExportPdf').onclick = ()=>{
   y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
 
   // Désassignations
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Désassignations', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
   doc.autoTable({
     startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
     head: [['Nb lignes','HMO MTX (h)','Skill','Raison']],
     body: (v.unassignedDetail||[]).map(u=>[
       u.n||0,
@@ -1139,8 +1270,21 @@ $('#btnExportPdf').onclick = ()=>{
   y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
 
   // MXI START
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('MXI / Poids avion – START', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
   doc.autoTable({
     startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
     head: [['Jalon','Lignes MXI','Poids MXI','Poids TTC','MXI','FDG']],
     body: [[
       'START',
@@ -1154,16 +1298,42 @@ $('#btnExportPdf').onclick = ()=>{
   y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
 
   // Prélèvements TRFX
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Prélèvements TRFX', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
   doc.autoTable({
     startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
     head: [['#','TRFX']],
     body: (v.prlvTrfx||[]).map((t,i)=>[i+1, t])
   });
   y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
 
   // Problèmes
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Problèmes liés à la visite', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
   doc.autoTable({
     startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
     head: [['Titre','Cat.','Impact(h)','Récurrent']],
     body: (v.problems||[]).map(p=>[
       p.title||'',
@@ -1234,7 +1404,7 @@ $('#visitsTable').addEventListener('click', (e)=>{
   if(act==='pbl'){ openPickDialogFor(id); }
   if(act==='del'){
     if(confirm('Supprimer définitivement cette visite ? Cette action affecte les statistiques REX.')){
-      state.visits=state.visits.filter(x=>x.id!==id); save(); renderVisitsList();
+      state.visits=state.visits.filter(x=>x.id!==id); save(); renderVisitsList(); refreshTopStats();
       if(currentVisitId===id){ $('#btnClearVisit').click(); }
     }
   }
@@ -1268,7 +1438,7 @@ $('#btnAddProblem').onclick=()=>{
     recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
     immat:'', check:'', ts:new Date().toISOString()
   };
-  state.problems.push(p); save();
+  state.problems.push(p); save(); refreshTopStats();
   $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
   renderProblems();
 };
@@ -1330,7 +1500,7 @@ document.getElementById('problemsBody').addEventListener('click', (e)=>{
       if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id);
     });
   }
-  save(); renderProblems();
+  save(); renderProblems(); refreshTopStats();
   const v = state.visits.find(x => x.id === (currentVisitId||'')); if (v) renderVisitProblems(v);
   alert('Problème supprimé ✅' + (cascade ? ' (et retiré des visites)' : ''));
 });
@@ -1390,7 +1560,7 @@ $('#importJsonFile').addEventListener('change', e=>{
         if(!confirm('Remplacer entièrement les données locales par ce JSON ?')) return;
         state=d;
         state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
-        save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
+        save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList(); refreshTopStats();
         alert('Import (remplacement) OK ✅');
       } else alert('JSON invalide');
     }catch{ alert('Erreur JSON'); }
@@ -1471,7 +1641,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
         state.visits = Array.from(mapV.values());
       }
 
-      save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList();
+      save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList(); refreshTopStats();
       const after = JSON.stringify(state).length;
       alert('Fusion JSON terminée ✅\nDonnées cumulées et dédoublonnées.\n(+'+ (after-before) +' octets environ)');
     }catch{ alert('Erreur JSON'); }
@@ -1585,7 +1755,7 @@ function renderPerf(){
     type:'bar',
     data:{
       labels:['PF','BORO'],
-      datasets:[
+    datasets:[
         {label:'Oui', data:[pfYes, boroYes]},
         {label:'Non', data:[pfNo, boroNo]}
       ]
@@ -1648,7 +1818,7 @@ $('#btnPerfPdf').onclick = ()=>{
     alert('Bibliothèque PDF non chargée.');
     return;
   }
-  const doc = new jspdf.jsPDF();
+  const doc = new jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4'});
   if(typeof doc.autoTable !== 'function'){
     alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
     return;
@@ -1671,11 +1841,13 @@ $('#btnPerfPdf').onclick = ()=>{
   const dHMinStr = $('#pfDeltaHmoMin').value;
   const dHMaxStr = $('#pfDeltaHmoMax').value;
 
-  let y = 10;
-  doc.setFontSize(14);
+  let y = 12;
+  doc.setFontSize(16);
+  doc.setTextColor(37,99,235);
   doc.text('REX A350 – Rapport Performance', 10, y);
-  y += 8;
-  doc.setFontSize(10);
+  y += 7;
+  doc.setFontSize(9);
+  doc.setTextColor(15,23,42);
   const filtText = [
     `Période : ${s || 'toutes'} -> ${e || 'toutes'}`,
     `Immat : ${im || 'toutes'}`,
@@ -1686,7 +1858,7 @@ $('#btnPerfPdf').onclick = ()=>{
     `ΔHMO max : ${dHMaxStr || '—'}`
   ].join(' | ');
   doc.text(filtText, 10, y, {maxWidth:190});
-  y += 8;
+  y += 7;
 
   // Calculs globaux rapides
   let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
@@ -1707,12 +1879,31 @@ $('#btnPerfPdf').onclick = ()=>{
   const effPct = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
 
   doc.setFontSize(11);
-  doc.text(`Nb visites : ${visits.length}`, 10, y); y+=5;
-  doc.text(`Respect planning : ${respectPct}%`, 10, y); y+=5;
-  doc.text(`Δ HMO moyen : ${avgDH.toFixed(1)} h (${pctDH}%)`, 10, y); y+=5;
-  doc.text(`Δ effectif moyen : ${effPct}`, 10, y); y+=5;
-  doc.text(`HMO plan total : ${hmoPlanTot.toFixed(1)} h`, 10, y); y+=5;
-  doc.text(`HMO réel total : ${hmoRealTot.toFixed(1)} h`, 10, y); y+=8;
+  doc.setTextColor(37,99,235);
+  doc.text('KPI globaux', 10, y);
+  y += 3;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 3;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY:y,
+    theme:'striped',
+    styles:{fontSize:9},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head:[['Indicateur','Valeur']],
+    body:[
+      ['Nb visites', visits.length],
+      ['Respect planning', respectPct + '%'],
+      ['Δ HMO moyen', `${avgDH.toFixed(1)} h (${pctDH}%)`],
+      ['Δ effectif moyen', effPct],
+      ['HMO plan total', `${hmoPlanTot.toFixed(1)} h`],
+      ['HMO réel total', `${hmoRealTot.toFixed(1)} h`]
+    ]
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
 
   // Résumé par Immat / Check (comme dans l'onglet)
   const summaryMap = new Map();
@@ -1752,16 +1943,42 @@ $('#btnPerfPdf').onclick = ()=>{
     ];
   });
 
+  doc.setFontSize(11);
+  doc.setTextColor(37,99,235);
+  doc.text('Résumé par Immat / Check', 10, y);
+  y += 3;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 3;
+  doc.setTextColor(15,23,42);
+
   doc.autoTable({
     startY:y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
     head:[['Immat','Check','Nb visites','HMO plan tot','HMO réel tot','Δ HMO moy','Respect dep. (%)']],
     body:summaryRows
   });
   y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
 
   // Détail des visites
+  doc.setFontSize(11);
+  doc.setTextColor(37,99,235);
+  doc.text('Détail des visites filtrées', 10, y);
+  y += 3;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 3;
+  doc.setTextColor(15,23,42);
+
   doc.autoTable({
     startY:y,
+    theme:'striped',
+    styles:{fontSize:7},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
     head:[['Immat','Check','TRFX','Arr prév','Dep prév','HMO plan','HMO réel','Δ HMO','PF','BORO']],
     body:visits.map(v=>{
       const dH = (v.hmoReal||0)-(v.hmoPlan||0);
@@ -1789,6 +2006,7 @@ $('#btnPerfPdf').onclick = ()=>{
   if(pieCanvas){
     const imgData = pieCanvas.toDataURL('image/png');
     doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
     doc.text('Répartition des catégories (Pareto)', 10, yCharts-4);
     doc.addImage(imgData, 'PNG', 10, yCharts, 90, 70);
   }
@@ -1798,6 +2016,7 @@ $('#btnPerfPdf').onclick = ()=>{
   if(barHmoCanvas){
     const imgData2 = barHmoCanvas.toDataURL('image/png');
     doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
     doc.text('HMO planifié vs réel (visites filtrées)', 110, yCharts-4);
     doc.addImage(imgData2, 'PNG', 110, yCharts, 90, 70);
   }
@@ -1810,6 +2029,7 @@ $('#btnPerfPdf').onclick = ()=>{
 function initialRender(){
   refreshImmatList(); renderProblems(); renderVisitsList();
   attachZeroClearInputs(); attachZeroClearDatetime();
+  refreshTopStats();
   // s'assurer qu'il y a au moins une ligne d'unassign par défaut si aucune visite chargée
   if(!getCurrentVisit()){
     putUnassignToUI([]);
