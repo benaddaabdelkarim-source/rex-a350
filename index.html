@@ -98,6 +98,33 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1}
   font-weight:600;
 }
 
+/* Résumé visuel coloré Perf */
+.kpiColor{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.kpiColorBox{
+  flex:1;
+  min-width:160px;
+  border-radius:14px;
+  padding:8px 10px;
+  background:linear-gradient(135deg,#1d4ed8,#38bdf8);
+  color:#f9fafb;
+}
+.kpiColorLabel{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  opacity:.9;
+}
+.kpiColorValue{
+  font-size:18px;
+  font-weight:600;
+  margin-top:2px;
+}
+
 .tag{font-size:11px;opacity:.9;padding:2px 6px;border:1px solid var(--line);border-radius:999px;background:#fff}
 label .pill{
   display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);
@@ -571,6 +598,22 @@ h2 .legend .pill{margin-left:6px}
           <div class="pill">HMO plan total : <b id="kpiHmoPlanTot">0 h</b></div>
           <div class="pill">HMO réel total : <b id="kpiHmoRealTot">0 h</b></div>
         </div>
+
+        <!-- Résumé visuel coloré -->
+        <div class="kpiColor">
+          <div class="kpiColorBox" id="perfBoxVisits">
+            <div class="kpiColorLabel">Visites filtrées</div>
+            <div class="kpiColorValue" id="perfBoxVisitsVal">0</div>
+          </div>
+          <div class="kpiColorBox" id="perfBoxRespect">
+            <div class="kpiColorLabel">Respect planning</div>
+            <div class="kpiColorValue" id="perfBoxRespectVal">0%</div>
+          </div>
+          <div class="kpiColorBox" id="perfBoxDelta">
+            <div class="kpiColorLabel">Δ HMO moyen</div>
+            <div class="kpiColorValue" id="perfBoxDeltaVal">0.0 h</div>
+          </div>
+        </div>
       </div>
 
       <div class="grid cols-2">
@@ -601,6 +644,13 @@ h2 .legend .pill{margin-left:6px}
           <div class="chart-wrap">
             <canvas id="barPfBoro"></canvas>
           </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Tendance Δ HMO (chronologique)</h2>
+        <div class="chart-wrap">
+          <canvas id="lineDelta"></canvas>
         </div>
       </div>
 
@@ -1650,7 +1700,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
 });
 
 /* ================================ Performance ============================= */
-let pie=null, barHmo=null, barPfBoro=null;
+let pie=null, barHmo=null, barPfBoro=null, lineDelta=null;
 
 function getPerfFilteredVisits(){
   const s=$('#pfStart').value;
@@ -1695,13 +1745,35 @@ function renderPerf(){
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
   });
   $('#kpiCount').textContent = visits.length;
-  $('#kpiRespect').textContent = (tot? Math.round(res*100/tot):0)+'%';
+  const respectPct = (tot? Math.round(res*100/tot):0);
+  $('#kpiRespect').textContent = respectPct+'%';
   const avgDH = visits.length? (sumDH/visits.length):0;
   const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
   $('#kpiHmoPlanTot').textContent = `${hmoPlanTot.toFixed(1)} h`;
   $('#kpiHmoRealTot').textContent = `${hmoRealTot.toFixed(1)} h`;
+
+  // Résumé visuel coloré
+  const boxV = $('#perfBoxVisitsVal');
+  const boxR = $('#perfBoxRespectVal');
+  const boxD = $('#perfBoxDeltaVal');
+  if(boxV) boxV.textContent = visits.length;
+  if(boxR) boxR.textContent = respectPct + '%';
+  if(boxD) boxD.textContent = avgDH.toFixed(1) + ' h';
+
+  const boxRespect = $('#perfBoxRespect');
+  if(boxRespect){
+    if(respectPct >= 90) boxRespect.style.background = 'linear-gradient(135deg,#16a34a,#4ade80)';
+    else if(respectPct >= 70) boxRespect.style.background = 'linear-gradient(135deg,#facc15,#f97316)';
+    else boxRespect.style.background = 'linear-gradient(135deg,#ef4444,#f97373)';
+  }
+  const boxDelta = $('#perfBoxDelta');
+  if(boxDelta){
+    if(avgDH <= 0) boxDelta.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+    else if(avgDH <= 2) boxDelta.style.background = 'linear-gradient(135deg,#facc15,#f97316)';
+    else boxDelta.style.background = 'linear-gradient(135deg,#ef4444,#f97373)';
+  }
 
   // Pareto / pie sur les problèmes
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
@@ -1755,7 +1827,7 @@ function renderPerf(){
     type:'bar',
     data:{
       labels:['PF','BORO'],
-    datasets:[
+      datasets:[
         {label:'Oui', data:[pfYes, boroYes]},
         {label:'Non', data:[pfNo, boroNo]}
       ]
@@ -1766,6 +1838,42 @@ function renderPerf(){
       scales:{y:{beginAtZero:true}}
     }
   });
+
+  // Graphique de tendance Δ HMO (chronologique)
+  const lineCanvas = document.getElementById('lineDelta');
+  if(lineCanvas){
+    const ctxLine = lineCanvas.getContext('2d');
+    if(lineDelta) lineDelta.destroy();
+    const sorted = visits.slice().sort((a,b)=>{
+      const da = new Date(a.depPrev||a.depReal||a.arrPrev||a.createdAt||0).getTime();
+      const db = new Date(b.depPrev||b.depReal||b.arrPrev||b.createdAt||0).getTime();
+      return da-db;
+    });
+    const labelsLine = sorted.map(v=>{
+      const d = v.depPrev||v.depReal||v.arrPrev||v.createdAt;
+      const base = d ? new Date(d).toLocaleDateString() : '?';
+      return `${base} – ${v.immat||'?'} ${v.check||''}`;
+    });
+    const dataDelta = sorted.map(v=> (v.hmoReal||0)-(v.hmoPlan||0));
+
+    lineDelta = new Chart(ctxLine,{
+      type:'line',
+      data:{
+        labels:labelsLine,
+        datasets:[{
+          label:'Δ HMO (h)',
+          data:dataDelta,
+          tension:0.3,
+          fill:false
+        }]
+      },
+      options:{
+        plugins:{legend:{position:'bottom'}},
+        maintainAspectRatio:false,
+        scales:{y:{beginAtZero:true}}
+      }
+    });
+  }
 
   // Résumé par Immat / Check
   const summaryBody = $('#perfSummaryBody');
@@ -2019,6 +2127,29 @@ $('#btnPerfPdf').onclick = ()=>{
     doc.setTextColor(37,99,235);
     doc.text('HMO planifié vs réel (visites filtrées)', 110, yCharts-4);
     doc.addImage(imgData2, 'PNG', 110, yCharts, 90, 70);
+  }
+
+  // Deuxième rangée de graphiques
+  const secondRowY = yCharts + 80;
+
+  // PF / BORO
+  const barPfBoroCanvas = document.getElementById('barPfBoro');
+  if(barPfBoroCanvas){
+    const imgData3 = barPfBoroCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
+    doc.text('Répartition PF / BORO', 10, secondRowY-4);
+    doc.addImage(imgData3, 'PNG', 10, secondRowY, 90, 70);
+  }
+
+  // Tendance Δ HMO
+  const lineDeltaCanvas = document.getElementById('lineDelta');
+  if(lineDeltaCanvas){
+    const imgData4 = lineDeltaCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
+    doc.text('Tendance Δ HMO', 110, secondRowY-4);
+    doc.addImage(imgData4, 'PNG', 110, secondRowY, 90, 70);
   }
 
   const fileName = `REX_PERF_${(im||'all')}_${(s||'all')}_${(e||'all')}`.replace(/[^A-Za-z0-9_-]/g,'_') + '.pdf';
