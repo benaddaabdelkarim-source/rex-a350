@@ -79,7 +79,7 @@ label .pill{
 h2 .legend{margin-left:8px}
 h2 .legend .pill{margin-left:6px}
 
-/* Camembert responsive */
+/* Camembert / graphiques responsive */
 .chart-wrap{height:320px; max-height:50vh;}
 .chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 
@@ -495,14 +495,43 @@ h2 .legend .pill{margin-left:6px}
             <label>Type</label>
             <select id="pfCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
           </div>
+          <div>
+            <label>PF</label>
+            <select id="pfPF">
+              <option value="">Tous</option>
+              <option value="1">Oui</option>
+              <option value="0">Non</option>
+            </select>
+          </div>
+          <div>
+            <label>BORO</label>
+            <select id="pfBORO">
+              <option value="">Tous</option>
+              <option value="1">Oui</option>
+              <option value="0">Non</option>
+            </select>
+          </div>
+          <div>
+            <label>Δ HMO min</label>
+            <input id="pfDeltaHmoMin" type="number" step="0.1" placeholder="">
+          </div>
+          <div>
+            <label>Δ HMO max</label>
+            <input id="pfDeltaHmoMax" type="number" step="0.1" placeholder="">
+          </div>
           <button id="btnPerfRefresh" class="btn">Actualiser</button>
+          <button id="btnPerfPdf" class="btn primary">📄 Export PDF perf</button>
         </div>
         <div class="kpi" style="margin-top:8px">
+          <div class="pill">Nb visites échantillon : <b id="kpiCount">0</b></div>
           <div class="pill">Respect planning (dep. réel ≤ prévu) : <b id="kpiRespect">0%</b></div>
           <div class="pill">Δ HMO moyen : <b id="kpiHmo">0.0 h (0%)</b></div>
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
+          <div class="pill">HMO plan total : <b id="kpiHmoPlanTot">0 h</b></div>
+          <div class="pill">HMO réel total : <b id="kpiHmoRealTot">0 h</b></div>
         </div>
       </div>
+
       <div class="grid cols-2">
         <div class="card">
           <h2>Pareto par catégorie</h2>
@@ -516,6 +545,41 @@ h2 .legend .pill{margin-left:6px}
           <div class="chart-wrap">
             <canvas id="pie"></canvas>
           </div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>HMO planifié vs réel (par visite)</h2>
+          <div class="chart-wrap">
+            <canvas id="barHmo"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Répartition PF / BORO</h2>
+          <div class="chart-wrap">
+            <canvas id="barPfBoro"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Résumé par Immat / Check</h2>
+        <div style="overflow:auto;margin-top:8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Immat</th>
+                <th>Check</th>
+                <th>Nb visites</th>
+                <th>HMO plan total</th>
+                <th>HMO réel total</th>
+                <th>Δ HMO moyen</th>
+                <th>Respect dep. (%)</th>
+              </tr>
+            </thead>
+            <tbody id="perfSummaryBody"></tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -1416,28 +1480,60 @@ $('#mergeJsonFile').addEventListener('change', e=>{
 });
 
 /* ================================ Performance ============================= */
-let pie=null;
+let pie=null, barHmo=null, barPfBoro=null;
+
+function getPerfFilteredVisits(){
+  const s=$('#pfStart').value;
+  const e=$('#pfEnd').value;
+  const im=($('#pfImmat').value||'').toUpperCase();
+  const ck=$('#pfCheck').value;
+  const pf = $('#pfPF') ? $('#pfPF').value : "";
+  const boro = $('#pfBORO') ? $('#pfBORO').value : "";
+  const dHMinStr = $('#pfDeltaHmoMin') ? $('#pfDeltaHmoMin').value : "";
+  const dHMaxStr = $('#pfDeltaHmoMax') ? $('#pfDeltaHmoMax').value : "";
+  const dHMin = dHMinStr === "" ? null : parseFloat(dHMinStr);
+  const dHMax = dHMaxStr === "" ? null : parseFloat(dHMaxStr);
+
+  return state.visits.filter(v=>{
+    if(!within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null)) return false;
+    if(im && v.immat !== im) return false;
+    if(ck && v.check !== ck) return false;
+    if(pf !== "" && String(v.pf||0) !== pf) return false;
+    if(boro !== "" && String(v.boro||0) !== boro) return false;
+    const dH = (v.hmoReal||0)-(v.hmoPlan||0);
+    if(dHMin !== null && dH < dHMin) return false;
+    if(dHMax !== null && dH > dHMax) return false;
+    return true;
+  });
+}
+
 function renderPerf(){
   const s=$('#pfStart').value, e=$('#pfEnd').value, im=($('#pfImmat').value||'').toUpperCase(), ck=$('#pfCheck').value;
-  const visits=state.visits.filter(v=> within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null) && (im? v.immat===im:true) && (ck? v.check===ck:true));
+  const visits = getPerfFilteredVisits();
 
   // KPIs
   let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
+  let hmoPlanTot=0, hmoRealTot=0;
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
     sumDH += dH; sumHD += (v.hmoPlan||0);
+    hmoPlanTot += (v.hmoPlan||0);
+    hmoRealTot += (v.hmoReal||0);
     const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
     const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
   });
+  $('#kpiCount').textContent = visits.length;
   $('#kpiRespect').textContent = (tot? Math.round(res*100/tot):0)+'%';
   const avgDH = visits.length? (sumDH/visits.length):0;
   const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
   $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
+  $('#kpiHmoPlanTot').textContent = `${hmoPlanTot.toFixed(1)} h`;
+  $('#kpiHmoRealTot').textContent = `${hmoRealTot.toFixed(1)} h`;
 
-  // Pareto / pie
+  // Pareto / pie sur les problèmes
   const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
   const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
   const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
@@ -1451,8 +1547,264 @@ function renderPerf(){
   });
   const ctx=$('#pie').getContext('2d'); if(pie) pie.destroy();
   pie=new Chart(ctx,{ type:'doughnut', data:{ labels:arr.map(x=>x[0]), datasets:[{ data:arr.map(x=>x[1]) }]}, options:{plugins:{legend:{position:'bottom'}},maintainAspectRatio:false} });
+
+  // Graphique HMO plan vs réel (par visite)
+  const ctxHmo = $('#barHmo').getContext('2d');
+  if(barHmo) barHmo.destroy();
+  const labelsHmo = visits.map(v=>`${v.immat||'?'} ${v.check||''}`);
+  const dataPlan = visits.map(v=>v.hmoPlan||0);
+  const dataReal = visits.map(v=>v.hmoReal||0);
+  barHmo = new Chart(ctxHmo, {
+    type:'bar',
+    data:{
+      labels:labelsHmo,
+      datasets:[
+        {label:'HMO plan', data:dataPlan},
+        {label:'HMO réel', data:dataReal}
+      ]
+    },
+    options:{
+      plugins:{legend:{position:'bottom'}},
+      maintainAspectRatio:false,
+      scales:{
+        x:{ticks:{autoSkip:true,maxRotation:45,minRotation:45}},
+        y:{beginAtZero:true}
+      }
+    }
+  });
+
+  // Graphique PF / BORO
+  let pfYes=0,pfNo=0,boroYes=0,boroNo=0;
+  visits.forEach(v=>{
+    if(v.pf) pfYes++; else pfNo++;
+    if(v.boro) boroYes++; else boroNo++;
+  });
+  const ctxPfBoro = $('#barPfBoro').getContext('2d');
+  if(barPfBoro) barPfBoro.destroy();
+  barPfBoro = new Chart(ctxPfBoro, {
+    type:'bar',
+    data:{
+      labels:['PF','BORO'],
+      datasets:[
+        {label:'Oui', data:[pfYes, boroYes]},
+        {label:'Non', data:[pfNo, boroNo]}
+      ]
+    },
+    options:{
+      plugins:{legend:{position:'bottom'}},
+      maintainAspectRatio:false,
+      scales:{y:{beginAtZero:true}}
+    }
+  });
+
+  // Résumé par Immat / Check
+  const summaryBody = $('#perfSummaryBody');
+  summaryBody.innerHTML = '';
+  const summaryMap = new Map();
+  visits.forEach(v=>{
+    const key = `${v.immat||''}|${v.check||''}`;
+    if(!summaryMap.has(key)){
+      summaryMap.set(key,{
+        immat:v.immat||'',
+        check:v.check||'',
+        count:0,
+        hPlan:0,
+        hReal:0,
+        depOk:0,
+        depTot:0
+      });
+    }
+    const sObj = summaryMap.get(key);
+    sObj.count++;
+    sObj.hPlan += (v.hmoPlan||0);
+    sObj.hReal += (v.hmoReal||0);
+    if(v.depPrev && v.depReal){
+      sObj.depTot++;
+      if(new Date(v.depReal) <= new Date(v.depPrev)) sObj.depOk++;
+    }
+  });
+  Array.from(summaryMap.values()).forEach(row=>{
+    const dHavg = row.count ? ((row.hReal-row.hPlan)/row.count) : 0;
+    const depPct = row.depTot ? Math.round(row.depOk*100/row.depTot) : 0;
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.immat}</td>
+      <td>${row.check}</td>
+      <td>${row.count}</td>
+      <td>${row.hPlan.toFixed(1)}</td>
+      <td>${row.hReal.toFixed(1)}</td>
+      <td>${dHavg.toFixed(1)}</td>
+      <td>${depPct}%</td>
+    `;
+    summaryBody.appendChild(tr);
+  });
 }
 $('#btnPerfRefresh').onclick=renderPerf;
+
+/* =========================== PDF Performance global ======================= */
+$('#btnPerfPdf').onclick = ()=>{
+  const jspdf = window.jspdf;
+  if(!jspdf || !jspdf.jsPDF){
+    alert('Bibliothèque PDF non chargée.');
+    return;
+  }
+  const doc = new jspdf.jsPDF();
+  if(typeof doc.autoTable !== 'function'){
+    alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
+    return;
+  }
+
+  // Assurer que les graphiques sont à jour avec les filtres courants
+  renderPerf();
+
+  const visits = getPerfFilteredVisits();
+  if(!visits.length){
+    alert('Aucune visite dans le filtre actuel pour générer le PDF.');
+    return;
+  }
+
+  const s=$('#pfStart').value, e=$('#pfEnd').value;
+  const im=($('#pfImmat').value||'').toUpperCase();
+  const ck=$('#pfCheck').value;
+  const pf = $('#pfPF').value;
+  const boro = $('#pfBORO').value;
+  const dHMinStr = $('#pfDeltaHmoMin').value;
+  const dHMaxStr = $('#pfDeltaHmoMax').value;
+
+  let y = 10;
+  doc.setFontSize(14);
+  doc.text('REX A350 – Rapport Performance', 10, y);
+  y += 8;
+  doc.setFontSize(10);
+  const filtText = [
+    `Période : ${s || 'toutes'} -> ${e || 'toutes'}`,
+    `Immat : ${im || 'toutes'}`,
+    `Check : ${ck || 'tous'}`,
+    `PF : ${pf===""?'tous':(pf==="1"?'Oui':'Non')}`,
+    `BORO : ${boro===""?'tous':(boro==="1"?'Oui':'Non')}`,
+    `ΔHMO min : ${dHMinStr || '—'}`,
+    `ΔHMO max : ${dHMaxStr || '—'}`
+  ].join(' | ');
+  doc.text(filtText, 10, y, {maxWidth:190});
+  y += 8;
+
+  // Calculs globaux rapides
+  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
+  let hmoPlanTot=0, hmoRealTot=0;
+  visits.forEach(v=>{
+    if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
+    const dH = (v.hmoReal||0) - (v.hmoPlan||0);
+    sumDH += dH; sumHD += (v.hmoPlan||0);
+    hmoPlanTot += (v.hmoPlan||0);
+    hmoRealTot += (v.hmoReal||0);
+    const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
+    const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
+    if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
+  });
+  const respectPct = (tot? Math.round(res*100/tot):0);
+  const avgDH = visits.length? (sumDH/visits.length):0;
+  const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
+  const effPct = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
+
+  doc.setFontSize(11);
+  doc.text(`Nb visites : ${visits.length}`, 10, y); y+=5;
+  doc.text(`Respect planning : ${respectPct}%`, 10, y); y+=5;
+  doc.text(`Δ HMO moyen : ${avgDH.toFixed(1)} h (${pctDH}%)`, 10, y); y+=5;
+  doc.text(`Δ effectif moyen : ${effPct}`, 10, y); y+=5;
+  doc.text(`HMO plan total : ${hmoPlanTot.toFixed(1)} h`, 10, y); y+=5;
+  doc.text(`HMO réel total : ${hmoRealTot.toFixed(1)} h`, 10, y); y+=8;
+
+  // Résumé par Immat / Check (comme dans l'onglet)
+  const summaryMap = new Map();
+  visits.forEach(v=>{
+    const key = `${v.immat||''}|${v.check||''}`;
+    if(!summaryMap.has(key)){
+      summaryMap.set(key,{
+        immat:v.immat||'',
+        check:v.check||'',
+        count:0,
+        hPlan:0,
+        hReal:0,
+        depOk:0,
+        depTot:0
+      });
+    }
+    const sObj = summaryMap.get(key);
+    sObj.count++;
+    sObj.hPlan += (v.hmoPlan||0);
+    sObj.hReal += (v.hmoReal||0);
+    if(v.depPrev && v.depReal){
+      sObj.depTot++;
+      if(new Date(v.depReal) <= new Date(v.depPrev)) sObj.depOk++;
+    }
+  });
+  const summaryRows = Array.from(summaryMap.values()).map(row=>{
+    const dHavg = row.count ? ((row.hReal-row.hPlan)/row.count) : 0;
+    const depPct = row.depTot ? Math.round(row.depOk*100/row.depTot) : 0;
+    return [
+      row.immat,
+      row.check,
+      row.count,
+      row.hPlan.toFixed(1),
+      row.hReal.toFixed(1),
+      dHavg.toFixed(1),
+      depPct + '%'
+    ];
+  });
+
+  doc.autoTable({
+    startY:y,
+    head:[['Immat','Check','Nb visites','HMO plan tot','HMO réel tot','Δ HMO moy','Respect dep. (%)']],
+    body:summaryRows
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Détail des visites
+  doc.autoTable({
+    startY:y,
+    head:[['Immat','Check','TRFX','Arr prév','Dep prév','HMO plan','HMO réel','Δ HMO','PF','BORO']],
+    body:visits.map(v=>{
+      const dH = (v.hmoReal||0)-(v.hmoPlan||0);
+      return [
+        v.immat||'',
+        v.check||'',
+        v.trfxVisit||'',
+        fmtDate(v.arrPrev),
+        fmtDate(v.depPrev),
+        (v.hmoPlan||0),
+        (v.hmoReal||0),
+        dH,
+        v.pf?'Oui':'Non',
+        v.boro?'Oui':'Non'
+      ];
+    })
+  });
+
+  // Nouvelle page pour les graphiques
+  doc.addPage();
+  let yCharts = 15;
+
+  // Camembert Pareto
+  const pieCanvas = document.getElementById('pie');
+  if(pieCanvas){
+    const imgData = pieCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.text('Répartition des catégories (Pareto)', 10, yCharts-4);
+    doc.addImage(imgData, 'PNG', 10, yCharts, 90, 70);
+  }
+
+  // HMO plan vs réel
+  const barHmoCanvas = document.getElementById('barHmo');
+  if(barHmoCanvas){
+    const imgData2 = barHmoCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.text('HMO planifié vs réel (visites filtrées)', 110, yCharts-4);
+    doc.addImage(imgData2, 'PNG', 110, yCharts, 90, 70);
+  }
+
+  const fileName = `REX_PERF_${(im||'all')}_${(s||'all')}_${(e||'all')}`.replace(/[^A-Za-z0-9_-]/g,'_') + '.pdf';
+  doc.save(fileName);
+};
 
 /* ================================ init UI ================================= */
 function initialRender(){
