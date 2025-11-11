@@ -200,7 +200,9 @@ h2 .legend .pill{margin-left:6px}
           <div>
             <label>Filtre Check</label>
             <select id="fltCheck">
-              <option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option value="">Tous</option>
+              <option>24 mois</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
               <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
             </select>
@@ -283,6 +285,7 @@ h2 .legend .pill{margin-left:6px}
           <div>
             <label>Type de check</label>
             <select id="vCheck">
+              <option>24 mois</option>
               <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
               <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
@@ -529,7 +532,13 @@ h2 .legend .pill{margin-left:6px}
           <div><label>Immat</label><input id="fImmat" placeholder="Toutes"></div>
           <div>
             <label>Type</label>
-            <select id="fCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
+            <select id="fCheck">
+              <option value="">Tous</option>
+              <option>24 mois</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
+              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
+            </select>
           </div>
           <div>
             <label>Catégorie</label>
@@ -561,7 +570,13 @@ h2 .legend .pill{margin-left:6px}
           <div><label>Immat</label><input id="pfImmat" placeholder="Toutes"></div>
           <div>
             <label>Type</label>
-            <select id="pfCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
+            <select id="pfCheck">
+              <option value="">Tous</option>
+              <option>24 mois</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
+              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
+            </select>
           </div>
           <div>
             <label>PF</label>
@@ -947,8 +962,10 @@ $('#btnImportXml').onclick=()=>{
       const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
-      // check type A\d+
-      const cm = tx.match(/\bA(1[0-2]|[1-9])\b/); if(cm) $('#vCheck').value = cm[0];
+      // check type A\d+ ou 24 mois
+      const cm = tx.match(/\bA(1[0-2]|[1-9])\b/);
+      if(cm) $('#vCheck').value = cm[0];
+      else if(/24\s*mois/i.test(tx)) $('#vCheck').value = '24 mois';
 
       // dates
       const getIso = (labelList)=> {
@@ -1083,7 +1100,7 @@ function collectVisitFromForm(){
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
   $('#vImmat').value = v?.immat||'';
-  $('#vCheck').value = v?.check||'A1';
+  $('#vCheck').value = v?.check||'24 mois';
   $('#vTrfxVisit').value = v?.trfxVisit || '';
   $('#vArrPrev').value = v?.arrPrev||'';
   $('#vArrReal').value = v?.arrReal||'';
@@ -1166,7 +1183,7 @@ $('#btnClearVisit').onclick=()=>{
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
-  const v={ id:uuid(), immat:'', check:'A1', trfxVisit:'',
+  const v={ id:uuid(), immat:'', check:'24 mois', trfxVisit:'',
     arrPrev:null, arrReal:null, depPrev:null, depReal:null,
     hmoPlan:0, hmoReal:0, pf:0, boro:0,
     mxi:{ start:{lines:0,weight:0,ttc:0,mxi:0,fdg:0} },
@@ -1214,10 +1231,13 @@ $('#btnExportPdf').onclick = ()=>{
   const deltaHmo = (v.hmoReal||0)-(v.hmoPlan||0);
 
   let y = 12;
-  // Titre coloré
+  // Titre auto
+  const label = v.trfxVisit
+    ? v.trfxVisit
+    : (v.immat ? `${v.immat} ${v.check||''}` : 'Visite');
   doc.setFontSize(16);
   doc.setTextColor(37,99,235);
-  doc.text('REX A350 – Résumé de visite', 10, y);
+  doc.text('REX A350 – ' + label, 10, y);
   y += 6;
   doc.setFontSize(11);
   doc.setTextColor(15,23,42);
