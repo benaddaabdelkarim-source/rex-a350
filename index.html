@@ -2119,6 +2119,141 @@ function initialRender(){
   }
 }
 initialRender();
+  <script>
+// ==========================================================
+// ✅ PATCH FINAL – CHECK "24 mois/A1" → "24 mois/A12" + PDF FIX
+// ==========================================================
+
+// Liste complète des types de check
+const CHECK_TYPES = ["24 mois"].concat(
+  Array.from({length:12},(_,i)=>`24 mois/A${i+1}`)
+);
+
+// Injection automatique dans tous les menus
+["#vCheck","#pfCheck","#fCheck"].forEach(sel=>{
+  const el=document.querySelector(sel);
+  if(el){
+    el.innerHTML = CHECK_TYPES.map(x=>`<option>${x}</option>`).join('');
+    if(sel!=="#vCheck") el.insertAdjacentHTML('afterbegin','<option value="">Tous</option>');
+  }
+});
+
+// === Correction de l’import XML ===
+function detectCheckFromXML(text){
+  if(/A(1[0-2]|[1-9])/i.test(text)){
+    const n = text.match(/A(1[0-2]|[1-9])/i)[0].toUpperCase();
+    return "24 mois/" + n;
+  }
+  if(/24\s*mois/i.test(text)) return "24 mois";
+  return "";
+}
+
+$('#btnImportXml').onclick=()=>{
+  const f=$('#xmlFile').files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const xmlText = r.result;
+      const check = detectCheckFromXML(xmlText);
+      if(check) $('#vCheck').value = check;
+      alert(`Import XML effectué ✅ Check détecté : ${check||'—'}`);
+    }catch(e){ alert("Erreur XML"); }
+  };
+  r.readAsText(f);
+};
+
+// ==========================================================
+// ✅ FIX GRAPHIQUES BLANCS DANS LES PDF
+// ==========================================================
+
+// Fonction d’attente + capture fiable du graphique Chart.js
+async function captureChart(chart) {
+  try {
+    if (chart && chart.update) chart.update();
+    await new Promise(r => setTimeout(r, 1000)); // délai d’une seconde pour rendre l’image
+    const canvas = chart.canvas;
+    return canvas.toDataURL("image/png");
+  } catch (e) {
+    console.warn("Erreur captureChart", e);
+    return null;
+  }
+}
+
+// Fonction PDF Performance corrigée
+async function exportPerfPDF() {
+  const jspdf = window.jspdf;
+  if(!jspdf || !jspdf.jsPDF){
+    alert('Librairie jsPDF manquante');
+    return;
+  }
+
+  const doc = new jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4'});
+  if(typeof doc.autoTable !== 'function'){
+    alert('autoTable manquant');
+    return;
+  }
+
+  renderPerf(); // forcer le rendu des graphiques avant capture
+  await new Promise(r => setTimeout(r, 1200));
+
+  // Capture des images avec correction
+  const imgPie = await captureChart(pie);
+  const imgBar = await captureChart(barHmo);
+  const imgBoro = await captureChart(barPfBoro);
+  const imgLine = await captureChart(lineDelta);
+
+  let y = 15;
+  doc.setFontSize(16);
+  doc.setTextColor(37,99,235);
+  doc.text('REX A350 – Rapport Performance (corrigé)', 10, y);
+  y += 10;
+
+  // Vérifie qu’on a bien des images
+  if(!imgPie && !imgBar && !imgBoro && !imgLine){
+    doc.setTextColor(200,0,0);
+    doc.text("⚠️ Aucun graphique n'a pu être capturé (canvas vide).", 10, y);
+    doc.text("Ouvre l'onglet 'Performance' avant d'exporter le PDF.", 10, y+6);
+    doc.save("REX_PERF_vide.pdf");
+    return;
+  }
+
+  // Placement des graphiques (2x2)
+  if(imgPie)  doc.addImage(imgPie,"PNG",10,y,90,70);
+  if(imgBar)  doc.addImage(imgBar,"PNG",110,y,90,70);
+  if(imgBoro) doc.addImage(imgBoro,"PNG",10,y+80,90,70);
+  if(imgLine) doc.addImage(imgLine,"PNG",110,y+80,90,70);
+
+  // Sauvegarde
+  const fileName = "REX_PERF_corrigé.pdf";
+  doc.save(fileName);
+}
+
+// Remplace l’ancien export PDF performance
+document.querySelector("#btnPerfPdf").onclick = exportPerfPDF;
+
+// ==========================================================
+// ✅ FONCTION POUR VÉRIFIER ET RÉPARER SI LES CHECKS MANQUENT
+// ==========================================================
+function repairCheckLists(){
+  ["#vCheck","#pfCheck","#fCheck"].forEach(sel=>{
+    const el=document.querySelector(sel);
+    if(!el) return;
+    const vals=[...el.options].map(o=>o.value);
+    if(!vals.includes("24 mois/A12")){
+      el.innerHTML = CHECK_TYPES.map(x=>`<option>${x}</option>`).join('');
+      if(sel!=="#vCheck") el.insertAdjacentHTML('afterbegin','<option value="">Tous</option>');
+      console.log(`[REX] Check list réparée pour ${sel}`);
+    }
+  });
+}
+
+// Appel automatique au démarrage
+setTimeout(repairCheckLists, 800);
+
+</script>
+</body>
+</html>
+
 </script>
 </body>
 </html>
