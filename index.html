@@ -3,99 +3,148 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX A350 – Check A (clair + PDF corrigé)</title>
+<title>REX A350 – Check A (clair + fusion JSON)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- PDF -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-:root {
-  --bg:#e9eef6;
-  --panel:#ffffff;
-  --muted:#eef3fb;
-  --text:#0b1220;
-  --accent:#2563eb;
-  --ok:#16a34a;
-  --bad:#dc2626;
-  --line:#d1d9e6;
-  --prev:#1d4ed8;
-  --real:#059669;
+:root{
+  /* Thème clair lisible */
+  --bg:#e9eef6;           /* fond de page gris bleuté doux */
+  --panel:#ffffff;        /* cartes/panneaux blancs */
+  --muted:#eef3fb;        /* fonds secondaires */
+  --text:#0b1220;         /* texte principal sombre */
+  --accent:#2563eb;       /* accent (bleu) */
+  --ok:#16a34a;           /* vert ok */
+  --bad:#dc2626;          /* rouge */
+  --line:#d1d9e6;         /* bordures */
+  --prev:#1d4ed8;         /* bleu prévu */
+  --real:#059669;         /* vert réel */
 }
-*{box-sizing:border-box;}
-html,body{height:100%;}
-body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font:14px/1.45 "Inter",system-ui,Segoe UI,Roboto;
-}
-.wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
-aside{background:var(--muted);border-right:1px solid var(--line);padding:16px 12px;}
-main{padding:16px;}
-h1{margin:0 0 12px;font-size:20px;}
-h2{margin:0 0 8px;font-size:16px;}
-.menu h3{
-  font-size:12px;
-  letter-spacing:.08em;
-  color:#334155;
-  margin:0 0 10px;
-  text-transform:uppercase;
-}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 Inter,system-ui,Segoe UI,Roboto}
+.wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+aside{background:var(--muted);border-right:1px solid var(--line);padding:16px 12px}
+main{padding:16px}
+h1{margin:0 0 12px;font-size:20px}
+h2{margin:0 0 8px;font-size:16px}
+.menu h3{font-size:12px;letter-spacing:.08em;color:#334155;margin:0 0 10px;text-transform:uppercase}
 .menu button{
   display:block;width:100%;text-align:left;
-  background:#f5f8ff;border:1px solid var(--line);
-  color:#0b1220;padding:10px 12px;margin:6px 0;
-  border-radius:10px;cursor:pointer;
+  background:#f5f8ff;border:1px solid var(--line);color:#0b1220;
+  padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer
 }
-.menu button.active{outline:2px solid var(--accent);}
-.card{
-  background:var(--panel);border:1px solid var(--line);
-  border-radius:14px;padding:14px;margin-bottom:14px;
-  box-shadow:0 1px 3px rgba(0,0,0,.05);
-}
-.grid{display:grid;gap:12px;}
-.cols-2{grid-template-columns:1fr 1fr;}
-.cols-3{grid-template-columns:repeat(3,1fr);}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.menu button.active{outline:2px solid var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.grid{display:grid;gap:12px}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:repeat(3,1fr)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 input,select,textarea{
   width:100%;background:#fff;border:1px solid var(--line);color:#0b1220;
-  border-radius:10px;padding:10px;
+  border-radius:10px;padding:10px
 }
-input[type="number"]{text-align:right;}
-input.clear0::placeholder{color:#94a3b8;}
-button,.btn{font:inherit;}
+input[type="number"]{text-align:right}
+input.clear0::placeholder{color:#94a3b8}
+button, .btn{font:inherit}
 .btn{
   border:1px solid var(--line);background:#f5f8ff;color:#0b1220;
-  border-radius:10px;padding:8px 12px;cursor:pointer;
+  border-radius:10px;padding:8px 12px;cursor:pointer
 }
-.btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46;}
-.btn.bad{background:#fde8e8;border-color:#fecaca;color:#7f1d1d;}
-.btn.fuse{background:#eefcef;border-color:#bbf7d0;color:#14532d;font-weight:600;}
-.btn.primary{background:#e7efff;border-color:#bfdbfe;color:#1e3a8a;}
-.btn.ghost{background:transparent;}
-table{width:100%;border-collapse:collapse;}
-th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right;}
-th:first-child,td:first-child{text-align:left;}
-thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
-.small{font-size:12px;opacity:.9;color:#334155;}
-.kpi{display:flex;gap:10px;flex-wrap:wrap;}
-.kpi .pill{padding:8px 10px;border-radius:999px;background:#f5f8ff;border:1px solid var(--line);}
-.hidden{display:none;}
-.topbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
-.topStats{display:flex;gap:8px;align-items:center;margin-left:8px;}
+.btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46}
+.btn.bad{background:#fde8e8;border-color:#fecaca;color:#7f1d1d}
+.btn.fuse{background:#eefcef;border-color:#bbf7d0;color:#14532d;font-weight:600}
+.btn.primary{background:#e7efff;border-color:#bfdbfe;color:#1e3a8a}
+.btn.ghost{background:transparent}
+table{width:100%;border-collapse:collapse}
+th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+thead th{background:#f7faff;position:sticky;top:0;z-index:1}
+.small{font-size:12px;opacity:.9;color:#334155}
+.kpi{display:flex;gap:10px;flex-wrap:wrap}
+.kpi .pill{padding:8px 10px;border-radius:999px;background:#f5f8ff;border:1px solid var(--line)}
+.hidden{display:none}
+.topbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+
+/* Bandeau stats coloré à côté d'Exporter JSON */
+.topStats{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-left:8px;
+}
 .statChip{
-  min-width:90px;padding:6px 10px;border-radius:999px;
+  min-width:90px;
+  padding:6px 10px;
+  border-radius:999px;
   background:linear-gradient(135deg,#2563eb,#4ade80);
-  color:#f9fafb;display:flex;flex-direction:column;justify-content:center;
+  color:#f9fafb;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
 }
-.statLabel{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.9;}
-.statValue{font-size:14px;font-weight:600;}
-.chart-wrap{height:320px;max-height:50vh;}
-.chart-wrap canvas{width:100%!important;height:100%!important;display:block;}
-.filters{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px;}
-.filters .btn{grid-column:span 1;}
-.table-small input,.table-small select{padding:6px;}
+.statLabel{
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  opacity:.9;
+}
+.statValue{
+  font-size:14px;
+  font-weight:600;
+}
+
+/* Résumé visuel coloré Perf */
+.kpiColor{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.kpiColorBox{
+  flex:1;
+  min-width:160px;
+  border-radius:14px;
+  padding:8px 10px;
+  background:linear-gradient(135deg,#1d4ed8,#38bdf8);
+  color:#f9fafb;
+}
+.kpiColorLabel{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  opacity:.9;
+}
+.kpiColorValue{
+  font-size:18px;
+  font-weight:600;
+  margin-top:2px;
+}
+
+.tag{font-size:11px;opacity:.9;padding:2px 6px;border:1px solid var(--line);border-radius:999px;background:#fff}
+label .pill{
+  display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);
+  font-size:11px;vertical-align:middle
+}
+.pill.prev{background:#eaf1ff;color:#0b3ea8;border-color:#c7d2fe}
+.pill.real{background:#e8fbf2;color:#065f46;border-color:#bbf7d0}
+h2 .legend{margin-left:8px}
+h2 .legend .pill{margin-left:6px}
+
+/* Camembert / graphiques responsive */
+.chart-wrap{height:320px; max-height:50vh;}
+.chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
+
+/* Filtres visites */
+.filters{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px}
+.filters .btn{grid-column:span 1}
+
+/* Champs désassignations (table) */
+.table-small input, .table-small select{padding:6px}
 </style>
 </head>
 <body>
@@ -117,6 +166,7 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
       <input id="mergeJsonFile" type="file" accept="application/json" class="hidden">
       <button id="mergeJsonBtn" class="btn fuse">Importer / Fusionner JSON</button>
 
+      <!-- Bandeau stats coloré -->
       <div class="topStats">
         <div class="statChip">
           <span class="statLabel">Visites</span>
@@ -132,6 +182,8 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
     <!-- VISITE -->
     <section id="tab-visit">
       <h1>Visite (Check A)</h1>
+
+      <!-- Liste des visites -->
       <div class="card">
         <div class="row">
           <h2 style="margin:0">Liste des visites</h2>
@@ -139,14 +191,16 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
           <button id="btnNewVisit" class="btn ok">+ Nouvelle visite</button>
         </div>
 
+        <!-- Filtres visites -->
         <div class="filters">
-          <div><label>Filtre Immat</label><input id="fltImmat" placeholder="Toutes"></div>
+          <div>
+            <label>Filtre Immat</label>
+            <input id="fltImmat" placeholder="Toutes">
+          </div>
           <div>
             <label>Filtre Check</label>
             <select id="fltCheck">
-              <option value="">Tous</option>
-              <option>24 mois</option>
-              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option>
               <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
             </select>
@@ -167,24 +221,35 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
               <option value="0">Non</option>
             </select>
           </div>
-          <div><label>VAC ≥</label><input id="fltVacMin" type="number" min="0" value="0"></div>
-          <div><label>Filtre TRFX</label><input id="fltTrfx" placeholder="Contient…"></div>
-          <div style="display:flex;align-items:flex-end"><button id="btnApplyVisitFilters" class="btn">Filtrer</button></div>
+          <div>
+            <label>VAC ≥</label>
+            <input id="fltVacMin" type="number" min="0" value="0">
+          </div>
+          <div>
+            <label>Filtre TRFX</label>
+            <input id="fltTrfx" placeholder="Contient…">
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button id="btnApplyVisitFilters" class="btn">Filtrer</button>
+          </div>
         </div>
 
         <div style="overflow:auto;margin-top:8px">
           <table id="visitsTable">
             <thead>
               <tr>
-                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th>
-                <th>APRS signé (prév.)</th><th>HMO plan</th><th>HMO réel</th>
-                <th>Δ HMO</th><th>P/F</th><th>BORO</th><th>VAC</th><th>TRFX visite</th><th>Actions</th>
+                <th>#</th><th>Immat</th><th>Check</th>
+                <th>Arr. prév</th><th>APRS signé (prév.)</th>
+                <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th>
+                <th>P/F</th><th>BORO</th><th>VAC</th><th>TRFX visite</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="visitsBody"></tbody>
           </table>
         </div>
       </div>
+
       <div class="card">
         <h2>
           Informations visite
@@ -218,7 +283,6 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
           <div>
             <label>Type de check</label>
             <select id="vCheck">
-              <option>24 mois</option>
               <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
               <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
@@ -465,13 +529,7 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
           <div><label>Immat</label><input id="fImmat" placeholder="Toutes"></div>
           <div>
             <label>Type</label>
-            <select id="fCheck">
-              <option value="">Tous</option>
-              <option>24 mois</option>
-              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
-              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
-              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-            </select>
+            <select id="fCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
           </div>
           <div>
             <label>Catégorie</label>
@@ -503,13 +561,7 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
           <div><label>Immat</label><input id="pfImmat" placeholder="Toutes"></div>
           <div>
             <label>Type</label>
-            <select id="pfCheck">
-              <option value="">Tous</option>
-              <option>24 mois</option>
-              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
-              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
-              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-            </select>
+            <select id="pfCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
           </div>
           <div>
             <label>PF</label>
@@ -649,6 +701,7 @@ thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
     </div>
   </div>
 </dialog>
+
 <script>
 /* ======================= stockage & base immats (LS) ====================== */
 const LS_KEY="rexA350_checkA_v4light";
@@ -894,10 +947,8 @@ $('#btnImportXml').onclick=()=>{
       const m = tx.match(/F-?H[A-Z0-9]{3}/i);
       if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
 
-      // check type A\d+ ou 24 mois
-      const cm = tx.match(/\bA(1[0-2]|[1-9])\b/);
-      if(cm) $('#vCheck').value = cm[0];
-      else if(/24\s*mois/i.test(tx)) $('#vCheck').value = '24 mois';
+      // check type A\d+
+      const cm = tx.match(/\bA(1[0-2]|[1-9])\b/); if(cm) $('#vCheck').value = cm[0];
 
       // dates
       const getIso = (labelList)=> {
@@ -1032,7 +1083,7 @@ function collectVisitFromForm(){
 function renderFormFromVisit(v){
   currentVisitId = v?.id || null;
   $('#vImmat').value = v?.immat||'';
-  $('#vCheck').value = v?.check||'24 mois';
+  $('#vCheck').value = v?.check||'A1';
   $('#vTrfxVisit').value = v?.trfxVisit || '';
   $('#vArrPrev').value = v?.arrPrev||'';
   $('#vArrReal').value = v?.arrReal||'';
@@ -1115,7 +1166,7 @@ $('#btnClearVisit').onclick=()=>{
 
 $('#btnNewVisit').onclick=()=>{
   if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
-  const v={ id:uuid(), immat:'', check:'24 mois', trfxVisit:'',
+  const v={ id:uuid(), immat:'', check:'A1', trfxVisit:'',
     arrPrev:null, arrReal:null, depPrev:null, depReal:null,
     hmoPlan:0, hmoReal:0, pf:0, boro:0,
     mxi:{ start:{lines:0,weight:0,ttc:0,mxi:0,fdg:0} },
@@ -1163,13 +1214,10 @@ $('#btnExportPdf').onclick = ()=>{
   const deltaHmo = (v.hmoReal||0)-(v.hmoPlan||0);
 
   let y = 12;
-  // Titre auto
-  const label = v.trfxVisit
-    ? v.trfxVisit
-    : (v.immat ? `${v.immat} ${v.check||''}` : 'Visite');
+  // Titre coloré
   doc.setFontSize(16);
   doc.setTextColor(37,99,235);
-  doc.text('REX A350 – ' + label, 10, y);
+  doc.text('REX A350 – Résumé de visite', 10, y);
   y += 6;
   doc.setFontSize(11);
   doc.setTextColor(15,23,42);
@@ -2119,141 +2167,6 @@ function initialRender(){
   }
 }
 initialRender();
-  <script>
-// ==========================================================
-// ✅ PATCH FINAL – CHECK "24 mois/A1" → "24 mois/A12" + PDF FIX
-// ==========================================================
-
-// Liste complète des types de check
-const CHECK_TYPES = ["24 mois"].concat(
-  Array.from({length:12},(_,i)=>`24 mois/A${i+1}`)
-);
-
-// Injection automatique dans tous les menus
-["#vCheck","#pfCheck","#fCheck"].forEach(sel=>{
-  const el=document.querySelector(sel);
-  if(el){
-    el.innerHTML = CHECK_TYPES.map(x=>`<option>${x}</option>`).join('');
-    if(sel!=="#vCheck") el.insertAdjacentHTML('afterbegin','<option value="">Tous</option>');
-  }
-});
-
-// === Correction de l’import XML ===
-function detectCheckFromXML(text){
-  if(/A(1[0-2]|[1-9])/i.test(text)){
-    const n = text.match(/A(1[0-2]|[1-9])/i)[0].toUpperCase();
-    return "24 mois/" + n;
-  }
-  if(/24\s*mois/i.test(text)) return "24 mois";
-  return "";
-}
-
-$('#btnImportXml').onclick=()=>{
-  const f=$('#xmlFile').files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{
-    try{
-      const xmlText = r.result;
-      const check = detectCheckFromXML(xmlText);
-      if(check) $('#vCheck').value = check;
-      alert(`Import XML effectué ✅ Check détecté : ${check||'—'}`);
-    }catch(e){ alert("Erreur XML"); }
-  };
-  r.readAsText(f);
-};
-
-// ==========================================================
-// ✅ FIX GRAPHIQUES BLANCS DANS LES PDF
-// ==========================================================
-
-// Fonction d’attente + capture fiable du graphique Chart.js
-async function captureChart(chart) {
-  try {
-    if (chart && chart.update) chart.update();
-    await new Promise(r => setTimeout(r, 1000)); // délai d’une seconde pour rendre l’image
-    const canvas = chart.canvas;
-    return canvas.toDataURL("image/png");
-  } catch (e) {
-    console.warn("Erreur captureChart", e);
-    return null;
-  }
-}
-
-// Fonction PDF Performance corrigée
-async function exportPerfPDF() {
-  const jspdf = window.jspdf;
-  if(!jspdf || !jspdf.jsPDF){
-    alert('Librairie jsPDF manquante');
-    return;
-  }
-
-  const doc = new jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4'});
-  if(typeof doc.autoTable !== 'function'){
-    alert('autoTable manquant');
-    return;
-  }
-
-  renderPerf(); // forcer le rendu des graphiques avant capture
-  await new Promise(r => setTimeout(r, 1200));
-
-  // Capture des images avec correction
-  const imgPie = await captureChart(pie);
-  const imgBar = await captureChart(barHmo);
-  const imgBoro = await captureChart(barPfBoro);
-  const imgLine = await captureChart(lineDelta);
-
-  let y = 15;
-  doc.setFontSize(16);
-  doc.setTextColor(37,99,235);
-  doc.text('REX A350 – Rapport Performance (corrigé)', 10, y);
-  y += 10;
-
-  // Vérifie qu’on a bien des images
-  if(!imgPie && !imgBar && !imgBoro && !imgLine){
-    doc.setTextColor(200,0,0);
-    doc.text("⚠️ Aucun graphique n'a pu être capturé (canvas vide).", 10, y);
-    doc.text("Ouvre l'onglet 'Performance' avant d'exporter le PDF.", 10, y+6);
-    doc.save("REX_PERF_vide.pdf");
-    return;
-  }
-
-  // Placement des graphiques (2x2)
-  if(imgPie)  doc.addImage(imgPie,"PNG",10,y,90,70);
-  if(imgBar)  doc.addImage(imgBar,"PNG",110,y,90,70);
-  if(imgBoro) doc.addImage(imgBoro,"PNG",10,y+80,90,70);
-  if(imgLine) doc.addImage(imgLine,"PNG",110,y+80,90,70);
-
-  // Sauvegarde
-  const fileName = "REX_PERF_corrigé.pdf";
-  doc.save(fileName);
-}
-
-// Remplace l’ancien export PDF performance
-document.querySelector("#btnPerfPdf").onclick = exportPerfPDF;
-
-// ==========================================================
-// ✅ FONCTION POUR VÉRIFIER ET RÉPARER SI LES CHECKS MANQUENT
-// ==========================================================
-function repairCheckLists(){
-  ["#vCheck","#pfCheck","#fCheck"].forEach(sel=>{
-    const el=document.querySelector(sel);
-    if(!el) return;
-    const vals=[...el.options].map(o=>o.value);
-    if(!vals.includes("24 mois/A12")){
-      el.innerHTML = CHECK_TYPES.map(x=>`<option>${x}</option>`).join('');
-      if(sel!=="#vCheck") el.insertAdjacentHTML('afterbegin','<option value="">Tous</option>');
-      console.log(`[REX] Check list réparée pour ${sel}`);
-    }
-  });
-}
-
-// Appel automatique au démarrage
-setTimeout(repairCheckLists, 800);
-
-</script>
-</body>
-</html>
-
 </script>
 </body>
 </html>
