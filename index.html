@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>REX A350 – Check A (REX Fusion)</title>
+<title>REX A350 – Check A (clair + PDF corrigé)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
 
 <style>
-:root{
-  --bg:#eef2f8;
-  --panel:#fff;
-  --muted:#f4f6fb;
-  --text:#111827;
+:root {
+  --bg:#e9eef6;
+  --panel:#ffffff;
+  --muted:#eef3fb;
+  --text:#0b1220;
   --accent:#2563eb;
   --ok:#16a34a;
   --bad:#dc2626;
@@ -22,479 +22,2103 @@
   --prev:#1d4ed8;
   --real:#059669;
 }
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 "Inter",system-ui,Segoe UI,Roboto}
-.wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
-aside{background:var(--muted);border-right:1px solid var(--line);padding:16px 12px}
-main{padding:16px}
-h1{margin:0 0 12px;font-size:20px}
-h2{margin:0 0 8px;font-size:16px}
-.menu h3{font-size:12px;letter-spacing:.08em;color:#334155;margin:0 0 10px;text-transform:uppercase}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.45 "Inter",system-ui,Segoe UI,Roboto;
+}
+.wrap{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+aside{background:var(--muted);border-right:1px solid var(--line);padding:16px 12px;}
+main{padding:16px;}
+h1{margin:0 0 12px;font-size:20px;}
+h2{margin:0 0 8px;font-size:16px;}
+.menu h3{
+  font-size:12px;
+  letter-spacing:.08em;
+  color:#334155;
+  margin:0 0 10px;
+  text-transform:uppercase;
+}
 .menu button{
   display:block;width:100%;text-align:left;
-  background:#f5f8ff;border:1px solid var(--line);color:#0b1220;
-  padding:10px 12px;margin:6px 0;border-radius:10px;cursor:pointer
+  background:#f5f8ff;border:1px solid var(--line);
+  color:#0b1220;padding:10px 12px;margin:6px 0;
+  border-radius:10px;cursor:pointer;
 }
-.menu button.active{outline:2px solid var(--accent)}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.grid{display:grid;gap:12px}
-.cols-2{grid-template-columns:1fr 1fr}
-.cols-3{grid-template-columns:repeat(3,1fr)}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.menu button.active{outline:2px solid var(--accent);}
+.card{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:14px;margin-bottom:14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.grid{display:grid;gap:12px;}
+.cols-2{grid-template-columns:1fr 1fr;}
+.cols-3{grid-template-columns:repeat(3,1fr);}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 input,select,textarea{
-  width:100%;background:#fff;border:1px solid var(--line);color:var(--text);
-  border-radius:10px;padding:10px
+  width:100%;background:#fff;border:1px solid var(--line);color:#0b1220;
+  border-radius:10px;padding:10px;
 }
-input[type="number"]{text-align:right}
-button,.btn{font:inherit}
-.btn{border:1px solid var(--line);background:#f5f8ff;color:var(--text);
-  border-radius:10px;padding:8px 12px;cursor:pointer}
-.btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46}
-.btn.bad{background:#fde8e8;border-color:#fecaca;color:#7f1d1d}
-.btn.fuse{background:#eefcef;border-color:#bbf7d0;color:#14532d;font-weight:600}
-.btn.primary{background:#e7efff;border-color:#bfdbfe;color:#1e3a8a}
-table{width:100%;border-collapse:collapse}
-th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right}
-th:first-child,td:first-child{text-align:left}
-thead th{background:#f7faff;position:sticky;top:0;z-index:1}
-.small{font-size:12px;opacity:.9;color:#334155}
-.kpi{display:flex;gap:10px;flex-wrap:wrap}
-.kpi .pill{padding:8px 10px;border-radius:999px;background:#f5f8ff;border:1px solid var(--line)}
-.hidden{display:none}
-.topbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-.topStats{display:flex;gap:8px;align-items:center;margin-left:8px}
+input[type="number"]{text-align:right;}
+input.clear0::placeholder{color:#94a3b8;}
+button,.btn{font:inherit;}
+.btn{
+  border:1px solid var(--line);background:#f5f8ff;color:#0b1220;
+  border-radius:10px;padding:8px 12px;cursor:pointer;
+}
+.btn.ok{background:#e8f7ee;border-color:#b7e3c6;color:#065f46;}
+.btn.bad{background:#fde8e8;border-color:#fecaca;color:#7f1d1d;}
+.btn.fuse{background:#eefcef;border-color:#bbf7d0;color:#14532d;font-weight:600;}
+.btn.primary{background:#e7efff;border-color:#bfdbfe;color:#1e3a8a;}
+.btn.ghost{background:transparent;}
+table{width:100%;border-collapse:collapse;}
+th,td{border-bottom:1px solid var(--line);padding:8px;text-align:right;}
+th:first-child,td:first-child{text-align:left;}
+thead th{background:#f7faff;position:sticky;top:0;z-index:1;}
+.small{font-size:12px;opacity:.9;color:#334155;}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;}
+.kpi .pill{padding:8px 10px;border-radius:999px;background:#f5f8ff;border:1px solid var(--line);}
+.hidden{display:none;}
+.topbar{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-bottom:12px;flex-wrap:wrap;}
+.topStats{display:flex;gap:8px;align-items:center;margin-left:8px;}
 .statChip{
   min-width:90px;padding:6px 10px;border-radius:999px;
   background:linear-gradient(135deg,#2563eb,#4ade80);
   color:#f9fafb;display:flex;flex-direction:column;justify-content:center;
 }
-.statLabel{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.9}
-.statValue{font-size:14px;font-weight:600}
-.chart-wrap{height:320px;max-height:50vh}
-.chart-wrap canvas{width:100%!important;height:100%!important;display:block}
-.filters{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px}
-.filters .btn{grid-column:span 1}
+.statLabel{font-size:10px;text-transform:uppercase;letter-spacing:.08em;opacity:.9;}
+.statValue{font-size:14px;font-weight:600;}
+.chart-wrap{height:320px;max-height:50vh;}
+.chart-wrap canvas{width:100%!important;height:100%!important;display:block;}
+.filters{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:8px;}
+.filters .btn{grid-column:span 1;}
+.table-small input,.table-small select{padding:6px;}
 </style>
 </head>
 <body>
 <div class="wrap">
-<aside>
-  <div class="menu">
-    <h3>REX A350</h3>
-    <button class="active" data-tab="visit">🛠️ Visite</button>
-    <button data-tab="problems">📚 Problèmes</button>
-    <button data-tab="perf">📊 Performance</button>
-  </div>
-</aside>
-<main>
-<!-- ====== SECTIONS PRINCIPALES ====== -->
-
-<!-- VISITE -->
-<section id="tab-visit">
-  <h1>Visite (Check A / 24 Mois)</h1>
-
-  <div class="card">
-    <div class="row">
-      <h2 style="margin:0">Liste des visites</h2>
-      <button id="btnNewVisit" class="btn ok">+ Nouvelle visite</button>
+  <aside>
+    <div class="menu">
+      <h3>REX A350</h3>
+      <button class="active" data-tab="visit">🛠️ Visite</button>
+      <button data-tab="problems">📚 Problèmes</button>
+      <button data-tab="perf">📊 Performance</button>
     </div>
+  </aside>
 
-    <div class="filters">
-      <div><label>Filtre Immat</label><input id="fltImmat" placeholder="Toutes"></div>
-      <div>
-        <label>Type de check</label>
-        <select id="fltCheck">
-          <option value="">Tous</option>
-          <option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option>
-          <option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-          <option>24 Mois</option>
-          <option>24 Mois/A1</option><option>24 Mois/A2</option><option>24 Mois/A3</option><option>24 Mois/A4</option>
-          <option>24 Mois/A5</option><option>24 Mois/A6</option><option>24 Mois/A7</option><option>24 Mois/A8</option>
-          <option>24 Mois/A9</option><option>24 Mois/A10</option><option>24 Mois/A11</option><option>24 Mois/A12</option>
-          <option>Check A1</option><option>Check A2</option><option>Check A3</option><option>Check A4</option>
-          <option>Check A5</option><option>Check A6</option><option>Check A7</option><option>Check A8</option>
-          <option>Check A9</option><option>Check A10</option><option>Check A11</option><option>Check A12</option>
-        </select>
+  <main>
+    <div class="topbar">
+      <button id="exportJson" class="btn">Exporter JSON</button>
+      <input id="importJsonFile" type="file" accept="application/json" class="hidden">
+      <button id="importJsonBtn" class="btn">Importer (remplacer)</button>
+      <input id="mergeJsonFile" type="file" accept="application/json" class="hidden">
+      <button id="mergeJsonBtn" class="btn fuse">Importer / Fusionner JSON</button>
+
+      <div class="topStats">
+        <div class="statChip">
+          <span class="statLabel">Visites</span>
+          <span class="statValue" id="statVisits">0</span>
+        </div>
+        <div class="statChip">
+          <span class="statLabel">Problèmes</span>
+          <span class="statValue" id="statProblems">0</span>
+        </div>
       </div>
-      <div><label>PF</label><select id="fltPF"><option value="">Tous</option><option value="1">Oui</option><option value="0">Non</option></select></div>
-      <div><label>BORO</label><select id="fltBORO"><option value="">Tous</option><option value="1">Oui</option><option value="0">Non</option></select></div>
-      <div><label>VAC ≥</label><input id="fltVacMin" type="number" min="0" value="0"></div>
-      <div><label>TRFX</label><input id="fltTrfx" placeholder="Contient…"></div>
-      <div style="display:flex;align-items:flex-end"><button id="btnApplyVisitFilters" class="btn">Filtrer</button></div>
     </div>
 
-    <div style="overflow:auto;margin-top:8px">
-      <table id="visitsTable">
-        <thead>
-          <tr><th>#</th><th>Immat</th><th>Check</th><th>Arrivée</th><th>APRS signé</th>
-          <th>HMO plan</th><th>HMO réel</th><th>Δ</th><th>P/F</th><th>BORO</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="visitsBody"></tbody>
+    <!-- VISITE -->
+    <section id="tab-visit">
+      <h1>Visite (Check A)</h1>
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Liste des visites</h2>
+          <span class="small tag">Clique “Ouvrir” pour charger dans le formulaire</span>
+          <button id="btnNewVisit" class="btn ok">+ Nouvelle visite</button>
+        </div>
+
+        <div class="filters">
+          <div><label>Filtre Immat</label><input id="fltImmat" placeholder="Toutes"></div>
+          <div>
+            <label>Filtre Check</label>
+            <select id="fltCheck">
+              <option value="">Tous</option>
+              <option>24 mois</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
+              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
+            </select>
+          </div>
+          <div>
+            <label>P/F</label>
+            <select id="fltPF">
+              <option value="">Tous</option>
+              <option value="1">Oui</option>
+              <option value="0">Non</option>
+            </select>
+          </div>
+          <div>
+            <label>BORO</label>
+            <select id="fltBORO">
+              <option value="">Tous</option>
+              <option value="1">Oui</option>
+              <option value="0">Non</option>
+            </select>
+          </div>
+          <div><label>VAC ≥</label><input id="fltVacMin" type="number" min="0" value="0"></div>
+          <div><label>Filtre TRFX</label><input id="fltTrfx" placeholder="Contient…"></div>
+          <div style="display:flex;align-items:flex-end"><button id="btnApplyVisitFilters" class="btn">Filtrer</button></div>
+        </div>
+
+        <div style="overflow:auto;margin-top:8px">
+          <table id="visitsTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Immat</th><th>Check</th><th>Arr. prév</th>
+                <th>APRS signé (prév.)</th><th>HMO plan</th><th>HMO réel</th>
+                <th>Δ HMO</th><th>P/F</th><th>BORO</th><th>VAC</th><th>TRFX visite</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="visitsBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2>
+          Informations visite
+          <span class="legend">
+            <span class="pill prev">Prévu</span>
+            <span class="pill real">Réel</span>
+          </span>
+        </h2>
+
+        <!-- TRFX de visite (obligatoire) -->
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label>TRFX de la visite (obligatoire)</label>
+            <input id="vTrfxVisit" placeholder="ex. TRFX-0001-REX">
+          </div>
+        </div>
+
+        <div class="grid cols-3">
+          <div>
+            <label>Immatriculation</label>
+            <input id="vImmat" list="immatList" placeholder="ex. F-HUVK">
+            <datalist id="immatList"></datalist>
+          </div>
+          <div class="row" style="align-items:end">
+            <div style="flex:1">
+              <label>Ajouter une immat</label>
+              <input id="vImmatAdd" placeholder="ex. F-HUVP">
+            </div>
+            <button id="btnAddImmat" class="btn">+ Ajouter</button>
+          </div>
+          <div>
+            <label>Type de check</label>
+            <select id="vCheck">
+              <option>24 mois</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
+              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Alignement 2 par ligne (prévu / réel) -->
+        <div class="grid cols-2" style="margin-top:8px">
+          <div>
+            <label>Arrivée <span class="pill prev">prévue</span></label>
+            <input id="vArrPrev" type="datetime-local" class="clear0">
+          </div>
+          <div>
+            <label>Arrivée <span class="pill real">réelle</span></label>
+            <input id="vArrReal" type="datetime-local" class="clear0">
+          </div>
+
+          <div>
+            <label>APRS signé (<span class="pill prev">prévu</span>)</label>
+            <input id="vDepPrev" type="datetime-local" class="clear0">
+          </div>
+          <div>
+            <label>APRS signé (<span class="pill real">réel</span>)</label>
+            <input id="vDepReal" type="datetime-local" class="clear0">
+          </div>
+
+          <div>
+            <label>HMO <span class="pill prev">prévue (h)</span></label>
+            <input id="vHmoPlan" type="number" min="0" step="0.5" value="0" class="clear0" placeholder="0">
+          </div>
+          <div>
+            <label>HMO <span class="pill real">réelle (h)</span></label>
+            <input id="vHmoReal" type="number" min="0" step="0.5" value="0" class="clear0" placeholder="0">
+          </div>
+        </div>
+
+        <!-- P/F & BORO -->
+        <div class="grid cols-3" style="margin-top:8px">
+          <div>
+            <label>Présence P/F</label>
+            <input id="vPF" type="checkbox">
+          </div>
+          <div>
+            <label>Présence BORO</label>
+            <input id="vBORO" type="checkbox">
+          </div>
+          <div>
+            <label class="small">Infos (PF/BORO filtrables dans la liste)</label>
+            <div class="small">—</div>
+          </div>
+        </div>
+
+        <!-- MXI / Poids avion (START uniquement) -->
+        <div class="card" style="margin-top:8px">
+          <h2>MXI / Poids avion (START)</h2>
+          <div style="overflow:auto;margin-top:6px">
+            <table class="table-small">
+              <thead>
+                <tr>
+                  <th>Jalon</th>
+                  <th>Lignes MXI</th>
+                  <th>Poids MXI</th>
+                  <th>Poids TTC</th>
+                  <th>MXI</th>
+                  <th>FDG</th>
+                  <th>TOT</th>
+                </tr>
+              </thead>
+              <tbody id="mxiBody">
+                <tr>
+                  <td>START</td>
+                  <td><input id="mxiLines" type="number" min="0" value="0" class="clear0" placeholder="0"></td>
+                  <td><input id="mxiWeight" type="number" step="0.1" value="0" class="clear0" placeholder="0"></td>
+                  <td><input id="mxiTtc" type="number" step="0.1" value="0" class="clear0" placeholder="0"></td>
+                  <td><input id="mxiMxi" type="number" step="0.1" value="0" class="clear0" placeholder="0"></td>
+                  <td><input id="mxiFdg" type="number" step="0.1" value="0" class="clear0" placeholder="0"></td>
+                  <td id="mxiTot">0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Désassignations : tableau détaillé (avec Skill + HMO MTX) -->
+        <div class="card" style="margin-top:8px">
+          <h2>Désassignations (détail)</h2>
+          <div class="small">Première ligne : avant start du chantier (pré-remplie).</div>
+          <div style="overflow:auto;margin-top:6px">
+            <table class="table-small" id="unassignTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Nb lignes</th>
+                  <th>HMO MTX (h)</th>
+                  <th>Skill</th>
+                  <th>Raison</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="unassignBody"></tbody>
+              <tfoot>
+                <tr>
+                  <th>Total</th>
+                  <th id="unassignTotal">0</th>
+                  <th id="unassignHmoTotal">0</th>
+                  <th colspan="3"></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="row" style="margin-top:6px">
+            <button id="btnAddUnassign" class="btn">+ Ajouter une ligne désassignée</button>
+          </div>
+        </div>
+
+        <!-- Prélèvements (TRFX) -->
+        <div class="card" style="margin-top:8px">
+          <h2>Prélèvements (TRFX)</h2>
+          <div class="row">
+            <input id="trfxInput" placeholder="Saisir TRFX (ex. TRFX-1234)" style="flex:1">
+            <button id="btnAddTrfx" class="btn ok">+ Ajouter TRFX</button>
+            <span class="pill" style="margin-left:auto">Total prélèvements : <b id="prlvCount">0</b></span>
+          </div>
+          <div style="overflow:auto;margin-top:6px">
+            <table class="table-small">
+              <thead><tr><th>#</th><th>TRFX</th><th></th></tr></thead>
+              <tbody id="trfxBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Import XML -->
+        <div class="row" style="margin-top:8px">
+          <input id="xmlFile" type="file" accept=".xml">
+          <button id="btnImportXml" class="btn primary">Importer XML (auto immat / check / Arr. prév / APRS signé (prév.) / HMO prévu)</button>
+          <span class="small" style="margin-left:auto">Tu peux toujours modifier manuellement.</span>
+        </div>
+      </div>
+
+      <!-- Effectifs (VAC) -->
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Effectifs par vac</h2>
+          <button id="btnAddVac" class="btn">+ Ajouter une vac</button>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table id="vacTable">
+            <thead>
+              <tr>
+                <th>Vac (auto)</th>
+                <th>Type</th>
+                <th>CME dem.</th><th>EIR dem.</th><th>Leader dem.</th><th>Eff. dem. total</th>
+                <th>CME réel</th><th>EIR réel</th><th>Leader réel</th><th>Eff. réel total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="vacBody"></tbody>
+            <tfoot>
+              <tr>
+                <th>Total général</th>
+                <th id="tShift">—</th>
+                <th id="tCmeD">0</th><th id="tEirD">0</th><th id="tLeadD">0</th><th id="tDem">0</th>
+                <th id="tCmeR">0</th><th id="tEirR">0</th><th id="tLeadR">0</th><th id="tReal">0</th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="kpi" style="margin-top:8px">
+          <div class="pill">Δ Effectif : <b id="deltaEff">0</b></div>
+          <div class="pill">Δ HMO : <b id="deltaHmoBadge">0.0 h</b></div>
+          <div class="pill">Nb de VAC : <b id="nbVac">0</b></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnSaveVisit" class="btn ok">💾 Enregistrer</button>
+          <button id="btnSaveAsNew" class="btn primary">🆕 Enregistrer (nouvelle)</button>
+          <button id="btnExportPdf" class="btn primary">📄 Exporter PDF visite</button>
+          <button id="btnClearVisit" class="btn bad">🧹 Effacer le formulaire</button>
+        </div>
+      </div>
+
+      <!-- Problèmes liés à la visite -->
+      <div class="card">
+        <div class="row">
+          <h2 style="margin:0">Problèmes liés à cette visite</h2>
+          <button id="btnLinkProblem" class="btn">+ Ajouter depuis la bibliothèque</button>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table>
+            <thead><tr><th>#</th><th>Titre</th><th>Cat.</th><th>Impact(h)</th><th>Réc.</th><th></th></tr></thead>
+            <tbody id="visitProblemsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROBLÈMES -->
+    <section id="tab-problems" class="hidden">
+      <h1>Problèmes (REX)</h1>
+      <div class="card">
+        <h2>Ajouter un problème</h2>
+        <div class="grid cols-3">
+          <div>
+            <label>Titre</label>
+            <input id="pTitle">
+          </div>
+          <div>
+            <label>Catégorie</label>
+            <select id="pCat">
+              <option>Cabine</option><option>Sous-traitance</option>
+              <option>Query/Prépa</option><option>Pièces/Log</option>
+              <option>Effectifs/Planif</option><option>Documentation</option>
+              <option>Autre</option><option>Moyen Industriel</option>
+            </select>
+          </div>
+          <div>
+            <label>Impact (h)</label>
+            <input id="pImpact" type="number" min="0" step="0.5" value="0" class="clear0" placeholder="0">
+          </div>
+          <div>
+            <label>Acteur/Responsable</label>
+            <input id="pActor" placeholder="ex. Cabine, STT, Query, Planif…">
+          </div>
+          <div>
+            <label>Récurrent</label>
+            <input id="pRecurring" type="checkbox">
+          </div>
+          <div class="cols-3" style="grid-column:1/-1">
+            <label>Description</label>
+            <textarea id="pDesc" rows="3" placeholder="Contexte, symptômes, documents concernés…"></textarea>
+          </div>
+        </div>
+        <button id="btnAddProblem" class="btn ok">+ Enregistrer en bibliothèque (non assigné)</button>
+      </div>
+
+      <div class="card">
+        <h2>Problèmes enregistrés</h2>
+        <div class="row">
+          <div><label>Recherche</label><input id="pbSearch" placeholder="titre/cat/acteur…"></div>
+          <div><label>Récurrents seulement</label><input id="pbRecOnly" type="checkbox"></div>
+          <div><label>Début</label><input id="fStart" type="date"></div>
+          <div><label>Fin</label><input id="fEnd" type="date"></div>
+          <div><label>Immat</label><input id="fImmat" placeholder="Toutes"></div>
+          <div>
+            <label>Type</label>
+            <select id="fCheck">
+              <option value="">Tous</option>
+              <option>24 mois</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
+              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
+            </select>
+          </div>
+          <div>
+            <label>Catégorie</label>
+            <select id="fCat"><option value="">Toutes</option><option>Cabine</option><option>Sous-traitance</option><option>Query/Prépa</option><option>Pièces/Log</option><option>Effectifs/Planif</option><option>Documentation</option><option>Autre</option><option>Moyen Industriel</option></select>
+          </div>
+          <button id="btnFilterProblems" class="btn">Filtrer</button>
+        </div>
+        <div style="overflow:auto;margin-top:8px">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Problème</th><th>Cat.</th><th>Impact(h)</th><th>Réc.</th>
+                <th>Assignations</th><th>%</th><th>Enregistré</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="problemsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERFORMANCE -->
+    <section id="tab-perf" class="hidden">
+      <h1>Performance</h1>
+      <div class="card">
+        <div class="row">
+          <div><label>Début</label><input id="pfStart" type="date"></div>
+          <div><label>Fin</label><input id="pfEnd" type="date"></div>
+          <div><label>Immat</label><input id="pfImmat" placeholder="Toutes"></div>
+          <div>
+            <label>Type</label>
+            <select id="pfCheck">
+              <option value="">Tous</option>
+              <option>24 mois</option>
+              <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
+              <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
+              <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
+            </select>
+          </div>
+          <div>
+            <label>PF</label>
+            <select id="pfPF">
+              <option value="">Tous</option>
+              <option value="1">Oui</option>
+              <option value="0">Non</option>
+            </select>
+          </div>
+          <div>
+            <label>BORO</label>
+            <select id="pfBORO">
+              <option value="">Tous</option>
+              <option value="1">Oui</option>
+              <option value="0">Non</option>
+            </select>
+          </div>
+          <div>
+            <label>Δ HMO min</label>
+            <input id="pfDeltaHmoMin" type="number" step="0.1" placeholder="">
+          </div>
+          <div>
+            <label>Δ HMO max</label>
+            <input id="pfDeltaHmoMax" type="number" step="0.1" placeholder="">
+          </div>
+          <button id="btnPerfRefresh" class="btn">Actualiser</button>
+          <button id="btnPerfPdf" class="btn primary">📄 Export PDF perf</button>
+        </div>
+        <div class="kpi" style="margin-top:8px">
+          <div class="pill">Nb visites échantillon : <b id="kpiCount">0</b></div>
+          <div class="pill">Respect planning (dep. réel ≤ prévu) : <b id="kpiRespect">0%</b></div>
+          <div class="pill">Δ HMO moyen : <b id="kpiHmo">0.0 h (0%)</b></div>
+          <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
+          <div class="pill">HMO plan total : <b id="kpiHmoPlanTot">0 h</b></div>
+          <div class="pill">HMO réel total : <b id="kpiHmoRealTot">0 h</b></div>
+        </div>
+
+        <!-- Résumé visuel coloré -->
+        <div class="kpiColor">
+          <div class="kpiColorBox" id="perfBoxVisits">
+            <div class="kpiColorLabel">Visites filtrées</div>
+            <div class="kpiColorValue" id="perfBoxVisitsVal">0</div>
+          </div>
+          <div class="kpiColorBox" id="perfBoxRespect">
+            <div class="kpiColorLabel">Respect planning</div>
+            <div class="kpiColorValue" id="perfBoxRespectVal">0%</div>
+          </div>
+          <div class="kpiColorBox" id="perfBoxDelta">
+            <div class="kpiColorLabel">Δ HMO moyen</div>
+            <div class="kpiColorValue" id="perfBoxDeltaVal">0.0 h</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>Pareto par catégorie</h2>
+          <table>
+            <thead><tr><th>Catégorie</th><th>Comptes</th><th>%</th><th>Cumul %</th></tr></thead>
+            <tbody id="paretoBody"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h2>Répartition (camembert)</h2>
+          <div class="chart-wrap">
+            <canvas id="pie"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>HMO planifié vs réel (par visite)</h2>
+          <div class="chart-wrap">
+            <canvas id="barHmo"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Répartition PF / BORO</h2>
+          <div class="chart-wrap">
+            <canvas id="barPfBoro"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Tendance Δ HMO (chronologique)</h2>
+        <div class="chart-wrap">
+          <canvas id="lineDelta"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Résumé par Immat / Check</h2>
+        <div style="overflow:auto;margin-top:8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Immat</th>
+                <th>Check</th>
+                <th>Nb visites</th>
+                <th>HMO plan total</th>
+                <th>HMO réel total</th>
+                <th>Δ HMO moyen</th>
+                <th>Respect dep. (%)</th>
+              </tr>
+            </thead>
+            <tbody id="perfSummaryBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Sélecteur de problèmes (assignation à une visite) -->
+<dialog id="dlgPick">
+  <div class="head">
+    <div style="font-weight:600">Ajouter des problèmes à la visite</div>
+    <button class="btn" onclick="dlgPick.close()">Fermer</button>
+  </div>
+  <div class="body">
+    <div class="row">
+      <input id="pickSearch" placeholder="Rechercher (titre/cat/acteur)…" style="flex:1">
+      <label class="row small"><input id="pickRec" type="checkbox"> Récurrents seulement</label>
+      <button id="pickRefresh" class="btn">Rechercher</button>
+    </div>
+    <div style="max-height:50vh;overflow:auto;margin-top:10px">
+      <table>
+        <thead><tr><th>Choisir</th><th>Titre</th><th>Cat.</th><th>Impact</th><th>Réc.</th></tr></thead>
+        <tbody id="pickBody"></tbody>
       </table>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>Formulaire visite</h2>
-    <div class="grid cols-3">
-      <div><label>Immatriculation</label><input id="vImmat" placeholder="F-HUVK"></div>
-      <div>
-        <label>Type de check</label>
-        <select id="vCheck">
-          <option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option>
-          <option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-          <option>24 Mois</option>
-          <option>24 Mois/A1</option><option>24 Mois/A2</option><option>24 Mois/A3</option><option>24 Mois/A4</option>
-          <option>24 Mois/A5</option><option>24 Mois/A6</option><option>24 Mois/A7</option><option>24 Mois/A8</option>
-          <option>24 Mois/A9</option><option>24 Mois/A10</option><option>24 Mois/A11</option><option>24 Mois/A12</option>
-          <option>Check A1</option><option>Check A2</option><option>Check A3</option><option>Check A4</option>
-          <option>Check A5</option><option>Check A6</option><option>Check A7</option><option>Check A8</option>
-          <option>Check A9</option><option>Check A10</option><option>Check A11</option><option>Check A12</option>
-        </select>
-      </div>
-      <div><label>TRFX</label><input id="vTrfxVisit" placeholder="TRFX-XXXX"></div>
-    </div>
-    <div class="grid cols-2" style="margin-top:8px">
-      <div><label>Arrivée prévue</label><input id="vArrPrev" type="datetime-local"></div>
-      <div><label>Arrivée réelle</label><input id="vArrReal" type="datetime-local"></div>
-      <div><label>APRS prévu</label><input id="vDepPrev" type="datetime-local"></div>
-      <div><label>APRS réel</label><input id="vDepReal" type="datetime-local"></div>
-    </div>
-    <div class="grid cols-2" style="margin-top:8px">
-      <div><label>HMO prévu (h)</label><input id="vHmoPlan" type="number" min="0" step="0.1"></div>
-      <div><label>HMO réel (h)</label><input id="vHmoReal" type="number" min="0" step="0.1"></div>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <label><input id="vPF" type="checkbox"> Présence PF</label>
-      <label><input id="vBORO" type="checkbox"> Présence BORO</label>
-    </div>
     <div class="row" style="margin-top:10px">
-      <button id="btnSaveVisit" class="btn ok">💾 Enregistrer</button>
-      <button id="btnExportPdf" class="btn primary">📄 PDF Visite</button>
-      <button id="btnClearVisit" class="btn bad">🧹 Effacer</button>
+      <button id="pickAdd" class="btn ok">+ Ajouter à la visite</button>
+      <span class="small" style="margin-left:auto;opacity:.9">Les éléments cochés seront ajoutés avec confirmation.</span>
     </div>
   </div>
-</section>
-
-<!-- PROBLEMES -->
-<section id="tab-problems" class="hidden">
-  <h1>Problèmes REX</h1>
-  <div class="card">
-    <div class="grid cols-3">
-      <div><label>Titre</label><input id="pTitle"></div>
-      <div><label>Catégorie</label><select id="pCat"><option>Cabine</option><option>Sous-traitance</option><option>Query</option><option>Pièces/Log</option><option>Effectifs</option><option>Documentation</option></select></div>
-      <div><label>Impact (h)</label><input id="pImpact" type="number" step="0.5"></div>
-    </div>
-    <div><label>Description</label><textarea id="pDesc" rows="3"></textarea></div>
-    <button id="btnAddProblem" class="btn ok">+ Ajouter problème</button>
-  </div>
-  <div class="card">
-    <h2>Liste problèmes</h2>
-    <table>
-      <thead><tr><th>#</th><th>Titre</th><th>Catégorie</th><th>Impact(h)</th><th></th></tr></thead>
-      <tbody id="problemsBody"></tbody>
-    </table>
-  </div>
-</section>
-
-<!-- PERFORMANCE -->
-<section id="tab-perf" class="hidden">
-  <h1>Performance visites</h1>
-  <div class="card">
-    <div class="grid cols-3">
-      <div><label>Début</label><input id="pfStart" type="date"></div>
-      <div><label>Fin</label><input id="pfEnd" type="date"></div>
-      <div><label>Type Check</label>
-        <select id="pfCheck">
-          <option value="">Tous</option>
-          <option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option>
-          <option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-          <option>24 Mois</option>
-          <option>24 Mois/A1</option><option>24 Mois/A2</option><option>24 Mois/A3</option><option>24 Mois/A4</option>
-          <option>24 Mois/A5</option><option>24 Mois/A6</option><option>24 Mois/A7</option><option>24 Mois/A8</option>
-          <option>24 Mois/A9</option><option>24 Mois/A10</option><option>24 Mois/A11</option><option>24 Mois/A12</option>
-          <option>Check A1</option><option>Check A2</option><option>Check A3</option><option>Check A4</option>
-          <option>Check A5</option><option>Check A6</option><option>Check A7</option><option>Check A8</option>
-          <option>Check A9</option><option>Check A10</option><option>Check A11</option><option>Check A12</option>
-        </select>
-      </div>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <button id="btnPerfRefresh" class="btn">Actualiser</button>
-      <button id="btnPerfPdf" class="btn primary">📄 PDF Performance</button>
-    </div>
-  </div>
-
-  <div class="grid cols-2">
-    <div class="card">
-      <h2>Répartition des catégories (Pareto)</h2>
-      <div class="chart-wrap"><canvas id="pie"></canvas></div>
-    </div>
-    <div class="card">
-      <h2>HMO planifié vs réel (visites filtrées)</h2>
-      <div class="chart-wrap"><canvas id="barHmo"></canvas></div>
-    </div>
-  </div>
-
-  <div class="grid cols-2">
-    <div class="card">
-      <h2>Répartition PF / BORO</h2>
-      <div class="chart-wrap"><canvas id="barPfBoro"></canvas></div>
-    </div>
-    <div class="card">
-      <h2>Tendance Δ HMO</h2>
-      <div class="chart-wrap"><canvas id="lineDelta"></canvas></div>
-    </div>
-  </div>
-</section>
+</dialog>
 <script>
-/* ======== DONNÉES & STOCKAGE ======== */
-let visits = JSON.parse(localStorage.getItem("visits") || "[]");
-let problems = JSON.parse(localStorage.getItem("problems") || "[]");
-let currentVisitIndex = null;
+/* ======================= stockage & base immats (LS) ====================== */
+const LS_KEY="rexA350_checkA_v4light";
+const BASE_IMMATS=[
+  "F-HTYA","F-HTYB","F-HTYC","F-HTYD","F-HTYE","F-HTYF","F-HTYG","F-HTYH",
+  "F-HTYI","F-HTYJ","F-HTYK","F-HTYL","F-HTYM","F-HTYN","F-HTYO","F-HTYP",
+  "F-HTYQ","F-HTYR","F-HTYS","F-HTYT","F-HUVA","F-HUVB","F-HUVC","F-HUVD",
+  "F-HUVE","F-HUVF","F-HUVG","F-HUVH","F-HUVI","F-HUVJ","F-HUVK","F-HUVL",
+  "F-HUVM","F-HUVN","F-HUVO","F-HUVP","F-HUVQ","F-HUVR","F-HUVS","F-HUVT",
+  "F-HUVU"
+];
+function load(){ try{return JSON.parse(localStorage.getItem(LS_KEY))}catch{ return null } }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(state)) }
+let state = load() || { immat:[...BASE_IMMATS], visits:[], problems:[] };
+if(!Array.isArray(state.immat) || !state.immat.length) state.immat=[...BASE_IMMATS];
+state.immat=Array.from(new Set([...state.immat,...BASE_IMMATS])).sort();
 
-/* ======== NAVIGATION ======== */
-document.querySelectorAll("aside button").forEach(b=>{
-  b.onclick = ()=>{
-    document.querySelectorAll("aside button").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));
-    document.querySelector("#tab-"+b.dataset.tab).classList.remove("hidden");
-    if(b.dataset.tab=="perf") refreshPerf();
-  };
+/* =============================== utilitaires ============================== */
+const $=(q,root=document)=>root.querySelector(q);
+const $$=(q,root=document)=>Array.from(root.querySelectorAll(q));
+const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n}
+const within=(d,a,b)=>{ if(!d) return false; const t=new Date(d).getTime(); const ta=a?new Date(a).getTime():-1e15; const tb=b?new Date(b).getTime()+86399999:1e15; return t>=ta&&t<=tb }
+function fmtDate(v){ if(!v) return "—"; const d=new Date(v); return isNaN(d)?"—":d.toLocaleString() }
+function uuid(){ return Math.random().toString(36).slice(2,10) }
+const cycle = ["Matin","Soir","Nuit"];
+
+/* =================== stats topbar (visites / problèmes) =================== */
+function refreshTopStats(){
+  const sv = $('#statVisits');
+  const sp = $('#statProblems');
+  if(sv) sv.textContent = state.visits.length;
+  if(sp) sp.textContent = state.problems.length;
+}
+
+/* ========================== UX: cacher le 0 en saisie ===================== */
+function attachZeroClearInputs(){
+  $$('input[type="number"].clear0').forEach(inp=>{
+    const clear = ()=>{ if(inp.value==="0"||inp.value==="0.0") inp.value=""; }
+    const restore = ()=>{ if(inp.value.trim()==="") inp.value="0"; }
+    inp.addEventListener('focus', clear);
+    inp.addEventListener('blur', restore);
+  });
+}
+function attachZeroClearDatetime(){ /* placeholder hook si besoin */ }
+
+/* ================================ onglets ================================= */
+$$('aside .menu button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    $$('aside .menu button').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+    ['tab-visit','tab-problems','tab-perf'].forEach(id=>$('#'+id).classList.add('hidden'));
+    $('#tab-'+btn.dataset.tab).classList.remove('hidden');
+    if(btn.dataset.tab==='perf') renderPerf();
+    if(btn.dataset.tab==='problems') renderProblems();
+    if(btn.dataset.tab==='visit') { renderVisitsList(); }
+  })
+})
+
+/* ============================= immats (datalist) ========================== */
+function refreshImmatList(){
+  const dl=$('#immatList'); dl.innerHTML='';
+  state.immat.forEach(i=>{ const o=document.createElement('option'); o.value=i; dl.appendChild(o) })
+}
+refreshImmatList();
+$('#btnAddImmat').onclick=()=>{
+  const v=$('#vImmatAdd').value.trim().toUpperCase(); if(!v) return;
+  if(!state.immat.includes(v)) state.immat.push(v);
+  $('#vImmat').value=v; $('#vImmatAdd').value=''; refreshImmatList(); save(); refreshTopStats();
+}
+
+/* ============================ VAC (table + rotation) ====================== */
+const vacBody=$('#vacBody');
+function nextShiftType(){
+  const rows=$$('#vacBody tr');
+  if(!rows.length) return "Matin";
+  const lastSel = $('.shift', rows[rows.length-1]);
+  const idx = cycle.indexOf(lastSel?.value||"Matin");
+  return cycle[(idx+1+cycle.length)%cycle.length];
+}
+function updateVacName(tr){
+  const idx=[...vacBody.children].indexOf(tr)+1;
+  const type = $('.shift',tr).value;
+  $('.vacName',tr).value = `Vac ${idx} ${type}`;
+}
+function vacRow(typePreset=null){
+  const type = typePreset || nextShiftType();
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input class="vacName" value=""></td>
+    <td>
+      <select class="shift">
+        <option ${type==="Matin"?"selected":""}>Matin</option>
+        <option ${type==="Soir"?"selected":""}>Soir</option>
+        <option ${type==="Nuit"?"selected":""}>Nuit</option>
+      </select>
+    </td>
+    <td><input class="cmeD clear0" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="eirD clear0" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="leadD clear0" type="number" min="0" value="0" placeholder="0"></td>
+    <td class="demTot">0</td>
+    <td><input class="cmeR clear0" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="eirR clear0" type="number" min="0" value="0" placeholder="0"></td>
+    <td><input class="leadR clear0" type="number" min="0" value="0" placeholder="0"></td>
+    <td class="realTot">0</td>
+    <td><button class="btn bad delVac">Retirer</button></td>`;
+  vacBody.appendChild(tr);
+  updateVacName(tr);
+  attachZeroClearInputs();
+}
+function seedVacs(){
+  vacBody.innerHTML='';
+  ["Matin","Soir","Nuit"].forEach(t=>vacRow(t));
+  recalcTotals();
+}
+seedVacs();
+
+vacBody.addEventListener('change', e=>{
+  if(e.target.classList.contains('shift')){
+    const tr=e.target.closest('tr'); updateVacName(tr);
+  }
+});
+vacBody.addEventListener('input', e=>{ if(e.target.tagName==='INPUT') recalcTotals() });
+vacBody.addEventListener('click', e=>{
+  if(e.target.classList.contains('delVac')){
+    if(confirm('Retirer cette vac ?')){ e.target.closest('tr').remove(); recalcTotals(); reindexVacNames(); }
+  }
+});
+function reindexVacNames(){
+  $$('#vacBody tr').forEach((tr,i)=>{
+    const type=$('.shift',tr).value;
+    $('.vacName',tr).value=`Vac ${i+1} ${type}`;
+  });
+}
+$('#btnAddVac').onclick=()=>{ vacRow(); recalcTotals(); reindexVacNames(); };
+
+/* ===================== Désassignations : tableau détail =================== */
+const unassignBody = $('#unassignBody');
+function addUnassignRow(val=0, hmo=0, reason="", skill=""){
+  const tr=document.createElement('tr');
+  tr.innerHTML = `
+    <td class="uaIndex"></td>
+    <td><input type="number" min="0" value="${val}" class="uaVal clear0" placeholder="0"></td>
+    <td><input type="number" min="0" step="0.1" value="${hmo}" class="uaHmo clear0" placeholder="0"></td>
+    <td>
+      <select class="uaSkill">
+        <option value="" ${skill===""?"selected":""}>—</option>
+        <option value="SKILL CABB" ${skill==="SKILL CABB"?"selected":""}>SKILL CABB</option>
+        <option value="SKILL B1/B2" ${skill==="SKILL B1/B2"?"selected":""}>SKILL B1/B2</option>
+      </select>
+    </td>
+    <td><input type="text" value="${reason}" class="uaReason" placeholder="ex. pièce manquante, outillage…"></td>
+    <td><button class="btn bad uaDel">Supprimer</button></td>`;
+  unassignBody.appendChild(tr);
+  renumberUnassign();
+  attachZeroClearInputs();
+  recalcUnassign();
+}
+function renumberUnassign(){ $$('#unassignBody tr').forEach((tr,i)=>$('.uaIndex',tr).textContent=i+1); }
+function recalcUnassign(){
+  let tot=0, totHmo=0;
+  $$('#unassignBody tr').forEach(tr=>{
+    tot += num($('.uaVal',tr).value);
+    totHmo += num($('.uaHmo',tr).value);
+  });
+  $('#unassignTotal').textContent = tot;
+  $('#unassignHmoTotal').textContent = totHmo.toFixed(1);
+}
+$('#btnAddUnassign').onclick = ()=> addUnassignRow();
+unassignBody.addEventListener('input', e=>{
+  if(e.target.classList.contains('uaVal') || e.target.classList.contains('uaHmo')) recalcUnassign();
+});
+unassignBody.addEventListener('click', e=>{
+  if(e.target.classList.contains('uaDel')){
+    e.target.closest('tr').remove(); renumberUnassign(); recalcUnassign();
+  }
 });
 
-/* ======== UTILITAIRES ======== */
-function saveAll(){
-  localStorage.setItem("visits", JSON.stringify(visits));
-  localStorage.setItem("problems", JSON.stringify(problems));
+/* ============================ TRFX Prélèvements =========================== */
+const trfxBody = $('#trfxBody');
+function renderTrfx(list){
+  trfxBody.innerHTML='';
+  list.forEach((t,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${t}</td><td><button class="btn bad" data-i="${i}">Supprimer</button></td>`;
+    trfxBody.appendChild(tr);
+  });
+  $('#prlvCount').textContent = list.length;
 }
-function fmt(num){return num!=null && !isNaN(num)?Number(num).toFixed(1):"";}
+$('#btnAddTrfx').onclick=()=>{
+  const v = $('#trfxInput').value.trim();
+  if(!v) return;
+  const cur = (getCurrentVisit()?.prlvTrfx)||[];
+  cur.push(v);
+  const vis = getCurrentVisit();
+  if(vis){ vis.prlvTrfx = cur; save(); refreshTopStats(); }
+  $('#trfxInput').value='';
+  renderTrfx(cur);
+}
+trfxBody.addEventListener('click', e=>{
+  const i = e.target?.dataset?.i;
+  if(i==null) return;
+  const v = getCurrentVisit(); if(!v) return;
+  v.prlvTrfx.splice(Number(i),1);
+  save(); renderTrfx(v.prlvTrfx);
+});
 
-/* ======== VISITES ======== */
-function refreshVisits(){
-  const tb=document.getElementById("visitsBody");
-  tb.innerHTML="";
-  const fltImmat=document.getElementById("fltImmat").value.toUpperCase();
-  const fltCheck=document.getElementById("fltCheck").value;
-  const fltPF=document.getElementById("fltPF").value;
-  const fltBORO=document.getElementById("fltBORO").value;
-  const fltVacMin=Number(document.getElementById("fltVacMin").value);
-  const fltTrfx=document.getElementById("fltTrfx").value.toUpperCase();
+/* ========================== calculs (totaux & KPI) ======================== */
+function recalcTotals(){
+  let tCmeD=0,tEirD=0,tLeadD=0,tDem=0,tCmeR=0,tEirR=0,tLeadR=0,tReal=0;
+  $$('#vacBody tr').forEach(tr=>{
+    const cmeD=num($('.cmeD',tr).value), eirD=num($('.eirD',tr).value), leadD=num($('.leadD',tr).value);
+    const cmeR=num($('.cmeR',tr).value), eirR=num($('.eirR',tr).value), leadR=num($('.leadR',tr).value);
+    const demTot=cmeD+eirD+leadD, realTot=cmeR+eirR+leadR;
+    $('.demTot',tr).textContent=demTot; $('.realTot',tr).textContent=realTot;
+    tCmeD+=cmeD; tEirD+=eirD; tLeadD+=leadD; tDem+=demTot;
+    tCmeR+=cmeR; tEirR+=eirR; tLeadR+=leadR; tReal+=realTot;
+  });
+  $('#tCmeD').textContent=tCmeD; $('#tEirD').textContent=tEirD; $('#tLeadD').textContent=tLeadD; $('#tDem').textContent=tDem;
+  $('#tCmeR').textContent=tCmeR; $('#tEirR').textContent=tEirR; $('#tLeadR').textContent=tLeadR; $('#tReal').textContent=tReal;
 
-  visits.forEach((v,i)=>{
-    if(fltImmat && !v.immat.toUpperCase().includes(fltImmat)) return;
-    if(fltCheck && v.check!=fltCheck) return;
-    if(fltPF!=="" && Number(v.pf)!=Number(fltPF)) return;
-    if(fltBORO!=="" && Number(v.boro)!=Number(fltBORO)) return;
-    if(fltVacMin>0 && (v.vacations?.length||0)<fltVacMin) return;
-    if(fltTrfx && !v.trfx?.toUpperCase().includes(fltTrfx)) return;
+  const dEff=tReal - tDem;
+  $('#deltaEff').textContent=dEff;
+  $('#nbVac').textContent = $$('#vacBody tr').length;
 
-    const tr=document.createElement("tr");
-    const delta=v.hmoReal-v.hmoPlan;
+  const dHmo = num($('#vHmoReal').value) - num($('#vHmoPlan').value);
+  $('#deltaHmoBadge').textContent = dHmo.toFixed(1)+' h';
+
+  // MXI TOT
+  const mxi = num($('#mxiMxi').value), fdg = num($('#mxiFdg').value);
+  $('#mxiTot').textContent = (mxi + fdg).toFixed(1);
+}
+;['vHmoPlan','vHmoReal','mxiMxi','mxiFdg'].forEach(id=> $('#'+id).addEventListener('input', recalcTotals));
+
+/* =============================== Import XML =============================== */
+$('#btnImportXml').onclick=()=>{
+  const f=$('#xmlFile').files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const xml=new DOMParser().parseFromString(r.result,'text/xml');
+      const tx=r.result;
+
+      // immat
+      const m = tx.match(/F-?H[A-Z0-9]{3}/i);
+      if(m) $('#vImmat').value = m[0].toUpperCase().replace(/^F(H)/,'F-$1');
+
+      // check type A\d+ ou 24 mois
+      const cm = tx.match(/\bA(1[0-2]|[1-9])\b/);
+      if(cm) $('#vCheck').value = cm[0];
+      else if(/24\s*mois/i.test(tx)) $('#vCheck').value = '24 mois';
+
+      // dates
+      const getIso = (labelList)=> {
+        for(const lab of labelList){
+          const n = xml.querySelector(lab);
+          if(n && n.textContent && /\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(n.textContent)) return n.textContent.trim().replace(' ','T');
+          if(n && n.getAttribute){
+            const v=n.getAttribute('value')||n.getAttribute('date')||''; 
+            if(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(v)) return v.replace(' ','T');
+          }
+        }
+        const iso = tx.match(/\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/);
+        return iso? iso[0].replace(' ','T') : '';
+      };
+      const arrPrev = getIso(['ArrivalPlanned','ArrPrev','ARR_PLAN','Arrival']);
+      const depPrev = getIso(['AprsPlanned','APRSPlanned','DepPrev','DEP_PLAN','Departure']);
+      const arrReal = getIso(['ArrivalReal','ArrReal','ARR_REAL']);
+      const depReal = getIso(['AprsReal','APRSReal','DepReal','DEP_REAL']);
+
+      if(arrPrev) $('#vArrPrev').value = arrPrev;
+      if(depPrev) $('#vDepPrev').value = depPrev;
+      if(arrReal) $('#vArrReal').value = arrReal;
+      if(depReal) $('#vDepReal').value = depReal;
+
+      // HMO
+      const getNumNode = sel => {
+        const n=xml.querySelector(sel); if(!n) return NaN;
+        const v=parseFloat(n.textContent||n.getAttribute('value')); return isNaN(v)?NaN:v;
+      }
+      let hPlan = getNumNode('HMOPlan, HmoPlan, PlanHMO');
+      let hReal = getNumNode('HMOReal, HmoReal, RealHMO');
+      if(isNaN(hPlan) || isNaN(hReal)){
+        let sum=0;
+        xml.querySelectorAll('[duration]').forEach(n=>{
+          const v=parseFloat(n.getAttribute('duration')); if(!isNaN(v)) sum+=v;
+        });
+        if(isNaN(hPlan)) hPlan=sum||0;
+        if(isNaN(hReal)) hReal=sum||0;
+      }
+      $('#vHmoPlan').value = isNaN(hPlan)? 0 : hPlan;
+      if(!isNaN(hReal)) $('#vHmoReal').value = hReal;
+
+      recalcTotals();
+      alert('XML importé ✅ (Immat, Check, Arr. prév, APRS signé (prév.), HMO prévu)');
+    }catch(e){ alert('XML invalide'); }
+  };
+  r.readAsText(f);
+};
+
+/* ========================= Enregistrer / Brouillon ======================== */
+let currentVisitId = null;
+
+function collectUnassignFromUI(){
+  return $$('#unassignBody tr').map(tr=>({
+    n: num($('.uaVal',tr).value),
+    hmo: num($('.uaHmo',tr).value),
+    reason: $('.uaReason',tr).value.trim(),
+    skill: $('.uaSkill',tr).value || ""
+  }));
+}
+function putUnassignToUI(list){
+  unassignBody.innerHTML='';
+  if((list||[]).length){
+    (list||[]).forEach(x=>addUnassignRow(x.n||0, x.hmo||0, x.reason||"", x.skill||""));
+  }else{
+    // Ligne par défaut "Avant start du chantier"
+    addUnassignRow(0, 0, "Avant start du chantier", "");
+  }
+  recalcUnassign();
+}
+
+function collectVacFromUI(){
+  return $$('#vacBody tr').map(tr=>({
+    name:$(".vacName",tr).value.trim(),
+    type:$(".shift",tr).value,
+    cmeDem:num($('.cmeD',tr).value), eirDem:num($('.eirD',tr).value), leadDem:num($('.leadD',tr).value),
+    cmeReal:num($('.cmeR',tr).value), eirReal:num($('.eirR',tr).value), leadReal:num($('.leadR',tr).value)
+  }));
+}
+function putVacToUI(vacs){
+  vacBody.innerHTML='';
+  if(Array.isArray(vacs) && vacs.length){
+    vacs.forEach(v=>{
+      vacRow(v.type||"Matin");
+      const tr=vacBody.lastElementChild;
+      $('.vacName',tr).value=v.name||"";
+      $('.cmeD',tr).value=v.cmeDem||0; $('.eirD',tr).value=v.eirDem||0; $('.leadD',tr).value=v.leadDem||0;
+      $('.cmeR',tr).value=v.cmeReal||0; $('.eirR',tr).value=v.eirReal||0; $('.leadR',tr).value=v.leadReal||0;
+      recalcTotals();
+    });
+    reindexVacNames();
+  }else{
+    seedVacs();
+  }
+}
+
+function getCurrentVisit(){ return state.visits.find(v=>v.id===currentVisitId) || null; }
+
+function collectVisitFromForm(){
+  return {
+    id: currentVisitId || uuid(),
+    immat: $('#vImmat').value.trim().toUpperCase(),
+    check: $('#vCheck').value,
+    trfxVisit: ($('#vTrfxVisit').value || '').trim(),
+    arrPrev: $('#vArrPrev').value || null,
+    arrReal: $('#vArrReal').value || null,
+    depPrev: $('#vDepPrev').value || null,
+    depReal: $('#vDepReal').value || null,
+    hmoPlan: num($('#vHmoPlan').value),
+    hmoReal: num($('#vHmoReal').value),
+    pf: $('#vPF').checked ? 1 : 0,
+    boro: $('#vBORO').checked ? 1 : 0,
+
+    mxi: {
+      start: {
+        lines: num($('#mxiLines').value),
+        weight: num($('#mxiWeight').value),
+        ttc: num($('#mxiTtc').value),
+        mxi: num($('#mxiMxi').value),
+        fdg: num($('#mxiFdg').value)
+      }
+    },
+
+    unassignedDetail: collectUnassignFromUI(),
+    vacs: collectVacFromUI(),
+    prlvTrfx: (getCurrentVisit()?.prlvTrfx)||[],
+    problems: (getCurrentVisit()?.problems)||[],
+    createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
+  };
+}
+
+function renderFormFromVisit(v){
+  currentVisitId = v?.id || null;
+  $('#vImmat').value = v?.immat||'';
+  $('#vCheck').value = v?.check||'24 mois';
+  $('#vTrfxVisit').value = v?.trfxVisit || '';
+  $('#vArrPrev').value = v?.arrPrev||'';
+  $('#vArrReal').value = v?.arrReal||'';
+  $('#vDepPrev').value = v?.depPrev||'';
+  $('#vDepReal').value = v?.depReal||'';
+  $('#vHmoPlan').value = v?.hmoPlan??0;
+  $('#vHmoReal').value = v?.hmoReal??0;
+  $('#vPF').checked = !!(v?.pf);
+  $('#vBORO').checked = !!(v?.boro);
+
+  // MXI
+  $('#mxiLines').value = v?.mxi?.start?.lines ?? 0;
+  $('#mxiWeight').value = v?.mxi?.start?.weight ?? 0;
+  $('#mxiTtc').value = v?.mxi?.start?.ttc ?? 0;
+  $('#mxiMxi').value = v?.mxi?.start?.mxi ?? 0;
+  $('#mxiFdg').value = v?.mxi?.start?.fdg ?? 0;
+
+  // Désassignations détaillées
+  putUnassignToUI(v?.unassignedDetail||[]);
+
+  // TRFX prélèvements
+  renderTrfx(v?.prlvTrfx||[]);
+
+  // VAC
+  putVacToUI(v?.vacs);
+
+  recalcTotals();
+  renderVisitProblems(v||{problems:[]});
+  attachZeroClearInputs(); attachZeroClearDatetime();
+}
+
+$('#btnSaveVisit').onclick=()=>{
+  const v = collectVisitFromForm();
+  if (!v.trfxVisit){
+    alert('Le champ "TRFX de la visite" est obligatoire.');
+    $('#vTrfxVisit').focus();
+    return;
+  }
+  const idx = state.visits.findIndex(x=>x.id===v.id);
+  if(idx>=0) state.visits[idx]=v; else state.visits.push(v);
+  if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
+  save(); renderVisitsList(); refreshTopStats();
+  alert('Visite enregistrée ✅');
+};
+
+$('#btnSaveAsNew').onclick=()=>{
+  const prevId = currentVisitId;
+  currentVisitId = null;
+  const v = collectVisitFromForm();
+  if (!v.trfxVisit){
+    alert('Le champ "TRFX de la visite" est obligatoire.');
+    $('#vTrfxVisit').focus();
+    return;
+  }
+  state.visits.push(v);
+  if(v.immat && !state.immat.includes(v.immat)){ state.immat.push(v.immat); refreshImmatList(); }
+  save(); renderVisitsList(); renderFormFromVisit(v); refreshTopStats();
+  alert('Nouvelle visite enregistrée ✅');
+};
+
+$('#btnClearVisit').onclick=()=>{
+  if(!confirm('Effacer le formulaire en cours ?')) return;
+  currentVisitId=null;
+  $('#vImmat').value=''; $('#vImmatAdd').value='';
+  ['vTrfxVisit','vArrPrev','vArrReal','vDepPrev','vDepReal'].forEach(id=> $('#'+id).value = '');
+  ['vHmoPlan','vHmoReal'].forEach(id=> $('#'+id).value = '0');
+  $('#vPF').checked=false; $('#vBORO').checked=false;
+
+  // MXI
+  ['mxiLines','mxiWeight','mxiTtc','mxiMxi','mxiFdg'].forEach(id=> $('#'+id).value='0');
+
+  // Désassign
+  putUnassignToUI([]);
+
+  // TRFX prélèvements
+  renderTrfx([]);
+
+  seedVacs(); recalcTotals(); renderVisitProblems({problems:[]});
+};
+
+$('#btnNewVisit').onclick=()=>{
+  if(!confirm('Créer une nouvelle visite (brouillon vide) ?')) return;
+  const v={ id:uuid(), immat:'', check:'24 mois', trfxVisit:'',
+    arrPrev:null, arrReal:null, depPrev:null, depReal:null,
+    hmoPlan:0, hmoReal:0, pf:0, boro:0,
+    mxi:{ start:{lines:0,weight:0,ttc:0,mxi:0,fdg:0} },
+    unassignedDetail:[],
+    vacs:[{name:'Vac 1 Matin',type:'Matin',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {name:'Vac 2 Soir',type:'Soir',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0},
+          {name:'Vac 3 Nuit',type:'Nuit',cmeDem:0,eirDem:0,leadDem:0,cmeReal:0,eirReal:0,leadReal:0}],
+    prlvTrfx:[],
+    problems:[], createdAt:new Date().toISOString()
+  };
+  state.visits.push(v); save(); refreshTopStats();
+  renderVisitsList(); renderFormFromVisit(v);
+};
+
+/* ============================ Export PDF (visite) ========================= */
+$('#btnExportPdf').onclick = ()=>{
+  const v = getCurrentVisit();
+  if(!v){
+    alert('Ouvre ou crée une visite avant d’exporter le PDF.');
+    return;
+  }
+  const jspdf = window.jspdf;
+  if(!jspdf || !jspdf.jsPDF){
+    alert('Bibliothèque PDF non chargée.');
+    return;
+  }
+  const doc = new jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4'});
+  if(typeof doc.autoTable !== 'function'){
+    alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
+    return;
+  }
+
+  // Quelques calculs pour les KPI visite
+  const vacs = v.vacs || [];
+  let vacDemTot=0, vacRealTot=0;
+  vacs.forEach(x=>{
+    const dem=(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0);
+    const rea=(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0);
+    vacDemTot+=dem; vacRealTot+=rea;
+  });
+  const deltaEffTot = vacRealTot - vacDemTot;
+  const unDet = v.unassignedDetail||[];
+  let unLines=0, unHmo=0;
+  unDet.forEach(u=>{unLines+=u.n||0; unHmo+=u.hmo||0});
+  const deltaHmo = (v.hmoReal||0)-(v.hmoPlan||0);
+
+  let y = 12;
+  // Titre auto
+  const label = v.trfxVisit
+    ? v.trfxVisit
+    : (v.immat ? `${v.immat} ${v.check||''}` : 'Visite');
+  doc.setFontSize(16);
+  doc.setTextColor(37,99,235);
+  doc.text('REX A350 – ' + label, 10, y);
+  y += 6;
+  doc.setFontSize(11);
+  doc.setTextColor(15,23,42);
+  doc.text(`TRFX : ${v.trfxVisit || '-'}`, 10, y);
+  y += 5;
+  doc.text(`Immat : ${v.immat || '-'}   •   Check : ${v.check || '-'}`, 10, y);
+  y += 5;
+  doc.text(`Arrivée prév. : ${fmtDate(v.arrPrev)}`, 10, y);
+  y += 5;
+  doc.text(`Arrivée réelle : ${fmtDate(v.arrReal)}`, 10, y);
+  y += 5;
+  doc.text(`APRS signé prév. : ${fmtDate(v.depPrev)}`, 10, y);
+  y += 5;
+  doc.text(`APRS signé réel : ${fmtDate(v.depReal)}`, 10, y);
+  y += 5;
+  doc.text(`HMO prév. : ${(v.hmoPlan||0)} h   •   HMO réelle : ${(v.hmoReal||0)} h`, 10, y);
+  y += 5;
+  doc.text(`P/F : ${v.pf ? 'Oui' : 'Non'}   •   BORO : ${v.boro ? 'Oui' : 'Non'}`, 10, y);
+  y += 6;
+
+  // Bloc KPI
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('KPI Visite', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY: y,
+    theme: 'striped',
+    styles: {fontSize:9},
+    headStyles: {fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles: {fillColor:[239,246,255]},
+    head: [['Indicateur','Valeur']],
+    body: [
+      ['Δ HMO (réel - plan)', `${deltaHmo.toFixed(1)} h`],
+      ['Nb de VAC', vacs.length],
+      ['Effectif demandé total', vacDemTot],
+      ['Effectif réel total', vacRealTot],
+      ['Δ Effectif total (réel - dem.)', deltaEffTot],
+      ['Lignes désassignées', unLines],
+      ['HMO désassignée totale', `${unHmo.toFixed(1)} h`],
+      ['Prélèvements TRFX', (v.prlvTrfx||[]).length]
+    ]
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // VAC
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Effectifs par vac', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head: [['Vac','Type','CME dem','EIR dem','Lead dem','CME réel','EIR réel','Lead réel']],
+    body: (v.vacs||[]).map((vac,i)=>[
+      `Vac ${i+1}`, vac.type||'',
+      vac.cmeDem||0, vac.eirDem||0, vac.leadDem||0,
+      vac.cmeReal||0, vac.eirReal||0, vac.leadReal||0
+    ])
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Désassignations
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Désassignations', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head: [['Nb lignes','HMO MTX (h)','Skill','Raison']],
+    body: (v.unassignedDetail||[]).map(u=>[
+      u.n||0,
+      u.hmo||0,
+      u.skill||'',
+      u.reason||''
+    ])
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // MXI START
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('MXI / Poids avion – START', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head: [['Jalon','Lignes MXI','Poids MXI','Poids TTC','MXI','FDG']],
+    body: [[
+      'START',
+      v.mxi?.start?.lines || 0,
+      v.mxi?.start?.weight || 0,
+      v.mxi?.start?.ttc || 0,
+      v.mxi?.start?.mxi || 0,
+      v.mxi?.start?.fdg || 0
+    ]]
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Prélèvements TRFX
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Prélèvements TRFX', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head: [['#','TRFX']],
+    body: (v.prlvTrfx||[]).map((t,i)=>[i+1, t])
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Problèmes
+  doc.setFontSize(12);
+  doc.setTextColor(37,99,235);
+  doc.text('Problèmes liés à la visite', 10, y);
+  y += 2;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 2;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY: y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head: [['Titre','Cat.','Impact(h)','Récurrent']],
+    body: (v.problems||[]).map(p=>[
+      p.title||'',
+      p.cat||'',
+      p.impact||0,
+      p.recurring ? 'Oui' : 'Non'
+    ])
+  });
+
+  const fileName = `REX_${(v.trfxVisit||v.immat||'visite').replace(/[^A-Za-z0-9_-]/g,'_')}.pdf`;
+  doc.save(fileName);
+};
+
+/* ============================ Liste des visites =========================== */
+function visitPassesFilters(v){
+  const im = ($('#fltImmat').value||'').trim().toUpperCase();
+  const ck = $('#fltCheck').value;
+  const pf = $('#fltPF').value;     // "", "1", "0"
+  const boro = $('#fltBORO').value; // "", "1", "0"
+  const vacMin = num($('#fltVacMin').value);
+  const trfxK = ($('#fltTrfx').value||'').trim().toLowerCase();
+
+  if(im && v.immat!==im) return false;
+  if(ck && v.check!==ck) return false;
+  if(pf!=="" && String(v.pf||0)!==pf) return false;
+  if(boro!=="" && String(v.boro||0)!==boro) return false;
+  const nbVac = Array.isArray(v.vacs)? v.vacs.length : 0;
+  if(vacMin>0 && nbVac<vacMin) return false;
+  if(trfxK && !(v.trfxVisit||'').toLowerCase().includes(trfxK)) return false;
+
+  return true;
+}
+function renderVisitsList(){
+  const tb=$('#visitsBody'); tb.innerHTML='';
+  state.visits.slice().reverse().forEach((v,idx)=>{
+    if(!visitPassesFilters(v)) return;
+    const dH = (v.hmoReal||0)-(v.hmoPlan||0);
+    const tr=document.createElement('tr');
     tr.innerHTML=`
-      <td>${i+1}</td>
-      <td>${v.immat}</td>
-      <td>${v.check}</td>
-      <td>${v.arrPrev?.split("T")[0]||""}</td>
-      <td>${v.depReal?.split("T")[0]||""}</td>
-      <td>${fmt(v.hmoPlan)}</td>
-      <td>${fmt(v.hmoReal)}</td>
-      <td style="color:${delta>0?'var(--bad)':'var(--ok)'}">${fmt(delta)}</td>
-      <td>${v.pf?"✅":""}</td>
-      <td>${v.boro?"✅":""}</td>
+      <td>${state.visits.length-idx}</td>
+      <td>${v.immat||'—'}</td>
+      <td>${v.check||'A?'}</td>
+      <td>${fmtDate(v.arrPrev)}</td>
+      <td>${fmtDate(v.depPrev)}</td>
+      <td>${v.hmoPlan||0}</td>
+      <td>${v.hmoReal||0}</td>
+      <td>${(dH>0?'+':'')+(dH||0)}</td>
+      <td>${v.pf? 'Oui':'Non'}</td>
+      <td>${v.boro? 'Oui':'Non'}</td>
+      <td>${Array.isArray(v.vacs)? v.vacs.length:0}</td>
+      <td>${v.trfxVisit||'—'}</td>
       <td>
-        <button class="btn" onclick="editVisit(${i})">✏️</button>
-        <button class="btn bad" onclick="deleteVisit(${i})">🗑️</button>
+        <button class="btn" data-act="open" data-id="${v.id}">Ouvrir</button>
+        <button class="btn" data-act="pbl" data-id="${v.id}">Problèmes</button>
+        <button class="btn bad" data-act="del" data-id="${v.id}">Supprimer</button>
       </td>`;
     tb.appendChild(tr);
   });
 }
-refreshVisits();
-document.getElementById("btnApplyVisitFilters").onclick=refreshVisits;
+renderVisitsList();
+$('#btnApplyVisitFilters').onclick = renderVisitsList;
 
-document.getElementById("btnNewVisit").onclick=()=>{
-  currentVisitIndex=null;
-  document.querySelectorAll("#tab-visit input, #tab-visit select").forEach(e=>{
-    if(e.type=="checkbox") e.checked=false; else e.value="";
-  });
-};
-document.getElementById("btnSaveVisit").onclick=()=>{
-  const v={
-    immat:document.getElementById("vImmat").value||"N/A",
-    check:document.getElementById("vCheck").value,
-    trfx:document.getElementById("vTrfxVisit").value,
-    arrPrev:document.getElementById("vArrPrev").value,
-    arrReal:document.getElementById("vArrReal").value,
-    depPrev:document.getElementById("vDepPrev").value,
-    depReal:document.getElementById("vDepReal").value,
-    hmoPlan:+document.getElementById("vHmoPlan").value||0,
-    hmoReal:+document.getElementById("vHmoReal").value||0,
-    pf:document.getElementById("vPF").checked,
-    boro:document.getElementById("vBORO").checked
-  };
-  if(!v.trfx){alert("TRFX obligatoire pour la visite !");return;}
-  if(currentVisitIndex==null) visits.push(v); else visits[currentVisitIndex]=v;
-  saveAll(); refreshVisits(); alert("Visite enregistrée !");
-};
-function editVisit(i){
-  currentVisitIndex=i; const v=visits[i];
-  document.getElementById("vImmat").value=v.immat;
-  document.getElementById("vCheck").value=v.check;
-  document.getElementById("vTrfxVisit").value=v.trfx||"";
-  document.getElementById("vArrPrev").value=v.arrPrev||"";
-  document.getElementById("vArrReal").value=v.arrReal||"";
-  document.getElementById("vDepPrev").value=v.depPrev||"";
-  document.getElementById("vDepReal").value=v.depReal||"";
-  document.getElementById("vHmoPlan").value=v.hmoPlan||"";
-  document.getElementById("vHmoReal").value=v.hmoReal||"";
-  document.getElementById("vPF").checked=v.pf||false;
-  document.getElementById("vBORO").checked=v.boro||false;
-}
-function deleteVisit(i){
-  if(confirm("Supprimer cette visite ?")){visits.splice(i,1);saveAll();refreshVisits();}
-}
+$('#visitsTable').addEventListener('click', (e)=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const id=b.dataset.id; const act=b.dataset.act;
+  const v=state.visits.find(x=>x.id===id); if(!v) return;
+  if(act==='open'){ renderFormFromVisit(v); }
+  if(act==='pbl'){ openPickDialogFor(id); }
+  if(act==='del'){
+    if(confirm('Supprimer définitivement cette visite ? Cette action affecte les statistiques REX.')){
+      state.visits=state.visits.filter(x=>x.id!==id); save(); renderVisitsList(); refreshTopStats();
+      if(currentVisitId===id){ $('#btnClearVisit').click(); }
+    }
+  }
+});
 
-/* ======== PROBLEMES ======== */
-function refreshProblems(){
-  const tb=document.getElementById("problemsBody");tb.innerHTML="";
-  problems.forEach((p,i)=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${i+1}</td><td>${p.titre}</td><td>${p.cat}</td><td>${fmt(p.impact)}</td>
-      <td><button class='btn bad' onclick='delProb(${i})'>🗑️</button></td>`;
+/* ==================== Problèmes liés à une visite (table) ================= */
+function renderVisitProblems(v){
+  const tb=$('#visitProblemsBody'); tb.innerHTML='';
+  (v.problems||[]).forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${i+1}</td><td>${p.title}</td><td>${p.cat||'—'}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td>
+    <td><button class="btn bad" data-i="${i}">Retirer</button></td>`;
     tb.appendChild(tr);
   });
 }
-document.getElementById("btnAddProblem").onclick=()=>{
-  const titre=document.getElementById("pTitle").value.trim();
-  if(!titre)return alert("Titre requis");
-  problems.push({
-    titre,cat:document.getElementById("pCat").value,
-    impact:+document.getElementById("pImpact").value||0,
-    desc:document.getElementById("pDesc").value
-  });
-  saveAll();refreshProblems();alert("Problème ajouté !");
-};
-function delProb(i){if(confirm("Supprimer ce problème ?")){problems.splice(i,1);saveAll();refreshProblems();}}
-refreshProblems();
+$('#visitProblemsBody').addEventListener('click',(e)=>{
+  const b=e.target.closest('button'); if(!b) return;
+  const i=Number(b.dataset.i);
+  const v=getCurrentVisit(); if(!v) return alert('Aucune visite chargée');
+  if(confirm('Retirer ce problème de la visite ?')){
+    v.problems.splice(i,1); save(); renderVisitProblems(v);
+  }
+});
 
-/* ======== PERFORMANCE ======== */
-function refreshPerf(){
-  const start=document.getElementById("pfStart").value;
-  const end=document.getElementById("pfEnd").value;
-  const check=document.getElementById("pfCheck").value;
-  const flt=visits.filter(v=>{
-    if(start && v.arrPrev<start) return false;
-    if(end && v.arrPrev>end) return false;
-    if(check && v.check!=check) return false;
+/* ============== Bibliothèque Problèmes (ajout & comptage) ================ */
+$('#btnAddProblem').onclick=()=>{
+  const title=$('#pTitle').value.trim(); if(!title) return alert('Titre manquant');
+  const p={
+    id: uuid(),
+    title, cat:$('#pCat').value, impact:num($('#pImpact').value), actor:$('#pActor').value.trim(),
+    recurring:$('#pRecurring').checked, desc:$('#pDesc').value.trim(),
+    immat:'', check:'', ts:new Date().toISOString()
+  };
+  state.problems.push(p); save(); refreshTopStats();
+  $('#pTitle').value=''; $('#pImpact').value=0; $('#pActor').value=''; $('#pRecurring').checked=false; $('#pDesc').value='';
+  renderProblems();
+};
+
+function filterProblemsList(list){
+  const q=$('#pbSearch').value.trim().toLowerCase();
+  const rec=$('#pbRecOnly').checked;
+  const s=$('#fStart').value, e=$('#fEnd').value, im=($('#fImmat').value||'').toUpperCase(), ck=$('#fCheck').value, cat=$('#fCat').value;
+  return list.filter(p=>{
+    const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
+    const inRec=!rec || !!p.recurring;
+    const inP = within(p.ts,s||null,e||null);
+    const inI = im? p.immat===im : true;
+    const inC = ck? p.check===ck : true;
+    const inCat = cat? p.cat===cat : true;
+    return inQ && inRec && inP && inI && inC && inCat;
+  });
+}
+function countAssignments(pid, visitsSubset=null){
+  const visits = Array.isArray(visitsSubset) ? visitsSubset : state.visits;
+  let n = 0;
+  visits.forEach(v=>{
+    if(Array.isArray(v.problems)){
+      n += v.problems.filter(x=>x.pid === pid).length;
+    }
+  });
+  return n;
+}
+function renderProblems(){
+  const tbody = document.getElementById('problemsBody');
+  tbody.innerHTML = '';
+  const filtered = filterProblemsList(state.problems);
+  const totalAssign = filtered.reduce((acc,p)=> acc + countAssignments(p.id), 0) || 1;
+  filtered.forEach((p,i)=>{
+    const assigns = countAssignments(p.id);
+    const pct = Math.round(assigns * 100 / totalAssign);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${p.title}</td>
+      <td>${p.cat}</td>
+      <td>${p.impact||0}</td>
+      <td>${p.recurring?'Oui':'Non'}</td>
+      <td>${assigns}</td>
+      <td>${pct}%</td>
+      <td>${new Date(p.ts).toLocaleString()}</td>
+      <td><button class="btn bad" data-del="${p.id}">Supprimer</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById('problemsBody').addEventListener('click', (e)=>{
+  const id = e.target?.dataset?.del;
+  if(!id) return;
+  const cascade = confirm("Supprimer ce problème de la bibliothèque ?\n\nOK = supprime aussi ce problème de toutes les visites.");
+  state.problems = state.problems.filter(p => p.id !== id);
+  if (cascade) {
+    state.visits.forEach(v=>{
+      if (Array.isArray(v.problems)) v.problems = v.problems.filter(x => x.pid !== id);
+    });
+  }
+  save(); renderProblems(); refreshTopStats();
+  const v = state.visits.find(x => x.id === (currentVisitId||'')); if (v) renderVisitProblems(v);
+  alert('Problème supprimé ✅' + (cascade ? ' (et retiré des visites)' : ''));
+});
+$('#btnFilterProblems').onclick=renderProblems;
+renderProblems();
+
+/* ================ Dialog: assigner problèmes à une visite ================= */
+const dlgPick = $('#dlgPick');
+function openPickDialogFor(visitId){
+  const v = state.visits.find(x=>x.id===visitId); if(!v) return;
+  currentVisitId = visitId;
+  $('#pickSearch').value=''; $('#pickRec').checked=false;
+  renderPickList();
+  dlgPick.showModal();
+}
+function renderPickList(){
+  const tb=$('#pickBody'); tb.innerHTML='';
+  const q=$('#pickSearch').value.trim().toLowerCase();
+  const rec=$('#pickRec').checked;
+  state.problems.filter(p=>{
+    const inQ=!q || (p.title+p.cat+(p.actor||'')+(p.desc||'')).toLowerCase().includes(q);
+    const inRec=!rec || !!p.recurring;
+    return inQ && inRec;
+  }).forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="text-align:center"><input type="checkbox" data-id="${p.id}"></td>
+      <td>${p.title}</td><td>${p.cat||'—'}</td><td>${p.impact||0}</td><td>${p.recurring?'Oui':'Non'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+$('#pickRefresh').onclick=renderPickList;
+$('#pickAdd').onclick=()=>{
+  const v=getCurrentVisit(); if(!v) return alert('Aucune visite chargée');
+  const ids=$$('#pickBody input[type="checkbox"]:checked').map(x=>x.dataset.id);
+  if(!ids.length) return alert('Sélectionne au moins un problème.');
+  if(!confirm(`Ajouter ${ids.length} problème(s) à cette visite ?`)) return;
+  const toAdd = state.problems.filter(p=>ids.includes(p.id)).map(p=>({
+    pid:p.id, title:p.title, cat:p.cat, impact:p.impact, recurring:!!p.recurring
+  }));
+  v.problems = (v.problems||[]).concat(toAdd);
+  save(); renderVisitProblems(v); dlgPick.close();
+}
+
+/* ============================ Export / Import JSON ======================== */
+$('#exportJson').onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='rex-a350.json'; a.click();
+}
+$('#importJsonBtn').onclick=()=>$('#importJsonFile').click();
+$('#importJsonFile').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(d && d.visits && d.problems){
+        if(!confirm('Remplacer entièrement les données locales par ce JSON ?')) return;
+        state=d;
+        state.immat=Array.from(new Set([...(state.immat||[]), ...BASE_IMMATS])).sort();
+        save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList(); refreshTopStats();
+        alert('Import (remplacement) OK ✅');
+      } else alert('JSON invalide');
+    }catch{ alert('Erreur JSON'); }
+  };
+  r.readAsText(f);
+});
+$('#mergeJsonBtn').onclick=()=>$('#mergeJsonFile').click();
+$('#mergeJsonFile').addEventListener('change', e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const incoming=JSON.parse(r.result);
+      if(!(incoming && (incoming.visits||incoming.problems||incoming.immat))) return alert('JSON sans contenu utile');
+      const before = JSON.stringify(state).length;
+
+      // union immats
+      if(Array.isArray(incoming.immat)) state.immat = Array.from(new Set([...state.immat, ...incoming.immat])).sort();
+
+      // fusion problèmes (par id sinon ajout)
+      if(Array.isArray(incoming.problems)){
+        const byId = new Map(state.problems.map(p=>[p.id,p]));
+        incoming.problems.forEach(p=>{
+          if(p && p.id){
+            if(!byId.has(p.id)) byId.set(p.id,p);
+            else {
+              const cur = byId.get(p.id);
+              byId.set(p.id, {
+                ...cur,
+                title: p.title || cur.title,
+                cat: p.cat || cur.cat,
+                impact: (typeof p.impact==='number')? p.impact : cur.impact,
+                actor: p.actor || cur.actor,
+                recurring: (typeof p.recurring==='boolean')? p.recurring : cur.recurring,
+                desc: p.desc || cur.desc,
+                immat: p.immat || cur.immat,
+                check: p.check || cur.check,
+                ts: p.ts || cur.ts
+              });
+            }
+          }else{
+            const cp={...p, id: uuid(), ts: p?.ts || new Date().toISOString()};
+            byId.set(cp.id, cp);
+          }
+        });
+        state.problems = Array.from(byId.values());
+      }
+
+      // fusion visites (par id; sinon dédoublonnage heuristique)
+      if(Array.isArray(incoming.visits)){
+        const mapV = new Map(state.visits.map(v=>[v.id,v]));
+        const keyOf = v => [v.immat,v.check,v.arrPrev,v.depPrev,v.hmoPlan].join('|');
+        const seenKeys = new Set(state.visits.map(v=>keyOf(v)));
+
+        incoming.visits.forEach(v=>{
+          if(v && v.id && mapV.has(v.id)){
+            const cur = mapV.get(v.id);
+            const merged = {
+              ...cur,
+              ...v,
+              vacs: Array.isArray(v.vacs) ? v.vacs : cur.vacs,
+              problems: Array.isArray(v.problems) ? v.problems : cur.problems,
+              prlvTrfx: Array.isArray(v.prlvTrfx) ? v.prlvTrfx : (cur.prlvTrfx||[]),
+              unassignedDetail: Array.isArray(v.unassignedDetail) ? v.unassignedDetail : (cur.unassignedDetail||[]),
+              mxi: v.mxi || cur.mxi,
+              trfxVisit: v.trfxVisit || cur.trfxVisit || ""
+            };
+            mapV.set(v.id, merged);
+          } else {
+            const k = keyOf(v||{});
+            if(!seenKeys.has(k)){
+              const nv = v && v.id ? v : {...v, id: uuid()};
+              mapV.set(nv.id, nv);
+              seenKeys.add(k);
+            }
+          }
+        });
+        state.visits = Array.from(mapV.values());
+      }
+
+      save(); refreshImmatList(); renderProblems(); renderPerf(); renderVisitsList(); refreshTopStats();
+      const after = JSON.stringify(state).length;
+      alert('Fusion JSON terminée ✅\nDonnées cumulées et dédoublonnées.\n(+'+ (after-before) +' octets environ)');
+    }catch{ alert('Erreur JSON'); }
+  };
+  r.readAsText(f);
+});
+
+/* ================================ Performance ============================= */
+let pie=null, barHmo=null, barPfBoro=null, lineDelta=null;
+
+function getPerfFilteredVisits(){
+  const s=$('#pfStart').value;
+  const e=$('#pfEnd').value;
+  const im=($('#pfImmat').value||'').toUpperCase();
+  const ck=$('#pfCheck').value;
+  const pf = $('#pfPF') ? $('#pfPF').value : "";
+  const boro = $('#pfBORO') ? $('#pfBORO').value : "";
+  const dHMinStr = $('#pfDeltaHmoMin') ? $('#pfDeltaHmoMin').value : "";
+  const dHMaxStr = $('#pfDeltaHmoMax') ? $('#pfDeltaHmoMax').value : "";
+  const dHMin = dHMinStr === "" ? null : parseFloat(dHMinStr);
+  const dHMax = dHMaxStr === "" ? null : parseFloat(dHMaxStr);
+
+  return state.visits.filter(v=>{
+    if(!within(v.createdAt||v.arrPrev||v.arrReal||v.depPrev||v.depReal, s||null, e||null)) return false;
+    if(im && v.immat !== im) return false;
+    if(ck && v.check !== ck) return false;
+    if(pf !== "" && String(v.pf||0) !== pf) return false;
+    if(boro !== "" && String(v.boro||0) !== boro) return false;
+    const dH = (v.hmoReal||0)-(v.hmoPlan||0);
+    if(dHMin !== null && dH < dHMin) return false;
+    if(dHMax !== null && dH > dHMax) return false;
     return true;
   });
-  const delta=flt.map(v=>v.hmoReal-v.hmoPlan);
-  const avgDelta=delta.length?(delta.reduce((a,b)=>a+b,0)/delta.length):0;
-  const pfYes=flt.filter(v=>v.pf).length, pfNo=flt.length-pfYes;
-  const boYes=flt.filter(v=>v.boro).length, boNo=flt.length-boYes;
-
-  const cats={}; problems.forEach(p=>cats[p.cat]=(cats[p.cat]||0)+1);
-  const ctx1=document.getElementById("pie"), ctx2=document.getElementById("barHmo"),
-        ctx3=document.getElementById("barPfBoro"), ctx4=document.getElementById("lineDelta");
-  if(window.charts){for(let c of Object.values(window.charts)) c.destroy();}
-  window.charts={
-    pie:new Chart(ctx1,{type:"pie",data:{labels:Object.keys(cats),datasets:[{data:Object.values(cats),backgroundColor:["#60a5fa","#34d399","#fcd34d","#f87171","#a78bfa","#fbbf24"]}]}}),
-    barHmo:new Chart(ctx2,{type:"bar",data:{labels:flt.map(v=>v.immat),
-      datasets:[{label:"Planifié",data:flt.map(v=>v.hmoPlan),backgroundColor:"var(--prev)"},{label:"Réel",data:flt.map(v=>v.hmoReal),backgroundColor:"var(--real)"}]}}),
-    barPfBoro:new Chart(ctx3,{type:"bar",data:{labels:["PF Oui","PF Non","BORO Oui","BORO Non"],
-      datasets:[{data:[pfYes,pfNo,boYes,boNo],backgroundColor:["#16a34a","#dc2626","#3b82f6","#9ca3af"]}]}}),
-    lineDelta:new Chart(ctx4,{type:"line",data:{labels:flt.map(v=>v.immat),
-      datasets:[{label:"Δ HMO",data:delta,borderColor:"#2563eb",tension:.3,fill:false}]}})
-  };
 }
 
-/* ======== EXPORT PDF ======== */
-document.getElementById("btnPerfPdf").onclick=()=>exportPdf("global");
-document.getElementById("btnExportPdf").onclick=()=>exportPdf("visit");
+function renderPerf(){
+  const s=$('#pfStart').value, e=$('#pfEnd').value, im=($('#pfImmat').value||'').toUpperCase(), ck=$('#pfCheck').value;
+  const visits = getPerfFilteredVisits();
 
-function exportPdf(mode){
-  const {jsPDF}=window.jspdf; const doc=new jsPDF({orientation:"landscape"});
-  const dark="#0f172a";
-  doc.setFillColor(22,27,34); doc.rect(0,0,300,15,"F");
-  doc.setTextColor(255); doc.setFontSize(14);
-  doc.text(mode=="visit"?"REX VISITE":"REX PERFORMANCE",10,10);
-  doc.setTextColor(0); doc.setFontSize(10);
-  doc.text("Généré le "+new Date().toLocaleString("fr-FR"),10,20);
+  // KPIs
+  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
+  let hmoPlanTot=0, hmoRealTot=0;
+  visits.forEach(v=>{
+    if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
+    const dH = (v.hmoReal||0) - (v.hmoPlan||0);
+    sumDH += dH; sumHD += (v.hmoPlan||0);
+    hmoPlanTot += (v.hmoPlan||0);
+    hmoRealTot += (v.hmoReal||0);
+    const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
+    const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
+    if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
+  });
+  $('#kpiCount').textContent = visits.length;
+  const respectPct = (tot? Math.round(res*100/tot):0);
+  $('#kpiRespect').textContent = respectPct+'%';
+  const avgDH = visits.length? (sumDH/visits.length):0;
+  const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
+  $('#kpiHmo').textContent = `${avgDH.toFixed(1)} h (${pctDH}%)`;
+  $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
+  $('#kpiHmoPlanTot').textContent = `${hmoPlanTot.toFixed(1)} h`;
+  $('#kpiHmoRealTot').textContent = `${hmoRealTot.toFixed(1)} h`;
 
-  if(mode=="visit"){
-    const v=currentVisitIndex!=null?visits[currentVisitIndex]:visits.at(-1);
-    doc.autoTable({startY:25,head:[["Immat","Check","TRFX","HMO plan","HMO réel","Δ","PF","BORO"]],
-      body:[[v.immat,v.check,v.trfx,fmt(v.hmoPlan),fmt(v.hmoReal),fmt(v.hmoReal-v.hmoPlan),v.pf?"Oui":"Non",v.boro?"Oui":"Non"]]});
-  }else{
-    const cats={}; problems.forEach(p=>cats[p.cat]=(cats[p.cat]||0)+1);
-    doc.autoTable({startY:25,head:[["Catégorie","Occurrences"]],body:Object.entries(cats)});
-    const avgDelta=visits.length?(visits.map(v=>v.hmoReal-v.hmoPlan).reduce((a,b)=>a+b,0)/visits.length):0;
-    doc.text("Moyenne Δ HMO : "+fmt(avgDelta)+" h",10,doc.lastAutoTable.finalY+10);
+  // Résumé visuel coloré
+  const boxV = $('#perfBoxVisitsVal');
+  const boxR = $('#perfBoxRespectVal');
+  const boxD = $('#perfBoxDeltaVal');
+  if(boxV) boxV.textContent = visits.length;
+  if(boxR) boxR.textContent = respectPct + '%';
+  if(boxD) boxD.textContent = avgDH.toFixed(1) + ' h';
+
+  const boxRespect = $('#perfBoxRespect');
+  if(boxRespect){
+    if(respectPct >= 90) boxRespect.style.background = 'linear-gradient(135deg,#16a34a,#4ade80)';
+    else if(respectPct >= 70) boxRespect.style.background = 'linear-gradient(135deg,#facc15,#f97316)';
+    else boxRespect.style.background = 'linear-gradient(135deg,#ef4444,#f97373)';
   }
-  doc.save(mode=="visit"?"REX_Visite.pdf":"REX_PERF.pdf");
-}
-</script>
-<!-- ======== STYLE GÉNÉRAL ======== -->
-<style>
-:root {
-  --bg: #f1f5f9;
-  --card: #ffffff;
-  --text: #0f172a;
-  --ok: #16a34a;
-  --bad: #dc2626;
-  --prev: #60a5fa;
-  --real: #34d399;
-}
-body {
-  margin: 0; font-family: 'Segoe UI', sans-serif;
-  background: var(--bg); color: var(--text);
-  display: flex; min-height: 100vh;
-}
-aside {
-  width: 200px; background: #1e293b; color: white;
-  display: flex; flex-direction: column; padding: 10px;
-}
-aside button {
-  background: transparent; border: none; color: white;
-  text-align: left; padding: 10px; cursor: pointer;
-  border-radius: 8px; margin: 3px 0;
-}
-aside button.active, aside button:hover {background:#334155;}
-main {flex:1; padding:15px; overflow:auto;}
-.hidden {display:none;}
-h1 {font-size:1.5rem; margin:10px 0; color:#1e40af;}
-h2 {font-size:1.1rem; color:#1e3a8a; margin-top:5px;}
-.card {
-  background: var(--card); border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,.08);
-  padding:12px; margin-bottom:12px;
-}
-.grid {display:grid; gap:10px;}
-.grid.cols-2 {grid-template-columns:1fr 1fr;}
-.grid.cols-3 {grid-template-columns:repeat(3,1fr);}
-.row {display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
-.btn {
-  border:none; padding:6px 12px; border-radius:6px;
-  cursor:pointer; background:#475569; color:white;
-}
-.btn:hover {opacity:.9;}
-.btn.ok {background:var(--ok);}
-.btn.bad {background:var(--bad);}
-.btn.primary {background:#2563eb;}
-table {width:100%; border-collapse:collapse; font-size:.9rem;}
-table th, table td {border-bottom:1px solid #e2e8f0; padding:6px 4px; text-align:left;}
-table th {background:#e2e8f0;}
-input, select, textarea {
-  width:100%; padding:5px; border:1px solid #cbd5e1;
-  border-radius:5px; font-size:.9rem;
-}
-.chart-wrap {height:280px;}
-canvas {width:100%!important;height:100%!important;}
-</style>
+  const boxDelta = $('#perfBoxDelta');
+  if(boxDelta){
+    if(avgDH <= 0) boxDelta.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+    else if(avgDH <= 2) boxDelta.style.background = 'linear-gradient(135deg,#facc15,#f97316)';
+    else boxDelta.style.background = 'linear-gradient(135deg,#ef4444,#f97373)';
+  }
 
-<!-- ======== FIN DU HTML ======== -->
-</main>
+  // Pareto / pie sur les problèmes
+  const probs=state.problems.filter(p=> within(p.ts,s||null,e||null) && (im? p.immat===im:true) && (ck? p.check===ck:true));
+  const byCat={}; probs.forEach(p=> byCat[p.cat]=(byCat[p.cat]||0)+1 );
+  const arr=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const total=arr.reduce((a,[,c])=>a+c,0)||1;
+  const pb=$('#paretoBody'); pb.innerHTML='';
+  let cumul=0;
+  arr.forEach(([cat,c])=>{
+    const pc=Math.round(c*100/total); cumul+=pc;
+    const tr=document.createElement('tr'); tr.innerHTML=`<td>${cat}</td><td>${c}</td><td>${pc}%</td><td>${Math.min(cumul,100)}%</td>`;
+    pb.appendChild(tr);
+  });
+  const ctx=$('#pie').getContext('2d'); if(pie) pie.destroy();
+  pie=new Chart(ctx,{ type:'doughnut', data:{ labels:arr.map(x=>x[0]), datasets:[{ data:arr.map(x=>x[1]) }]}, options:{plugins:{legend:{position:'bottom'}},maintainAspectRatio:false} });
+
+  // Graphique HMO plan vs réel (par visite)
+  const ctxHmo = $('#barHmo').getContext('2d');
+  if(barHmo) barHmo.destroy();
+  const labelsHmo = visits.map(v=>`${v.immat||'?'} ${v.check||''}`);
+  const dataPlan = visits.map(v=>v.hmoPlan||0);
+  const dataReal = visits.map(v=>v.hmoReal||0);
+  barHmo = new Chart(ctxHmo, {
+    type:'bar',
+    data:{
+      labels:labelsHmo,
+      datasets:[
+        {label:'HMO plan', data:dataPlan},
+        {label:'HMO réel', data:dataReal}
+      ]
+    },
+    options:{
+      plugins:{legend:{position:'bottom'}},
+      maintainAspectRatio:false,
+      scales:{
+        x:{ticks:{autoSkip:true,maxRotation:45,minRotation:45}},
+        y:{beginAtZero:true}
+      }
+    }
+  });
+
+  // Graphique PF / BORO
+  let pfYes=0,pfNo=0,boroYes=0,boroNo=0;
+  visits.forEach(v=>{
+    if(v.pf) pfYes++; else pfNo++;
+    if(v.boro) boroYes++; else boroNo++;
+  });
+  const ctxPfBoro = $('#barPfBoro').getContext('2d');
+  if(barPfBoro) barPfBoro.destroy();
+  barPfBoro = new Chart(ctxPfBoro, {
+    type:'bar',
+    data:{
+      labels:['PF','BORO'],
+      datasets:[
+        {label:'Oui', data:[pfYes, boroYes]},
+        {label:'Non', data:[pfNo, boroNo]}
+      ]
+    },
+    options:{
+      plugins:{legend:{position:'bottom'}},
+      maintainAspectRatio:false,
+      scales:{y:{beginAtZero:true}}
+    }
+  });
+
+  // Graphique de tendance Δ HMO (chronologique)
+  const lineCanvas = document.getElementById('lineDelta');
+  if(lineCanvas){
+    const ctxLine = lineCanvas.getContext('2d');
+    if(lineDelta) lineDelta.destroy();
+    const sorted = visits.slice().sort((a,b)=>{
+      const da = new Date(a.depPrev||a.depReal||a.arrPrev||a.createdAt||0).getTime();
+      const db = new Date(b.depPrev||b.depReal||b.arrPrev||b.createdAt||0).getTime();
+      return da-db;
+    });
+    const labelsLine = sorted.map(v=>{
+      const d = v.depPrev||v.depReal||v.arrPrev||v.createdAt;
+      const base = d ? new Date(d).toLocaleDateString() : '?';
+      return `${base} – ${v.immat||'?'} ${v.check||''}`;
+    });
+    const dataDelta = sorted.map(v=> (v.hmoReal||0)-(v.hmoPlan||0));
+
+    lineDelta = new Chart(ctxLine,{
+      type:'line',
+      data:{
+        labels:labelsLine,
+        datasets:[{
+          label:'Δ HMO (h)',
+          data:dataDelta,
+          tension:0.3,
+          fill:false
+        }]
+      },
+      options:{
+        plugins:{legend:{position:'bottom'}},
+        maintainAspectRatio:false,
+        scales:{y:{beginAtZero:true}}
+      }
+    });
+  }
+
+  // Résumé par Immat / Check
+  const summaryBody = $('#perfSummaryBody');
+  summaryBody.innerHTML = '';
+  const summaryMap = new Map();
+  visits.forEach(v=>{
+    const key = `${v.immat||''}|${v.check||''}`;
+    if(!summaryMap.has(key)){
+      summaryMap.set(key,{
+        immat:v.immat||'',
+        check:v.check||'',
+        count:0,
+        hPlan:0,
+        hReal:0,
+        depOk:0,
+        depTot:0
+      });
+    }
+    const sObj = summaryMap.get(key);
+    sObj.count++;
+    sObj.hPlan += (v.hmoPlan||0);
+    sObj.hReal += (v.hmoReal||0);
+    if(v.depPrev && v.depReal){
+      sObj.depTot++;
+      if(new Date(v.depReal) <= new Date(v.depPrev)) sObj.depOk++;
+    }
+  });
+  Array.from(summaryMap.values()).forEach(row=>{
+    const dHavg = row.count ? ((row.hReal-row.hPlan)/row.count) : 0;
+    const depPct = row.depTot ? Math.round(row.depOk*100/row.depTot) : 0;
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.immat}</td>
+      <td>${row.check}</td>
+      <td>${row.count}</td>
+      <td>${row.hPlan.toFixed(1)}</td>
+      <td>${row.hReal.toFixed(1)}</td>
+      <td>${dHavg.toFixed(1)}</td>
+      <td>${depPct}%</td>
+    `;
+    summaryBody.appendChild(tr);
+  });
+}
+$('#btnPerfRefresh').onclick=renderPerf;
+
+/* =========================== PDF Performance global ======================= */
+$('#btnPerfPdf').onclick = ()=>{
+  const jspdf = window.jspdf;
+  if(!jspdf || !jspdf.jsPDF){
+    alert('Bibliothèque PDF non chargée.');
+    return;
+  }
+  const doc = new jspdf.jsPDF({orientation:'p', unit:'mm', format:'a4'});
+  if(typeof doc.autoTable !== 'function'){
+    alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
+    return;
+  }
+
+  // Assurer que les graphiques sont à jour avec les filtres courants
+  renderPerf();
+
+  const visits = getPerfFilteredVisits();
+  if(!visits.length){
+    alert('Aucune visite dans le filtre actuel pour générer le PDF.');
+    return;
+  }
+
+  const s=$('#pfStart').value, e=$('#pfEnd').value;
+  const im=($('#pfImmat').value||'').toUpperCase();
+  const ck=$('#pfCheck').value;
+  const pf = $('#pfPF').value;
+  const boro = $('#pfBORO').value;
+  const dHMinStr = $('#pfDeltaHmoMin').value;
+  const dHMaxStr = $('#pfDeltaHmoMax').value;
+
+  let y = 12;
+  doc.setFontSize(16);
+  doc.setTextColor(37,99,235);
+  doc.text('REX A350 – Rapport Performance', 10, y);
+  y += 7;
+  doc.setFontSize(9);
+  doc.setTextColor(15,23,42);
+  const filtText = [
+    `Période : ${s || 'toutes'} -> ${e || 'toutes'}`,
+    `Immat : ${im || 'toutes'}`,
+    `Check : ${ck || 'tous'}`,
+    `PF : ${pf===""?'tous':(pf==="1"?'Oui':'Non')}`,
+    `BORO : ${boro===""?'tous':(boro==="1"?'Oui':'Non')}`,
+    `ΔHMO min : ${dHMinStr || '—'}`,
+    `ΔHMO max : ${dHMaxStr || '—'}`
+  ].join(' | ');
+  doc.text(filtText, 10, y, {maxWidth:190});
+  y += 7;
+
+  // Calculs globaux rapides
+  let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
+  let hmoPlanTot=0, hmoRealTot=0;
+  visits.forEach(v=>{
+    if(v.depPrev && v.depReal){ tot++; if(new Date(v.depReal)<=new Date(v.depPrev)) res++; }
+    const dH = (v.hmoReal||0) - (v.hmoPlan||0);
+    sumDH += dH; sumHD += (v.hmoPlan||0);
+    hmoPlanTot += (v.hmoPlan||0);
+    hmoRealTot += (v.hmoReal||0);
+    const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
+    const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
+    if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
+  });
+  const respectPct = (tot? Math.round(res*100/tot):0);
+  const avgDH = visits.length? (sumDH/visits.length):0;
+  const pctDH = sumHD? Math.round(sumDH*100/sumHD):0;
+  const effPct = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
+
+  doc.setFontSize(11);
+  doc.setTextColor(37,99,235);
+  doc.text('KPI globaux', 10, y);
+  y += 3;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 3;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY:y,
+    theme:'striped',
+    styles:{fontSize:9},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head:[['Indicateur','Valeur']],
+    body:[
+      ['Nb visites', visits.length],
+      ['Respect planning', respectPct + '%'],
+      ['Δ HMO moyen', `${avgDH.toFixed(1)} h (${pctDH}%)`],
+      ['Δ effectif moyen', effPct],
+      ['HMO plan total', `${hmoPlanTot.toFixed(1)} h`],
+      ['HMO réel total', `${hmoRealTot.toFixed(1)} h`]
+    ]
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Résumé par Immat / Check (comme dans l'onglet)
+  const summaryMap = new Map();
+  visits.forEach(v=>{
+    const key = `${v.immat||''}|${v.check||''}`;
+    if(!summaryMap.has(key)){
+      summaryMap.set(key,{
+        immat:v.immat||'',
+        check:v.check||'',
+        count:0,
+        hPlan:0,
+        hReal:0,
+        depOk:0,
+        depTot:0
+      });
+    }
+    const sObj = summaryMap.get(key);
+    sObj.count++;
+    sObj.hPlan += (v.hmoPlan||0);
+    sObj.hReal += (v.hmoReal||0);
+    if(v.depPrev && v.depReal){
+      sObj.depTot++;
+      if(new Date(v.depReal) <= new Date(v.depPrev)) sObj.depOk++;
+    }
+  });
+  const summaryRows = Array.from(summaryMap.values()).map(row=>{
+    const dHavg = row.count ? ((row.hReal-row.hPlan)/row.count) : 0;
+    const depPct = row.depTot ? Math.round(row.depOk*100/row.depTot) : 0;
+    return [
+      row.immat,
+      row.check,
+      row.count,
+      row.hPlan.toFixed(1),
+      row.hReal.toFixed(1),
+      dHavg.toFixed(1),
+      depPct + '%'
+    ];
+  });
+
+  doc.setFontSize(11);
+  doc.setTextColor(37,99,235);
+  doc.text('Résumé par Immat / Check', 10, y);
+  y += 3;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 3;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY:y,
+    theme:'striped',
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head:[['Immat','Check','Nb visites','HMO plan tot','HMO réel tot','Δ HMO moy','Respect dep. (%)']],
+    body:summaryRows
+  });
+  y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
+
+  // Détail des visites
+  doc.setFontSize(11);
+  doc.setTextColor(37,99,235);
+  doc.text('Détail des visites filtrées', 10, y);
+  y += 3;
+  doc.setDrawColor(209,217,230);
+  doc.line(10, y, 200, y);
+  y += 3;
+  doc.setTextColor(15,23,42);
+
+  doc.autoTable({
+    startY:y,
+    theme:'striped',
+    styles:{fontSize:7},
+    headStyles:{fillColor:[37,99,235], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[239,246,255]},
+    head:[['Immat','Check','TRFX','Arr prév','Dep prév','HMO plan','HMO réel','Δ HMO','PF','BORO']],
+    body:visits.map(v=>{
+      const dH = (v.hmoReal||0)-(v.hmoPlan||0);
+      return [
+        v.immat||'',
+        v.check||'',
+        v.trfxVisit||'',
+        fmtDate(v.arrPrev),
+        fmtDate(v.depPrev),
+        (v.hmoPlan||0),
+        (v.hmoReal||0),
+        dH,
+        v.pf?'Oui':'Non',
+        v.boro?'Oui':'Non'
+      ];
+    })
+  });
+
+  // Nouvelle page pour les graphiques
+  doc.addPage();
+  let yCharts = 15;
+
+  // Camembert Pareto
+  const pieCanvas = document.getElementById('pie');
+  if(pieCanvas){
+    const imgData = pieCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
+    doc.text('Répartition des catégories (Pareto)', 10, yCharts-4);
+    doc.addImage(imgData, 'PNG', 10, yCharts, 90, 70);
+  }
+
+  // HMO plan vs réel
+  const barHmoCanvas = document.getElementById('barHmo');
+  if(barHmoCanvas){
+    const imgData2 = barHmoCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
+    doc.text('HMO planifié vs réel (visites filtrées)', 110, yCharts-4);
+    doc.addImage(imgData2, 'PNG', 110, yCharts, 90, 70);
+  }
+
+  // Deuxième rangée de graphiques
+  const secondRowY = yCharts + 80;
+
+  // PF / BORO
+  const barPfBoroCanvas = document.getElementById('barPfBoro');
+  if(barPfBoroCanvas){
+    const imgData3 = barPfBoroCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
+    doc.text('Répartition PF / BORO', 10, secondRowY-4);
+    doc.addImage(imgData3, 'PNG', 10, secondRowY, 90, 70);
+  }
+
+  // Tendance Δ HMO
+  const lineDeltaCanvas = document.getElementById('lineDelta');
+  if(lineDeltaCanvas){
+    const imgData4 = lineDeltaCanvas.toDataURL('image/png');
+    doc.setFontSize(12);
+    doc.setTextColor(37,99,235);
+    doc.text('Tendance Δ HMO', 110, secondRowY-4);
+    doc.addImage(imgData4, 'PNG', 110, secondRowY, 90, 70);
+  }
+
+  const fileName = `REX_PERF_${(im||'all')}_${(s||'all')}_${(e||'all')}`.replace(/[^A-Za-z0-9_-]/g,'_') + '.pdf';
+  doc.save(fileName);
+};
+
+/* ================================ init UI ================================= */
+function initialRender(){
+  refreshImmatList(); renderProblems(); renderVisitsList();
+  attachZeroClearInputs(); attachZeroClearDatetime();
+  refreshTopStats();
+  // s'assurer qu'il y a au moins une ligne d'unassign par défaut si aucune visite chargée
+  if(!getCurrentVisit()){
+    putUnassignToUI([]);
+  }
+}
+initialRender();
+</script>
 </body>
 </html>
