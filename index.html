@@ -135,7 +135,7 @@ label .pill{
 h2 .legend{margin-left:8px}
 h2 .legend .pill{margin-left:6px}
 
-/* Camembert / graphiques responsive */
+/*  / graphiques responsive */
 .chart-wrap{height:320px; max-height:50vh;}
 .chart-wrap canvas{width:100% !important; height:100% !important; display:block;}
 
@@ -203,7 +203,7 @@ h2 .legend .pill{margin-left:6px}
               <option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option>
               <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-            </select>
+            <option>24 Mois</option><option>24 Mois / A1</option><option>24 Mois / A2</option><option>24 Mois / A3</option><option>24 Mois / A4</option><option>24 Mois / A5</option><option>24 Mois / A6</option><option>24 Mois / A7</option><option>24 Mois / A8</option><option>24 Mois / A9</option><option>24 Mois / A10</option><option>24 Mois / A11</option><option>24 Mois / A12</option></select>
           </div>
           <div>
             <label>P/F</label>
@@ -286,7 +286,7 @@ h2 .legend .pill{margin-left:6px}
               <option>A1</option><option>A2</option><option>A3</option><option>A4</option>
               <option>A5</option><option>A6</option><option>A7</option><option>A8</option>
               <option>A9</option><option>A10</option><option>A11</option><option>A12</option>
-            </select>
+            <option>24 Mois</option><option>24 Mois / A1</option><option>24 Mois / A2</option><option>24 Mois / A3</option><option>24 Mois / A4</option><option>24 Mois / A5</option><option>24 Mois / A6</option><option>24 Mois / A7</option><option>24 Mois / A8</option><option>24 Mois / A9</option><option>24 Mois / A10</option><option>24 Mois / A11</option><option>24 Mois / A12</option></select>
           </div>
         </div>
 
@@ -529,7 +529,7 @@ h2 .legend .pill{margin-left:6px}
           <div><label>Immat</label><input id="fImmat" placeholder="Toutes"></div>
           <div>
             <label>Type</label>
-            <select id="fCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
+            <select id="fCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option><option>24 Mois</option><option>24 Mois / A1</option><option>24 Mois / A2</option><option>24 Mois / A3</option><option>24 Mois / A4</option><option>24 Mois / A5</option><option>24 Mois / A6</option><option>24 Mois / A7</option><option>24 Mois / A8</option><option>24 Mois / A9</option><option>24 Mois / A10</option><option>24 Mois / A11</option><option>24 Mois / A12</option></select>
           </div>
           <div>
             <label>Catégorie</label>
@@ -561,7 +561,7 @@ h2 .legend .pill{margin-left:6px}
           <div><label>Immat</label><input id="pfImmat" placeholder="Toutes"></div>
           <div>
             <label>Type</label>
-            <select id="pfCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option></select>
+            <select id="pfCheck"><option value="">Tous</option><option>A1</option><option>A2</option><option>A3</option><option>A4</option><option>A5</option><option>A6</option><option>A7</option><option>A8</option><option>A9</option><option>A10</option><option>A11</option><option>A12</option><option>24 Mois</option><option>24 Mois / A1</option><option>24 Mois / A2</option><option>24 Mois / A3</option><option>24 Mois / A4</option><option>24 Mois / A5</option><option>24 Mois / A6</option><option>24 Mois / A7</option><option>24 Mois / A8</option><option>24 Mois / A9</option><option>24 Mois / A10</option><option>24 Mois / A11</option><option>24 Mois / A12</option></select>
           </div>
           <div>
             <label>PF</label>
@@ -625,9 +625,9 @@ h2 .legend .pill{margin-left:6px}
           </table>
         </div>
         <div class="card">
-          <h2>Répartition (camembert)</h2>
+          <h2>Répartition</h2>
           <div class="chart-wrap">
-            <canvas id="pie"></canvas>
+            <canvas id="pie" style="background:white"></canvas>
           </div>
         </div>
       </div>
@@ -636,13 +636,13 @@ h2 .legend .pill{margin-left:6px}
         <div class="card">
           <h2>HMO planifié vs réel (par visite)</h2>
           <div class="chart-wrap">
-            <canvas id="barHmo"></canvas>
+            <canvas id="barHmo" style="background:white"></canvas>
           </div>
         </div>
         <div class="card">
           <h2>Répartition PF / BORO</h2>
           <div class="chart-wrap">
-            <canvas id="barPfBoro"></canvas>
+            <canvas id="barPfBoro" style="background:white"></canvas>
           </div>
         </div>
       </div>
@@ -650,7 +650,7 @@ h2 .legend .pill{margin-left:6px}
       <div class="card">
         <h2>Tendance Δ HMO (chronologique)</h2>
         <div class="chart-wrap">
-          <canvas id="lineDelta"></canvas>
+          <canvas id="lineDelta" style="background:white"></canvas>
         </div>
       </div>
 
@@ -1788,7 +1788,7 @@ function renderPerf(){
     pb.appendChild(tr);
   });
   const ctx=$('#pie').getContext('2d'); if(pie) pie.destroy();
-  pie=new Chart(ctx,{ type:'doughnut', data:{ labels:arr.map(x=>x[0]), datasets:[{ data:arr.map(x=>x[1]) }]}, options:{plugins:{legend:{position:'bottom'}},maintainAspectRatio:false} });
+  pie=new Chart(ctx,{ type:'doughnut', data:{ labels:arr.map(x=>x[0]), datasets:[{ data:arr.map(x=>x[1]) }]}, options:{animation:false,plugins:{legend:{position:'bottom'}},maintainAspectRatio:false} });
 
   // Graphique HMO plan vs réel (par visite)
   const ctxHmo = $('#barHmo').getContext('2d');
@@ -1805,7 +1805,7 @@ function renderPerf(){
         {label:'HMO réel', data:dataReal}
       ]
     },
-    options:{
+    options:{animation:false,
       plugins:{legend:{position:'bottom'}},
       maintainAspectRatio:false,
       scales:{
@@ -1832,7 +1832,7 @@ function renderPerf(){
         {label:'Non', data:[pfNo, boroNo]}
       ]
     },
-    options:{
+    options:{animation:false,
       plugins:{legend:{position:'bottom'}},
       maintainAspectRatio:false,
       scales:{y:{beginAtZero:true}}
@@ -1867,7 +1867,7 @@ function renderPerf(){
           fill:false
         }]
       },
-      options:{
+      options:{animation:false,
         plugins:{legend:{position:'bottom'}},
         maintainAspectRatio:false,
         scales:{y:{beginAtZero:true}}
@@ -2109,7 +2109,7 @@ $('#btnPerfPdf').onclick = ()=>{
   doc.addPage();
   let yCharts = 15;
 
-  // Camembert Pareto
+  //  Pareto
   const pieCanvas = document.getElementById('pie');
   if(pieCanvas){
     const imgData = pieCanvas.toDataURL('image/png');
