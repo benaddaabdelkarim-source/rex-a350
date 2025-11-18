@@ -241,6 +241,7 @@ h2 .legend .pill{margin-left:6px}
                 <th>#</th><th>Immat</th><th>Check</th>
                 <th>Arr. prév</th><th>APRS signé (prév.)</th>
                 <th>HMO plan</th><th>HMO réel</th><th>Δ HMO</th>
+                <th>Findings</th><th>Hrs find.</th>
                 <th>P/F</th><th>BORO</th><th>VAC</th><th>TRFX visite</th>
                 <th>Actions</th>
               </tr>
@@ -617,6 +618,8 @@ h2 .legend .pill{margin-left:6px}
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
           <div class="pill">HMO plan total : <b id="kpiHmoPlanTot">0 h</b></div>
           <div class="pill">HMO réel total : <b id="kpiHmoRealTot">0 h</b></div>
+          <div class="pill">Findings total : <b id="kpiFindCountPerf">0</b></div>
+          <div class="pill">Heures findings totales : <b id="kpiFindHoursPerf">0 h</b></div>
         </div>
 
         <!-- Résumé visuel coloré -->
@@ -948,6 +951,14 @@ function recalcTotals(){
   const dHmo = num($('#vHmoReal').value) - num($('#vHmoPlan').value);
   $('#deltaHmoBadge').textContent = dHmo.toFixed(1)+' h';
 
+  // Findings KPIs (visite)
+  const fCount = num($('#vFindCount').value);
+  const fHours = num($('#vFindHours').value);
+  const kCount = document.getElementById('kpiFindCount');
+  const kHours = document.getElementById('kpiFindHours');
+  if(kCount) kCount.textContent = fCount;
+  if(kHours) kHours.textContent = fHours.toFixed(1) + ' h';
+
   // MXI TOT
   const mxi = num($('#mxiMxi').value), fdg = num($('#mxiFdg').value);
   $('#mxiTot').textContent = (mxi + fdg).toFixed(1);
@@ -1096,6 +1107,8 @@ function collectVisitFromForm(){
     vacs: collectVacFromUI(),
     prlvTrfx: (getCurrentVisit()?.prlvTrfx)||[],
     problems: (getCurrentVisit()?.problems)||[],
+    findCount: num(document.getElementById("vFindCount").value),
+    findHours: num(document.getElementById("vFindHours").value),
     createdAt: getCurrentVisit()?.createdAt || new Date().toISOString()
   };
 }
@@ -1113,6 +1126,8 @@ function renderFormFromVisit(v){
   $('#vHmoReal').value = v?.hmoReal??0;
   $('#vPF').checked = !!(v?.pf);
   $('#vBORO').checked = !!(v?.boro);
+  $('#vFindCount').value = v?.findCount ?? 0;
+  $('#vFindHours').value = v?.findHours ?? 0;
 
   // MXI
   $('#mxiLines').value = v?.mxi?.start?.lines ?? 0;
@@ -1283,7 +1298,9 @@ $('#btnExportPdf').onclick = ()=>{
       ['Δ Effectif total (réel - dem.)', deltaEffTot],
       ['Lignes désassignées', unLines],
       ['HMO désassignée totale', `${unHmo.toFixed(1)} h`],
-      ['Prélèvements TRFX', (v.prlvTrfx||[]).length]
+      ['Prélèvements TRFX', (v.prlvTrfx||[]).length],
+      ['Findings (nb)', v.findCount || 0],
+      ['Findings (heures)', (v.findHours || 0).toFixed(1) + ' h']
     ]
   });
   y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
@@ -1451,6 +1468,8 @@ function renderVisitsList(){
       <td>${v.hmoPlan||0}</td>
       <td>${v.hmoReal||0}</td>
       <td>${(dH>0?'+':'')+(dH||0)}</td>
+      <td>${v.findCount||0}</td>
+      <td>${v.findHours||0}</td>
       <td>${v.pf? 'Oui':'Non'}</td>
       <td>${v.boro? 'Oui':'Non'}</td>
       <td>${Array.isArray(v.vacs)? v.vacs.length:0}</td>
@@ -1774,6 +1793,17 @@ function renderPerf(){
   $('#kpiHmoPlanTot').textContent = `${hmoPlanTot.toFixed(1)} h`;
   $('#kpiHmoRealTot').textContent = `${hmoRealTot.toFixed(1)} h`;
 
+  // Findings globaux
+  let sumFindCount = 0, sumFindHours = 0;
+  visits.forEach(v=>{
+    sumFindCount += (v.findCount||0);
+    sumFindHours += (v.findHours||0);
+  });
+  const kFindPerf = document.getElementById('kpiFindCountPerf');
+  const kFindHP = document.getElementById('kpiFindHoursPerf');
+  if(kFindPerf) kFindPerf.textContent = sumFindCount;
+  if(kFindHP) kFindHP.textContent = sumFindHours.toFixed(1) + ' h';
+
   // Résumé visuel coloré
   const boxV = $('#perfBoxVisitsVal');
   const boxR = $('#perfBoxRespectVal');
@@ -2028,7 +2058,9 @@ $('#btnPerfPdf').onclick = ()=>{
       ['Δ HMO moyen', `${avgDH.toFixed(1)} h (${pctDH}%)`],
       ['Δ effectif moyen', effPct],
       ['HMO plan total', `${hmoPlanTot.toFixed(1)} h`],
-      ['HMO réel total', `${hmoRealTot.toFixed(1)} h`]
+      ['HMO réel total', `${hmoRealTot.toFixed(1)} h`],
+      ['Findings total', sumFindCount],
+      ['Heures findings totales', `${sumFindHours.toFixed(1)} h`]
     ]
   });
   y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 6 : y+10;
