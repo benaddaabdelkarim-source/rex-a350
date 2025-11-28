@@ -265,7 +265,7 @@ h2 .legend .pill{margin-left:6px}
         <div class="row small" style="margin-top:4px;gap:12px">
           <input id="uvrFile" type="file" accept=".xlsx" style="display:none">
           <button id="btnImportUvr" class="btn">📥 Importer UVR (Excel)</button>
-          <span class="small">Utilise l'export UVR Maintenix (XLSX) pour pré-remplir findings, prélèvements et désassignations.</span>
+          <span class="small">Pré-remplit findings, HMO réelle et désassignations à partir de l'export UVR.</span>
         </div>
 
         <!-- TRFX de visite (obligatoire) -->
@@ -644,8 +644,11 @@ h2 .legend .pill{margin-left:6px}
           <div class="pill">Δ effectif moyen : <b id="kpiEff">0%</b></div>
           <div class="pill">HMO plan total : <b id="kpiHmoPlanTot">0 h</b></div>
           <div class="pill">HMO réel total : <b id="kpiHmoRealTot">0 h</b></div>
+          <div class="pill">Effectif plan total : <b id="kpiEffPlanTot">0</b></div>
+          <div class="pill">Effectif réel total : <b id="kpiEffRealTot">0</b></div>
           <div class="pill">Findings total : <b id="kpiFindCountPerf">0</b></div>
           <div class="pill">Heures findings totales : <b id="kpiFindHoursPerf">0 h</b></div>
+          <div class="pill">H désassign. MTCA total : <b id="kpiUnMtca">0 h</b></div>
         </div>
 
         <!-- Résumé visuel coloré -->
@@ -689,10 +692,17 @@ h2 .legend .pill{margin-left:6px}
           </div>
         </div>
         <div class="card">
-          <h2>Répartition PF / BORO</h2>
+          <h2>Effectif planifié vs réel (par visite)</h2>
           <div class="chart-wrap">
-            <canvas id="barPfBoro" style="background:white"></canvas>
+            <canvas id="barEff" style="background:white"></canvas>
           </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Nb désassignements MTCA (par visite)</h2>
+        <div class="chart-wrap">
+          <canvas id="barMtcaCount" style="background:white"></canvas>
         </div>
       </div>
 
@@ -912,7 +922,6 @@ function addUnassignRow(val=0, hmo=0, reason="", skill=""){
     </td>
     <td><input type="text" value="${reason}" class="uaReason" placeholder="ex. pièce manquante, outillage…"></td>
     <td><button class="btn bad uaDel">Supprimer</button></td>`;
-
   const sel = tr.querySelector('select.uaSkill');
   if (sel && skill && !Array.from(sel.options).some(o => o.value === skill)) {
     const opt = document.createElement('option');
@@ -921,13 +930,11 @@ function addUnassignRow(val=0, hmo=0, reason="", skill=""){
     opt.selected = true;
     sel.appendChild(opt);
   }
-
   unassignBody.appendChild(tr);
   renumberUnassign();
   attachZeroClearInputs();
   recalcUnassign();
 }
-
 function renumberUnassign(){ $$('#unassignBody tr').forEach((tr,i)=>$('.uaIndex',tr).textContent=i+1); }
 function recalcUnassign(){
   let tot=0, totHmo=0;
@@ -1682,35 +1689,37 @@ $('#pickAdd').onclick=()=>{
   }));
   v.problems = (v.problems||[]).concat(toAdd);
   save(); renderVisitProblems(v); dlgPick.close();
+}
 
-
-// Bouton 'Ajouter depuis la bibliothèque' dans la carte Problèmes de la visite
+// Bouton 'Ajouter depuis la bibliothèque' dans la carte Problèmes de la visite (bas de page)
 const btnLinkProblem = document.getElementById('btnLinkProblem');
 if (btnLinkProblem) {
   btnLinkProblem.onclick = () => {
     const v = getCurrentVisit();
     if (!v) {
-      alert('Ouvre ou crée une visite avant d\u2019ajouter des problèmes.');
+      alert('Ouvre ou crée une visite avant d’ajouter des problèmes.');
       return;
     }
     openPickDialogFor(v.id);
   };
 }
 
-}
+
+
 
 
 
 /* ============================ Import UVR (Excel) ========================== */
 // Utilise SheetJS (XLSX) pour lire le fichier UVR exporté depuis Maintenix.
-// Objectif : pré-remplir Findings (nb + heures), immat / type de check / TRFX visite et
-// désassignations (nb lignes, heures, skill).
+// Objectif : pré-remplir Findings, HMO réelle et Désassignations (agrégées par skill)
+// uniquement pour les tâches clôturées après le début de la visite (Arrivée réelle).
 const uvrFileInput = document.getElementById('uvrFile');
 const btnImportUvr = document.getElementById('btnImportUvr');
 
 if (btnImportUvr && uvrFileInput && window.XLSX) {
   btnImportUvr.onclick = () => {
-    if (!getCurrentVisit()) {
+    const v = getCurrentVisit();
+    if (!v) {
       alert("Ouvre ou crée une visite avant d'importer l'UVR.");
       return;
     }
@@ -1760,7 +1769,7 @@ if (btnImportUvr && uvrFileInput && window.XLSX) {
         const headers = rows[headerRowIndex].map(h => (h || "").toString().trim());
         const idx = (name) => headers.indexOf(name);
 
-        // Ligne d'information en tête (ligne 0) : immat / type de check / nom complet du check
+        // Informations générales (ligne 0) : immat, type de check, nom complet du check
         let headerCheckName = "";
         const headerInfo = rows[0] || [];
         for (let i = 0; i < headerInfo.length - 1; i++) {
@@ -1781,36 +1790,34 @@ if (btnImportUvr && uvrFileInput && window.XLSX) {
           }
         }
 
-        const idxTaskType     = idx("TASK_TYPE");
-        const idxSpent        = idx("ACTUAL_SPENT_HOURS");
-        const idxSched        = idx("ACTUAL_SCHEDULED_HRS");
-        const idxDur          = idx("DURATION");
-        const idxStatus       = idx("JOBCARD_STATUS");
-        const idxSkill        = idx("SKILL(S)");
-        const idxDesc         = idx("JIC_DESCRIPTION");
-        const idxWorkArea     = idx("WORK_AREA_NAME");
-        const idxBarcode      = idx("BARCODE");
-        const idxJicTaskName  = idx("JICTASKNAME");
-        const idxJicBarcode   = idx("JICBARCODE");
+        const idxTaskType   = idx("TASK_TYPE");
+        const idxSpent      = idx("ACTUAL_SPENT_HOURS");
+        const idxSched      = idx("ACTUAL_SCHEDULED_HRS");
+        const idxDur        = idx("DURATION");
+        const idxStatus     = idx("JOBCARD_STATUS");
+        const idxSkill      = idx("SKILL(S)");
+        const idxCompletion = idx("COLLECTION_DATE");
+        const idxJicTask    = idx("JICTASKNAME");
+        const idxJicBarcode = idx("JICBARCODE");
 
         if (idxTaskType === -1 || idxSpent === -1) {
           alert("Colonnes clés manquantes dans l'UVR (TASK_TYPE / ACTUAL_SPENT_HOURS).");
           return;
         }
 
-        // TRFX de la visite : on cherche la ligne UVR dont le JICTASKNAME == CHECK NAME (header)
-        if (!v.trfxVisit && headerCheckName && idxJicTaskName !== -1 && idxJicBarcode !== -1) {
+        // Tentative de retrouver le TRFX de la visite à partir de JICTASKNAME / JICBARCODE
+        if (!v.trfxVisit && headerCheckName && idxJicTask !== -1 && idxJicBarcode !== -1) {
           const targetName = headerCheckName.trim();
           for (let i = headerRowIndex + 1; i < rows.length; i++) {
             const row = rows[i];
             if (!row) continue;
-            const tn = (row[idxJicTaskName] || "").toString().trim();
+            const tn = (row[idxJicTask] || "").toString().trim();
             if (tn === targetName) {
               const tb = (row[idxJicBarcode] || "").toString().trim();
               if (tb) {
                 v.trfxVisit = tb;
-                break;
               }
+              break;
             }
           }
         }
@@ -1819,10 +1826,35 @@ if (btnImportUvr && uvrFileInput && window.XLSX) {
         let findingsHours = 0;
         let totalHmoReal  = 0;
 
-        const findingTypes = new Set(["CORR", "ADHOC", "EO"]);
-
-        // Pour les désassignations par skill
+        const findingTypes = new Set(["CORR","ADHOC","EO"]);
         const unassignBySkill = new Map();
+
+        // Date/heure de début de visite (Arrivée réelle) côté REX
+        const arrInput = document.getElementById('vArrReal');
+        let arrRealStr = (arrInput && arrInput.value) ? arrInput.value : (v.arrReal || null);
+        let arrRealDate = null;
+        if (arrRealStr) {
+          const d = new Date(arrRealStr);
+          if (!isNaN(d.getTime())) arrRealDate = d;
+          // on synchronise dans l'objet visite pour ne pas perdre la valeur saisie
+          v.arrReal = arrRealStr;
+        }
+
+        // Conversion des dates UVR (COMPLETION_DATE) en Date JS
+        function cellToDate(value) {
+          if (value == null || value === "") return null;
+          if (value instanceof Date) return value;
+          if (typeof value === "number") {
+            // Conversion Excel -> JS (base 1899-12-30)
+            const epoch = Date.UTC(1899, 11, 30);
+            const ms = epoch + value * 86400000;
+            return new Date(ms);
+          }
+          const s = value.toString();
+          const d = new Date(s);
+          if (!isNaN(d.getTime())) return d;
+          return null;
+        }
 
         for (let i = headerRowIndex + 1; i < rows.length; i++) {
           const row = rows[i];
@@ -1834,26 +1866,38 @@ if (btnImportUvr && uvrFileInput && window.XLSX) {
           const dur      = idxDur !== -1 ? (parseFloat(row[idxDur]) || 0) : 0;
           const status   = idxStatus !== -1 ? (String(row[idxStatus] || "")).toUpperCase() : "";
           const skill    = idxSkill !== -1 ? (row[idxSkill] || "").toString().trim() : "";
-          const desc     = idxDesc !== -1 ? (row[idxDesc] || "").toString() : "";
-          const workArea = idxWorkArea !== -1 ? (row[idxWorkArea] || "").toString() : "";
-          const barcode  = idxBarcode !== -1 ? (row[idxBarcode] || "").toString().trim() : "";
 
-          // HMO réel : on agrège tout
-          totalHmoReal += spent;
+          // Filtre temporel : on ne garde que les tâches clôturées après l'arrivée réelle
+          let completionDate = null;
+          if (idxCompletion !== -1) {
+            completionDate = cellToDate(row[idxCompletion]);
+          }
+          if (arrRealDate) {
+            // Si on a une arrivée réelle, on ne retient que les tâches avec date de complétion
+            // connue et postérieure à cette date.
+            if (!completionDate || completionDate < arrRealDate) {
+              continue;
+            }
+          }
 
-          // Findings = types correctifs
+          // HMO réelle : uniquement les tâches réellement effectuées (status COMPLETE) avec des heures > 0
+          if (status === "COMPLETE" && spent > 0) {
+            totalHmoReal += spent;
+          }
+
+          // Findings : tâches correctives (CORR / ADHOC / EO) après le début de visite
           if (findingTypes.has(taskType)) {
             findingsCount += 1;
             findingsHours += spent;
           }
 
-          // Désassignations = status UNASSIGN (agrégation par skill)
+          // Désassignations : lignes UNASSIGN, agrégées par skill
           if (status === "UNASSIGN") {
             const skillRaw = skill || "—";
-            const parts = skillRaw.split(/[\s\n]+/).map(x => x.trim()).filter(x => x);
+            const parts = skillRaw.split(/[\\s\\n]+/).map(x=>x.trim()).filter(x=>x);
             const skillsList = parts.length ? parts : ["—"];
             const hmo = sched || dur;
-            skillsList.forEach(sk => {
+            skillsList.forEach(sk=>{
               const key = sk;
               if (!unassignBySkill.has(key)) {
                 unassignBySkill.set(key, { n: 0, hmo: 0, skill: key, reason: "" });
@@ -1865,27 +1909,39 @@ if (btnImportUvr && uvrFileInput && window.XLSX) {
           }
         }
 
-        // Findings (nb + heures) -> champs officiels du formulaire
+        // Appliquer les résultats dans l'objet visite
+
+        // Findings (nb + heures)
         v.findCount = findingsCount;
         v.findHours = parseFloat(findingsHours.toFixed(1));
 
-        // HMO réel (si non déjà saisi) - on ne touche pas HMO prévu
-        if (!v.hmoReal || v.hmoReal === 0) {
-          v.hmoReal = parseFloat(totalHmoReal.toFixed(1));
+        
+        // Déduction PF / BORO à partir des findings si aucune info n'est encore saisie
+        if ((v.pf === 0 || v.pf == null) && (v.boro === 0 || v.boro == null)) {
+          if (findingsCount > 0) {
+            // Présence de findings → BORO présent
+            v.boro = 1;
+            v.pf = 0;
+          } else {
+            // Aucune finding → PF pur
+            v.pf = 1;
+            v.boro = 0;
+          }
         }
+// HMO réelle (on ne touche pas HMO prévue)
+        v.hmoReal = parseFloat(totalHmoReal.toFixed(1));
 
-        // Désassignations : fusion avec ce qu'il y a déjà dans la visite
+        // Désassignations détaillées : fusion avec ce qu'il y a déjà
         const existingUn = Array.isArray(v.unassignedDetail) ? v.unassignedDetail.slice() : [];
         const newUn = Array.from(unassignBySkill.values()).map(o => ({
           n: o.n,
           hmo: parseFloat(o.hmo.toFixed(1)),
-          reason: o.reason,
+          reason: "",
           skill: o.skill
         }));
 
         let finalUn = existingUn;
         if (newUn.length) {
-          // Si on a seulement la ligne par défaut "Avant start du chantier", on la garde et on ajoute derrière
           if (existingUn.length === 1 &&
               !existingUn[0].n &&
               !existingUn[0].hmo &&
@@ -1901,7 +1957,7 @@ if (btnImportUvr && uvrFileInput && window.XLSX) {
 
         save();
         renderFormFromVisit(v);
-        alert("Import UVR terminé : findings, HMO et désassignations ont été mis à jour.");
+        alert("Import UVR terminé : findings, HMO réelle et désassignations ont été mis à jour.");
       } catch (err) {
         console.error(err);
         alert("Erreur lors de la lecture de l'UVR : " + err.message);
@@ -1913,7 +1969,7 @@ if (btnImportUvr && uvrFileInput && window.XLSX) {
 } else if (btnImportUvr) {
   // XLSX non chargé (offline / CDN bloqué)
   btnImportUvr.onclick = () => {
-    alert("La bibliothèque XLSX n'est pas chargée. Vérifie l'accès internet ou contacte le support.");
+    alert("La bibliothèque XLSX n'est pas chargée. Vérifie l'accès internet ou utilise la version avec scripts locaux.");
   };
 }
 
@@ -2024,7 +2080,7 @@ $('#mergeJsonFile').addEventListener('change', e=>{
 });
 
 /* ================================ Performance ============================= */
-let pie=null, barHmo=null, barPfBoro=null, lineDelta=null;
+let pie=null, barHmo=null, barEff=null, barMtcaCount=null, lineDelta=null;
 
 function getPerfFilteredVisits(){
   const s=$('#pfStart').value;
@@ -2055,18 +2111,68 @@ function renderPerf(){
   const s=$('#pfStart').value, e=$('#pfEnd').value, im=($('#pfImmat').value||'').toUpperCase(), ck=$('#pfCheck').value;
   const visits = getPerfFilteredVisits();
 
-  // KPIs
+  // KPIs et agrégats
   let res=0,tot=0, sumDH=0,sumHD=0, sumPctEff=0, cntPct=0;
   let hmoPlanTot=0, hmoRealTot=0;
+  let effPlanTot=0, effRealTot=0;
+  let totalMtcaUn=0;
+  const labelsHmo=[], dataPlan=[], dataReal=[], dataMtcaUn=[], effPlanArr=[], effRealArr=[], mtcaCountArr=[];
+
   visits.forEach(v=>{
     if(v.depPrev && v.depReal){ tot++; if(isRespectDepWithTol(v,30)) res++; }
     const dH = (v.hmoReal||0) - (v.hmoPlan||0);
     sumDH += dH; sumHD += (v.hmoPlan||0);
     hmoPlanTot += (v.hmoPlan||0);
     hmoRealTot += (v.hmoReal||0);
+
+    // Effectif plan / réel (somme sur toutes les vac)
     const dem = (v.vacs||[]).reduce((a,x)=>a+(x.cmeDem||0)+(x.eirDem||0)+(x.leadDem||0),0);
     const rea = (v.vacs||[]).reduce((a,x)=>a+(x.cmeReal||0)+(x.eirReal||0)+(x.leadReal||0),0);
+    effPlanTot += dem;
+    effRealTot += rea;
     if(dem>0){ sumPctEff += ((rea-dem)/dem)*100; cntPct++; }
+
+    // Heures désassignement MTCA (B1 / B2 / B1B2 / B1/B2, sans CABB)
+    let mtcaH = 0;
+    let mtcaCount = 0;
+    (v.unassignedDetail || []).forEach(u=>{
+      const sSkill = (u.skill || '').toUpperCase();
+
+      // On exclut toutes les compétences cabine
+      const isCabb = sSkill.includes('CABB');
+
+      // On considère MTCA dès qu'il y a du B1 / B2 (hors CABB)
+      const hasMtcaPattern =
+        sSkill === 'B1' ||
+        sSkill === 'B2' ||
+        sSkill === 'B1/B2' ||
+        sSkill === 'SKILL B1' ||
+        sSkill === 'SKILL B2' ||
+        sSkill === 'SKILL B1/B2' ||
+        sSkill.includes('B1B2') ||
+        sSkill.includes('B1/B2') ||
+        /\bB1\b/.test(sSkill) ||
+        /\bB2\b/.test(sSkill);
+
+      const isMtca = !isCabb && hasMtcaPattern;
+
+      if(isMtca){
+        mtcaH += (u.hmo || 0);
+        // On compte le nombre de lignes désassignées MTCA (colonne Nb lignes)
+        const nbLines = (u.n || 0);
+        mtcaCount += (nbLines > 0 ? nbLines : 1);
+      }
+    });
+    totalMtcaUn += mtcaH;
+
+    // Préparation des séries par visite
+    labelsHmo.push(`${v.immat||'?'} ${v.check||''}`);
+    dataPlan.push(v.hmoPlan||0);
+    dataReal.push(v.hmoReal||0);
+    dataMtcaUn.push(mtcaH);
+    mtcaCountArr.push(mtcaCount);
+    effPlanArr.push(dem);
+    effRealArr.push(rea);
   });
   $('#kpiCount').textContent = visits.length;
   const respectPct = (tot? Math.round(res*100/tot):0);
@@ -2077,6 +2183,14 @@ function renderPerf(){
   $('#kpiEff').textContent = `${cntPct? Math.round(sumPctEff/cntPct):0}%`;
   $('#kpiHmoPlanTot').textContent = `${hmoPlanTot.toFixed(1)} h`;
   $('#kpiHmoRealTot').textContent = `${hmoRealTot.toFixed(1)} h`;
+
+  const kEffPlanTot = document.getElementById('kpiEffPlanTot');
+  const kEffRealTot = document.getElementById('kpiEffRealTot');
+  if(kEffPlanTot) kEffPlanTot.textContent = effPlanTot.toFixed(0);
+  if(kEffRealTot) kEffRealTot.textContent = effRealTot.toFixed(0);
+
+  const kUnMtca = document.getElementById('kpiUnMtca');
+  if(kUnMtca) kUnMtca.textContent = totalMtcaUn.toFixed(1) + ' h';
 
   // Findings globaux
   let sumFindCount = 0, sumFindHours = 0;
@@ -2128,16 +2242,14 @@ function renderPerf(){
   // Graphique HMO plan vs réel (par visite)
   const ctxHmo = $('#barHmo').getContext('2d');
   if(barHmo) barHmo.destroy();
-  const labelsHmo = visits.map(v=>`${v.immat||'?'} ${v.check||''}`);
-  const dataPlan = visits.map(v=>v.hmoPlan||0);
-  const dataReal = visits.map(v=>v.hmoReal||0);
   barHmo = new Chart(ctxHmo, {
     type:'bar',
     data:{
       labels:labelsHmo,
       datasets:[
         {label:'HMO plan', data:dataPlan},
-        {label:'HMO réel', data:dataReal}
+        {label:'HMO réel', data:dataReal},
+        {label:'H désassign. MTCA', data:dataMtcaUn}
       ]
     },
     options:{animation:false,
@@ -2150,31 +2262,58 @@ function renderPerf(){
     }
   });
 
-  // Graphique PF / BORO
-  let pfYes=0,pfNo=0,boroYes=0,boroNo=0;
-  visits.forEach(v=>{
-    if(v.pf) pfYes++; else pfNo++;
-    if(v.boro) boroYes++; else boroNo++;
-  });
-  const ctxPfBoro = $('#barPfBoro').getContext('2d');
-  if(barPfBoro) barPfBoro.destroy();
-  barPfBoro = new Chart(ctxPfBoro, {
-    type:'bar',
-    data:{
-      labels:['PF','BORO'],
-      datasets:[
-        {label:'Oui', data:[pfYes, boroYes]},
-        {label:'Non', data:[pfNo, boroNo]}
-      ]
-    },
-    options:{animation:false,
-      plugins:{legend:{position:'bottom'}},
-      maintainAspectRatio:false,
-      scales:{y:{beginAtZero:true}}
-    }
-  });
+  
+  // Graphique Effectif plan vs réel (par visite)
+  const effCanvas = document.getElementById('barEff');
+  if(effCanvas){
+    const ctxEff = effCanvas.getContext('2d');
+    if(barEff) barEff.destroy();
+    barEff = new Chart(ctxEff, {
+      type:'bar',
+      data:{
+        labels: labelsHmo,
+        datasets:[
+          {label:'Effectif plan', data: effPlanArr},
+          {label:'Effectif réel', data: effRealArr}
+        ]
+      },
+      options:{animation:false,
+        plugins:{legend:{position:'bottom'}},
+        maintainAspectRatio:false,
+        scales:{
+          x:{ticks:{autoSkip:true,maxRotation:45,minRotation:45}},
+          y:{beginAtZero:true}
+        }
+      }
+    });
+  }
 
-  // Graphique de tendance Δ HMO (chronologique)
+  // Graphique nb désassignements MTCA (par visite)
+  const mtcaCountCanvas = document.getElementById('barMtcaCount');
+  if(mtcaCountCanvas){
+    const ctxMtca = mtcaCountCanvas.getContext('2d');
+    if(barMtcaCount) barMtcaCount.destroy();
+    barMtcaCount = new Chart(ctxMtca, {
+      type:'bar',
+      data:{
+        labels: labelsHmo,
+        datasets:[
+          {label:'Nb désassignements MTCA', data: mtcaCountArr}
+        ]
+      },
+      options:{animation:false,
+        plugins:{legend:{position:'bottom'}},
+        maintainAspectRatio:false,
+        scales:{
+          x:{ticks:{autoSkip:true,maxRotation:45,minRotation:45}},
+          y:{beginAtZero:true}
+        }
+      }
+    });
+  }
+
+
+// Graphique de tendance Δ HMO (chronologique)
   const lineCanvas = document.getElementById('lineDelta');
   if(lineCanvas){
     const ctxLine = lineCanvas.getContext('2d');
@@ -2266,6 +2405,9 @@ $('#btnPerfPdf').onclick = ()=>{
     alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
     return;
   }
+
+  // Assurer que les graphiques sont à jour avec les filtres courants
+  renderPerf();
 
   const visits = getPerfFilteredVisits();
   if(!visits.length){
@@ -2466,13 +2608,13 @@ $('#btnPerfPdf').onclick = ()=>{
   // Deuxième rangée de graphiques
   const secondRowY = yCharts + 80;
 
-  // PF / BORO
-  const barPfBoroCanvas = document.getElementById('barPfBoro');
-  if(barPfBoroCanvas){
-    const imgData3 = barPfBoroCanvas.toDataURL('image/png');
+  // Effectif plan vs réel
+  const barEffCanvas = document.getElementById('barEff');
+  if(barEffCanvas){
+    const imgData3 = barEffCanvas.toDataURL('image/png');
     doc.setFontSize(12);
     doc.setTextColor(37,99,235);
-    doc.text('Répartition PF / BORO', 10, secondRowY-4);
+    doc.text('Effectif planifié vs réel (visites filtrées)', 10, secondRowY-4);
     doc.addImage(imgData3, 'PNG', 10, secondRowY, 90, 70);
   }
 
