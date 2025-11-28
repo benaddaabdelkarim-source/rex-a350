@@ -9,6 +9,8 @@
 <!-- PDF -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 
 <style>
 :root{
@@ -260,6 +262,12 @@ h2 .legend .pill{margin-left:6px}
           </span>
         </h2>
 
+        <div class="row small" style="margin-top:4px;gap:12px">
+          <input id="uvrFile" type="file" accept=".xlsx" style="display:none">
+          <button id="btnImportUvr" class="btn">📥 Importer UVR (Excel)</button>
+          <span class="small">Utilise l'export UVR Maintenix (XLSX) pour pré-remplir findings, prélèvements et désassignations.</span>
+        </div>
+
         <!-- TRFX de visite (obligatoire) -->
         <div class="grid cols-3" style="margin-top:8px">
           <div>
@@ -469,13 +477,7 @@ h2 .legend .pill{margin-left:6px}
               </tr>
             </tfoot>
           </table>
-        </div>
-        <div class="row small" style="margin-top:8px;gap:16px">
-          <label><input type="checkbox" id="togglePareto" checked> Afficher Pareto par catégorie</label>
-          <label><input type="checkbox" id="togglePie" checked> Afficher répartition</label>
-        </div>
-
-        <div class="kpi" style="margin-top:8px">
+        </div><div class="kpi" style="margin-top:8px">
           <div class="pill">Findings totaux : <b id="kpiFindCount">0</b></div>
           <div class="pill">Heures findings totales : <b id="kpiFindHours">0 h</b></div>
 
@@ -595,6 +597,10 @@ h2 .legend .pill{margin-left:6px}
     <!-- PERFORMANCE -->
     <section id="tab-perf" class="hidden">
       <h1>Performance</h1>
+      <div class="row small" style="margin-top:8px;gap:16px">
+        <label><input type="checkbox" id="togglePareto" checked> Afficher Pareto par catégorie</label>
+        <label><input type="checkbox" id="togglePie" checked> Afficher répartition</label>
+      </div>
       <div class="card">
         <div class="row">
           <div><label>Début</label><input id="pfStart" type="date"></div>
@@ -906,11 +912,22 @@ function addUnassignRow(val=0, hmo=0, reason="", skill=""){
     </td>
     <td><input type="text" value="${reason}" class="uaReason" placeholder="ex. pièce manquante, outillage…"></td>
     <td><button class="btn bad uaDel">Supprimer</button></td>`;
+
+  const sel = tr.querySelector('select.uaSkill');
+  if (sel && skill && !Array.from(sel.options).some(o => o.value === skill)) {
+    const opt = document.createElement('option');
+    opt.value = skill;
+    opt.textContent = skill;
+    opt.selected = true;
+    sel.appendChild(opt);
+  }
+
   unassignBody.appendChild(tr);
   renumberUnassign();
   attachZeroClearInputs();
   recalcUnassign();
 }
+
 function renumberUnassign(){ $$('#unassignBody tr').forEach((tr,i)=>$('.uaIndex',tr).textContent=i+1); }
 function recalcUnassign(){
   let tot=0, totHmo=0;
@@ -1665,7 +1682,241 @@ $('#pickAdd').onclick=()=>{
   }));
   v.problems = (v.problems||[]).concat(toAdd);
   save(); renderVisitProblems(v); dlgPick.close();
+
+
+// Bouton 'Ajouter depuis la bibliothèque' dans la carte Problèmes de la visite
+const btnLinkProblem = document.getElementById('btnLinkProblem');
+if (btnLinkProblem) {
+  btnLinkProblem.onclick = () => {
+    const v = getCurrentVisit();
+    if (!v) {
+      alert('Ouvre ou crée une visite avant d\u2019ajouter des problèmes.');
+      return;
+    }
+    openPickDialogFor(v.id);
+  };
 }
+
+}
+
+
+
+/* ============================ Import UVR (Excel) ========================== */
+// Utilise SheetJS (XLSX) pour lire le fichier UVR exporté depuis Maintenix.
+// Objectif : pré-remplir Findings (nb + heures), immat / type de check / TRFX visite et
+// désassignations (nb lignes, heures, skill).
+const uvrFileInput = document.getElementById('uvrFile');
+const btnImportUvr = document.getElementById('btnImportUvr');
+
+if (btnImportUvr && uvrFileInput && window.XLSX) {
+  btnImportUvr.onclick = () => {
+    if (!getCurrentVisit()) {
+      alert("Ouvre ou crée une visite avant d'importer l'UVR.");
+      return;
+    }
+    uvrFileInput.value = "";
+    uvrFileInput.click();
+  };
+
+  uvrFileInput.onchange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const v = getCurrentVisit();
+    if (!v) {
+      alert("Aucune visite chargée.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type: 'array'});
+        const sheetName = wb.SheetNames[0];
+        const sheet = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:null});
+
+        if (!rows.length) {
+          alert("Fichier UVR vide ou non reconnu.");
+          return;
+        }
+
+        // Chercher la ligne d'entête : celle qui contient 'SEQ'
+        let headerRowIndex = -1;
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r) continue;
+          if (String(r[0]).trim() === 'SEQ' || r.includes('SEQ')) {
+            headerRowIndex = i;
+            break;
+          }
+        }
+        if (headerRowIndex === -1) {
+          alert("Impossible de trouver la ligne d'entête (SEQ) dans l'UVR.");
+          return;
+        }
+
+        const headers = rows[headerRowIndex].map(h => (h || "").toString().trim());
+        const idx = (name) => headers.indexOf(name);
+
+        // Ligne d'information en tête (ligne 0) : immat / type de check / nom complet du check
+        let headerCheckName = "";
+        const headerInfo = rows[0] || [];
+        for (let i = 0; i < headerInfo.length - 1; i++) {
+          const label = (headerInfo[i] || "").toString().toUpperCase();
+          const value = (headerInfo[i+1] || "").toString().trim();
+          if (!v.immat && label.includes("A/C REG")) {
+            v.immat = value.toUpperCase();
+          }
+          if (label.includes("CHECK NAME")) {
+            headerCheckName = value;
+            if (!v.check) {
+              const parts = value.split("-");
+              if (parts.length) {
+                const c = parts[0].trim();
+                if (c) v.check = c;
+              }
+            }
+          }
+        }
+
+        const idxTaskType     = idx("TASK_TYPE");
+        const idxSpent        = idx("ACTUAL_SPENT_HOURS");
+        const idxSched        = idx("ACTUAL_SCHEDULED_HRS");
+        const idxDur          = idx("DURATION");
+        const idxStatus       = idx("JOBCARD_STATUS");
+        const idxSkill        = idx("SKILL(S)");
+        const idxDesc         = idx("JIC_DESCRIPTION");
+        const idxWorkArea     = idx("WORK_AREA_NAME");
+        const idxBarcode      = idx("BARCODE");
+        const idxJicTaskName  = idx("JICTASKNAME");
+        const idxJicBarcode   = idx("JICBARCODE");
+
+        if (idxTaskType === -1 || idxSpent === -1) {
+          alert("Colonnes clés manquantes dans l'UVR (TASK_TYPE / ACTUAL_SPENT_HOURS).");
+          return;
+        }
+
+        // TRFX de la visite : on cherche la ligne UVR dont le JICTASKNAME == CHECK NAME (header)
+        if (!v.trfxVisit && headerCheckName && idxJicTaskName !== -1 && idxJicBarcode !== -1) {
+          const targetName = headerCheckName.trim();
+          for (let i = headerRowIndex + 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row) continue;
+            const tn = (row[idxJicTaskName] || "").toString().trim();
+            if (tn === targetName) {
+              const tb = (row[idxJicBarcode] || "").toString().trim();
+              if (tb) {
+                v.trfxVisit = tb;
+                break;
+              }
+            }
+          }
+        }
+
+        let findingsCount = 0;
+        let findingsHours = 0;
+        let totalHmoReal  = 0;
+
+        const findingTypes = new Set(["CORR", "ADHOC", "EO"]);
+
+        // Pour les désassignations par skill
+        const unassignBySkill = new Map();
+
+        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || row[0] == null) continue; // ignore lignes vides
+
+          const taskType = (row[idxTaskType] || "").toString().trim().toUpperCase();
+          const spent    = parseFloat(row[idxSpent]) || 0;
+          const sched    = idxSched !== -1 ? (parseFloat(row[idxSched]) || 0) : 0;
+          const dur      = idxDur !== -1 ? (parseFloat(row[idxDur]) || 0) : 0;
+          const status   = idxStatus !== -1 ? (String(row[idxStatus] || "")).toUpperCase() : "";
+          const skill    = idxSkill !== -1 ? (row[idxSkill] || "").toString().trim() : "";
+          const desc     = idxDesc !== -1 ? (row[idxDesc] || "").toString() : "";
+          const workArea = idxWorkArea !== -1 ? (row[idxWorkArea] || "").toString() : "";
+          const barcode  = idxBarcode !== -1 ? (row[idxBarcode] || "").toString().trim() : "";
+
+          // HMO réel : on agrège tout
+          totalHmoReal += spent;
+
+          // Findings = types correctifs
+          if (findingTypes.has(taskType)) {
+            findingsCount += 1;
+            findingsHours += spent;
+          }
+
+          // Désassignations = status UNASSIGN (agrégation par skill)
+          if (status === "UNASSIGN") {
+            const skillRaw = skill || "—";
+            const parts = skillRaw.split(/[\s\n]+/).map(x => x.trim()).filter(x => x);
+            const skillsList = parts.length ? parts : ["—"];
+            const hmo = sched || dur;
+            skillsList.forEach(sk => {
+              const key = sk;
+              if (!unassignBySkill.has(key)) {
+                unassignBySkill.set(key, { n: 0, hmo: 0, skill: key, reason: "" });
+              }
+              const obj = unassignBySkill.get(key);
+              obj.n += 1;
+              obj.hmo += hmo;
+            });
+          }
+        }
+
+        // Findings (nb + heures) -> champs officiels du formulaire
+        v.findCount = findingsCount;
+        v.findHours = parseFloat(findingsHours.toFixed(1));
+
+        // HMO réel (si non déjà saisi) - on ne touche pas HMO prévu
+        if (!v.hmoReal || v.hmoReal === 0) {
+          v.hmoReal = parseFloat(totalHmoReal.toFixed(1));
+        }
+
+        // Désassignations : fusion avec ce qu'il y a déjà dans la visite
+        const existingUn = Array.isArray(v.unassignedDetail) ? v.unassignedDetail.slice() : [];
+        const newUn = Array.from(unassignBySkill.values()).map(o => ({
+          n: o.n,
+          hmo: parseFloat(o.hmo.toFixed(1)),
+          reason: o.reason,
+          skill: o.skill
+        }));
+
+        let finalUn = existingUn;
+        if (newUn.length) {
+          // Si on a seulement la ligne par défaut "Avant start du chantier", on la garde et on ajoute derrière
+          if (existingUn.length === 1 &&
+              !existingUn[0].n &&
+              !existingUn[0].hmo &&
+              (existingUn[0].reason || "").toLowerCase().startsWith("avant start")) {
+            finalUn = [existingUn[0], ...newUn];
+          } else if (!existingUn.length) {
+            finalUn = newUn;
+          } else {
+            finalUn = existingUn.concat(newUn);
+          }
+        }
+        v.unassignedDetail = finalUn;
+
+        save();
+        renderFormFromVisit(v);
+        alert("Import UVR terminé : findings, HMO et désassignations ont été mis à jour.");
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de la lecture de l'UVR : " + err.message);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+} else if (btnImportUvr) {
+  // XLSX non chargé (offline / CDN bloqué)
+  btnImportUvr.onclick = () => {
+    alert("La bibliothèque XLSX n'est pas chargée. Vérifie l'accès internet ou contacte le support.");
+  };
+}
+
 
 /* ============================ Export / Import JSON ======================== */
 $('#exportJson').onclick=()=>{
@@ -2015,9 +2266,6 @@ $('#btnPerfPdf').onclick = ()=>{
     alert('La fonction autoTable (tableaux PDF) n’est pas disponible.');
     return;
   }
-
-  // Assurer que les graphiques sont à jour avec les filtres courants
-  renderPerf();
 
   const visits = getPerfFilteredVisits();
   if(!visits.length){
